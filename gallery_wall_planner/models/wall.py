@@ -8,6 +8,9 @@ class Wall:
         self.height = height
         self.color = color
 
+        self.artwork = []
+        self.wall_lines = []
+
     def export_wall(self):
         #TODO: way to export object to json, can be refined later
         return(json.dumps(self.__dict__))
