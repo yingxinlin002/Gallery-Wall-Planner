@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import font
 from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
 
 
@@ -39,7 +40,7 @@ root.title("Gallery Wall Planner")
 root.geometry("1024x768")
 
 # Define a custom font for the buttons
-button_font = tk.font.Font(family="Helvetica", size=12, weight="bold")
+button_font = font.Font(family="Helvetica", size=12, weight="bold")
 
 # Create the home menu
 create_home_menu()
