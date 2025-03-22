@@ -37,13 +37,6 @@ The Gallery Wall Planner Tool will include the following features:
 
 ---
 
-## Background Story
-Yingxin works as a graduate assistant at Roberta's Art Gallery. During the installation of the exhibit "Neighbors: Near and Far," the team faced challenges when artists removed a door sign, which was a reference point for measurements. This led to manual calculations and adjustments, causing delays and inefficiencies.
-
-To prevent such issues in the future, this tool aims to provide a digital platform where artists and gallery staff can visualize and adjust art piece placements before installation. By including customizable wall features (e.g., doors, light switches, fire alarms), the tool ensures that all elements of the wall are considered during planning.
-
----
-
 ## Technology Choices
 The team is open to exploring technologies that best suit the project's needs. Current considerations include:
 
