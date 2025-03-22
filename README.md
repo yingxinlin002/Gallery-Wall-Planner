@@ -52,3 +52,4 @@ The team is open to exploring technologies that best suit the project's needs. C
 - Reduce the need for manual calculations and adjustments.
 - Provide a visual tool for artists and gallery staff to plan art piece placements.
 - Improve workflow efficiency and reduce installation time.
+
