@@ -1,7 +1,5 @@
 # Gallery Wall Planner Tool
 
-**Submitted by Yingxin Lin**
-
 ---
 
 ## Overview
