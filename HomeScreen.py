@@ -1,140 +1,74 @@
-#!/usr/bin/env python3
 import tkinter as tk
+from tkinter import messagebox, font
 
-def on_new():
-    print("New button pressed")
 
-def on_load():
-    print("Load button pressed")
+def new_exhibit():
+    # Create a popup window for new exhibit options
+    popup = tk.Toplevel(root)
+    popup.title("New Exhibit")
+    popup.geometry("300x150")
 
-def on_quit():
-    root.quit()
+    # Function to handle the "Start from Scratch" option
+    def start_from_scratch():
+        messagebox.showinfo("New Exhibit", "Starting a new exhibit from scratch.")
+        popup.destroy()
 
-# Create the main window
+    # Function to handle the "Load from an Existing Wall" option
+    def load_from_existing():
+        messagebox.showinfo("New Exhibit", "Loading from an existing wall.")
+        popup.destroy()
+
+    # Add buttons to the popup window
+    tk.Button(popup, text="Start from Scratch", command=start_from_scratch, width=20, bg="#B95CF4", fg="white",
+              font=button_font, relief="raised", padx=10, pady=5).pack(pady=10)
+    tk.Button(popup, text="Load from an Existing Wall", command=load_from_existing, width=20, bg="#B95CF4", fg="white",
+              font=button_font, relief="raised", padx=10, pady=5).pack(pady=10)
+
+
+def load_exhibit():
+    # Clear the current frame and load the existing exhibits page
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Add a label for the existing exhibits page
+    tk.Label(root, text="Existing Exhibits", font=("Arial", 24)).pack(pady=50)
+
+    # Add a back button to return to the home menu
+    tk.Button(root, text="Back to Home", command=create_home_menu, width=20, bg="#7D7098", fg="white", font=button_font,
+              relief="raised", padx=10, pady=5).pack(pady=20)
+
+
+def quit_application():
+    root.destroy()
+
+
+def create_home_menu():
+    # Clear the current frame and create the home menu
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Add the title label
+    tk.Label(root, text="Gallery Wall Planner", font=("Arial", 24)).pack(pady=50)
+
+    # Styling the buttons
+    tk.Button(root, text="New Exhibit", command=new_exhibit, width=20, bg="#B95CF4", fg="white", font=button_font,
+              relief="raised", padx=10, pady=5).pack(pady=10)
+    tk.Button(root, text="Load Exhibit", command=load_exhibit, width=20, bg="#B95CF4", fg="white", font=button_font,
+              relief="raised", padx=10, pady=5).pack(pady=10)
+    tk.Button(root, text="Quit", command=quit_application, width=20, bg="#B95CF4", fg="white", font=button_font,
+              relief="raised", padx=10, pady=5).pack(pady=10)
+
+
+# Create the main application window
 root = tk.Tk()
 root.title("Gallery Wall Planner")
+root.geometry("1024x768")
 
-# Set an initial window size (optional)
-root.geometry("400x300")
+# Define a custom font for the buttons
+button_font = font.Font(family="Helvetica", size=12, weight="bold")
 
-# Configure the grid to allow responsiveness
-root.columnconfigure(0, weight=1)
-# Set up two rows: one for the title and one for the buttons.
-root.rowconfigure(1, weight=1)
-
-# Title label, centered at the top
-title_label = tk.Label(root, text="Gallery Wall Planner", font=("Helvetica", 24))
-title_label.grid(row=0, column=0, pady=(20, 10), sticky="n")
-
-# Create a frame for the buttons to better control layout and spacing
-button_frame = tk.Frame(root)
-button_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
-
-# Configure the frame to have one column that expands
-button_frame.columnconfigure(0, weight=1)
-# Create three rows in the frame and let them expand equally to maintain spacing
-for i in range(3):
-    button_frame.rowconfigure(i, weight=1)
-
-# New Button
-new_button = tk.Button(button_frame, text="New", command=on_new, width=15, height=2)
-new_button.grid(row=0, column=0, pady=5)
-
-# Load Button
-load_button = tk.Button(button_frame, text="Load", command=on_load, width=15, height=2)
-load_button.grid(row=1, column=0,pady=5)
-
-# Quit Button
-quit_button = tk.Button(button_frame, text="Quit", command=on_quit, width=15, height=2)
-quit_button.grid(row=2, column=0,pady=5)
-
-# Start the main event loop
-root.mainloop()
-
-
-
-
-
-
-
-
-
-
-
-
-#!/usr/bin/env python3
-import tkinter as tk
-from PIL import Image, ImageTk
-
-def on_new():
-    print("New button pressed")
-
-def on_load():
-    print("Load button pressed")
-
-def on_quit():
-    root.quit()
-
-def resize_background(event):
-    # Resize the original image to the current window size
-    new_width = event.width
-    new_height = event.height
-    resized = original_image.resize((new_width, new_height), Image.ANTIALIAS)
-    # Update the PhotoImage and the label displaying it
-    bg_image = ImageTk.PhotoImage(resized)
-    background_label.config(image=bg_image)
-    background_label.image = bg_image  # Keep a reference!
-
-# Create the main window
-root = tk.Tk()
-root.title("Gallery Wall Planner")
-root.geometry("600x400")  # initial size
-
-# Load the background image (hard-coded to GalleryWall.png)
-original_image = Image.open("GalleryWall.png")
-
-# Create a label to display the background image and fill the entire window.
-background_label = tk.Label(root)
-background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
-
-# Bind the window resizing to the resize function
-root.bind("<Configure>", resize_background)
-
-# Create a container frame for widgets with transparent background
-container = tk.Frame(root, bg="", highlightthickness=0)
-container.grid(row=0, column=0, sticky="nsew")
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
-
-# Configure grid for the container for responsiveness
-container.columnconfigure(0, weight=1)
-container.rowconfigure(1, weight=1)
-
-# Title label, centered at the top
-title_label = tk.Label(container, text="Gallery Wall Planner", font=("Helvetica", 24), bg="white")
-title_label.grid(row=0, column=0, pady=(20, 10), sticky="n")
-
-# Create a frame for the buttons to control layout and spacing
-button_frame = tk.Frame(container, bg="", highlightthickness=0)
-button_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=10)
-button_frame.columnconfigure(0, weight=1)
-for i in range(3):
-    button_frame.rowconfigure(i, weight=1)
-
-# New Button
-new_button = tk.Button(button_frame, text="New", command=on_new)
-new_button.grid(row=0, column=0, sticky="ew", pady=5)
-
-# Load Button
-load_button = tk.Button(button_frame, text="Load", command=on_load)
-load_button.grid(row=1, column=0, sticky="ew", pady=5)
-
-# Quit Button
-quit_button = tk.Button(button_frame, text="Quit", command=on_quit)
-quit_button.grid(row=2, column=0, sticky="ew", pady=5)
-
-# Ensure the container is above the background image
-container.lift()
+# Create the home menu
+create_home_menu()
 
 # Start the main event loop
 root.mainloop()
