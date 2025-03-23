@@ -2,10 +2,9 @@ import sys
 import os
 import tkinter as tk
 from tkinter import font
-
-# Add the parent directory of gallery_wall_planner to the system path for ModuleNotFoundError: No module named 'gallery_wall_planner'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 
 def create_home_menu():
@@ -19,20 +18,10 @@ def create_home_menu():
     # Add the buttons
     tk.Button(root, text="New Exhibit", command=lambda: NewGalleryUI(root, create_home_menu), width=20, bg="#5F3FCA",
               fg="white", font=button_font, relief="raised", padx=10, pady=5).pack(pady=10)
-    tk.Button(root, text="Load Exhibit", command=load_exhibit, width=20, bg="#5F3FCA", fg="white", font=button_font,
+    tk.Button(root, text="Load Exhibit", command=lambda: SelectWallSpaceUI(root,create_home_menu), width=20, bg="#5F3FCA", fg="white", font=button_font,
               relief="raised", padx=10, pady=5).pack(pady=10)
     tk.Button(root, text="Quit", command=quit_application, width=20, bg="#69718A", fg="white", font=button_font,
               relief="raised", padx=10, pady=5).pack(pady=10)
-
-
-def load_exhibit():
-    """Placeholder function for the Load Exhibit functionality."""
-    for widget in root.winfo_children():
-        widget.destroy()
-    tk.Label(root, text="Existing Exhibits", font=("Arial", 24)).pack(pady=50)
-    tk.Button(root, text="Back to Home", command=create_home_menu, width=20, bg="#FF9800", fg="white", font=button_font,
-              relief="raised", padx=10, pady=5).pack(pady=20)
-
 
 def quit_application():
     """Quit the application."""

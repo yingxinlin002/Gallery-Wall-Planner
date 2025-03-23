@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 class PermanentObjectUI:
     def __init__(self, root, return_to_previous):
@@ -149,5 +150,9 @@ class PermanentObjectUI:
             messagebox.showerror("Error", "Please add at least one permanent object.")
             return
 
-        messagebox.showinfo("Success", "Wall information submitted successfully!")
-        self.return_to_previous()
+        # If "No" is selected, proceed to the next step
+        if not self.has_permanent_items.get():
+            SelectWallSpaceUI(self.root, self.return_to_previous)
+        else:
+            messagebox.showinfo("Success", "Wall information submitted successfully!")
+            self.return_to_previous()
