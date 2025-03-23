@@ -2,6 +2,7 @@ import sys
 import os
 import tkinter as tk
 from tkinter import font
+
 # Add the parent directory of gallery_wall_planner to the system path for ModuleNotFoundError: No module named 'gallery_wall_planner'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI

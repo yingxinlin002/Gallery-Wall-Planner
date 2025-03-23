@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
+import re
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -173,13 +174,13 @@ class NewGalleryUI:
         wall_height = self.wall_height_entry.get()
         
         # Validate inputs
-        if wall_name == "South Wall" or wall_width == "inches" or wall_height == "inches":
+        if wall_name == "" or wall_width == "" or wall_height == "":
             messagebox.showerror("Error", "Please fill in all fields.")
             return
         
         try:
-            wall_width = float(wall_width)
-            wall_height = float(wall_height)
+            wall_width = float(re.sub(r"[^0-9.]", "", wall_width).strip())
+            wall_height = float(re.sub(r"[^0-9.]", "", wall_height).strip())
         except ValueError:
             messagebox.showerror("Error", "Width and height must be numbers.")
             return
@@ -187,6 +188,7 @@ class NewGalleryUI:
         # Create a new wall object
         from gallery_wall_planner.models.wall import Wall
         wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
+        print(wall.toString())
         
         # Display success message
         messagebox.showinfo("Success", f"Wall '{wall_name}' created successfully!")

@@ -14,6 +14,9 @@ class Wall:
     def export_wall(self):
         #TODO: way to export object to json, can be refined later
         return(json.dumps(self.__dict__))
+    
+    def toString(self):
+        return f"Wall: {self.name}, {self.width}, {self.height}, {self.color}"
         
 def import_wall(wall_name, file_name):
     #TEMP: Replace later with the menu input
