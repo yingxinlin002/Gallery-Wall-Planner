@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
+from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -45,7 +46,7 @@ class NewGalleryUI:
         # Wall Width
         tk.Label(self.root, text="Wall Width (inches):", font=("Arial", 12)).pack(pady=5)
         self.wall_width_entry = tk.Entry(self.root, font=("Arial", 12))
-        self.wall_width_entry.insert(0, "inches")  # Placeholder text
+        self.wall_width_entry.insert(0, "313")  # Placeholder text
         self.wall_width_entry.config(fg="grey")
         self.wall_width_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.wall_width_entry, "inches"))
         self.wall_width_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.wall_width_entry, "inches"))
@@ -54,7 +55,7 @@ class NewGalleryUI:
         # Wall Height
         tk.Label(self.root, text="Wall Height (inches):", font=("Arial", 12)).pack(pady=5)
         self.wall_height_entry = tk.Entry(self.root, font=("Arial", 12))
-        self.wall_height_entry.insert(0, "inches")  # Placeholder text
+        self.wall_height_entry.insert(0, "96")  # Placeholder text
         self.wall_height_entry.config(fg="grey")
         self.wall_height_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.wall_height_entry, "inches"))
         self.wall_height_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.wall_height_entry, "inches"))
@@ -65,7 +66,7 @@ class NewGalleryUI:
         self.wall_color = "white"  # Default color
         self.color_box = tk.Label(self.root, bg=self.wall_color, width=10, height=2)
         self.color_box.pack(pady=5)
-        tk.Button(self.root, text="Pick Color", command=self.pick_color, width=20, bg="#2196F3", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(pady=10)
+        tk.Button(self.root, text="Pick Color", command=self.pick_color, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(pady=10)
         
         # Back and Submit Buttons
         tk.Button(self.root, text="Back to Home", command=self.return_to_home, width=20, bg="#69718A", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(pady=10)
@@ -106,4 +107,14 @@ class NewGalleryUI:
         
         # Display success message
         messagebox.showinfo("Success", f"Wall '{wall_name}' created successfully!")
-        self.return_to_home()
+        
+        # Navigate to PermanentObjectUI
+        self.show_permanent_object_ui()
+
+    def show_permanent_object_ui(self):
+        # Clear the current frame
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        
+        # Initialize the PermanentObjectUI
+        PermanentObjectUI(self.root, self.return_to_home)
