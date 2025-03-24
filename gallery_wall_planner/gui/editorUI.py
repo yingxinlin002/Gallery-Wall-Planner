@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI  # Import SelectWallSpaceUI
 
 class EditorUI:
     def __init__(self, root, return_to_home, selected_wall):
@@ -23,7 +24,7 @@ class EditorUI:
         # Back button at top left
         back_button = tk.Button(main_frame,
                               text="< Back to Wall Selection",
-                              command=self.return_to_home,
+                              command=self.back_to_wall_selection,
                               bg=self.styles["bg_secondary"],
                               fg=self.styles["fg_white"],
                               font=self.styles["button_font"],
@@ -77,7 +78,7 @@ class EditorUI:
         calc_button = tk.Button(control_panel,
                               text="Calculate Installation Instruction",
                               command=lambda: messagebox.showinfo("Info", "Calculate Installation Instruction button pushed"),
-                              bg=self.styles["bg_success"],
+                              bg=self.styles["bg_primary"],
                               fg=self.styles["fg_white"],
                               font=self.styles["button_font"],
                               padx=self.styles["button_padx"],
@@ -134,3 +135,7 @@ class EditorUI:
         else:
             content_frame.pack(fill="x")
             toggle_btn.config(text="▼")
+
+    def back_to_wall_selection(self):
+        """Navigate back to the SelectWallSpaceUI"""
+        SelectWallSpaceUI(self.root, self.return_to_home)
