@@ -2,7 +2,6 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
-from gallery_wall_planner.models import shared_state
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -188,9 +187,10 @@ class NewGalleryUI:
         
         # Create a new wall object
         from gallery_wall_planner.models.wall import Wall
-        wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
+        from gallery_wall_planner.models.gallery import Gallery
 
-        shared_state.add_wall(wall)
+        wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
+        Gallery.add_wall(wall)
 
         print(str(wall))
         

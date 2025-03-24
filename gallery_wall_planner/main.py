@@ -5,11 +5,11 @@ from tkinter import font
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
-from gallery_wall_planner.models import shared_state
+from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 
 # Initialize example wall once at startup
-shared_state.add_wall(Wall("Example Wall", 100, 75, "grey"))
+Gallery.add_wall(Wall("Example Wall", 100, 75, "grey"))
 
 def create_home_menu():
     """Create the home menu with buttons."""
