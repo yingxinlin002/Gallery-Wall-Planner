@@ -164,10 +164,14 @@ class SelectWallSpaceUI:
             messagebox.showwarning("Error", "Please select a wall space to export.")
 
     def continue_to_next(self):
-        # Continue to the next step with the selected wall
         selected_wall = self.get_selected_wall()
         if selected_wall:
-            messagebox.showinfo("Continue", f"Selected Wall: {selected_wall.toString()}")
+            # Clear current UI
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            # Navigate to EditorUI
+            from gallery_wall_planner.gui.editorUI import EditorUI
+            EditorUI(self.root, self.return_to_home, selected_wall)
         else:
             messagebox.showwarning("Error", "Please select a wall space to continue.")
 
