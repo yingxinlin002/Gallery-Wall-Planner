@@ -1,7 +1,8 @@
+# NewExhibitUI.py
 import tkinter as tk
 from tkinter import messagebox, colorchooser
-from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
 import re
+from gallery_wall_planner.models import shared_state
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -140,8 +141,8 @@ class NewGalleryUI:
         
         # Get width and height from entries
         try:
-            wall_width = float(self.wall_width_entry.get())
-            wall_height = float(self.wall_height_entry.get())
+            wall_width = float(re.sub(r"[^0-9.]", "", self.wall_width_entry.get()).strip())
+            wall_height = float(re.sub(r"[^0-9.]", "", self.wall_height_entry.get()).strip())
         except ValueError:
             return  # Do nothing if inputs are invalid
         
@@ -167,20 +168,20 @@ class NewGalleryUI:
         self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")  # Height line start
         self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")  # Height line end
         self.preview_canvas.create_text(x0 - 15, (y0 + y1) / 2, text=f"{wall_height} inches", anchor="e", angle=90)
-
+    
     def submit_wall_info(self):
         wall_name = self.wall_name_entry.get()
-        wall_width = self.wall_width_entry.get()
-        wall_height = self.wall_height_entry.get()
+        wall_width_str = self.wall_width_entry.get()
+        wall_height_str = self.wall_height_entry.get()
         
         # Validate inputs
-        if wall_name == "" or wall_width == "" or wall_height == "":
+        if wall_name == "" or wall_width_str == "" or wall_height_str == "":
             messagebox.showerror("Error", "Please fill in all fields.")
             return
         
         try:
-            wall_width = float(re.sub(r"[^0-9.]", "", wall_width).strip())
-            wall_height = float(re.sub(r"[^0-9.]", "", wall_height).strip())
+            wall_width = float(re.sub(r"[^0-9.]", "", wall_width_str).strip())
+            wall_height = float(re.sub(r"[^0-9.]", "", wall_height_str).strip())
         except ValueError:
             messagebox.showerror("Error", "Width and height must be numbers.")
             return
@@ -188,18 +189,11 @@ class NewGalleryUI:
         # Create a new wall object
         from gallery_wall_planner.models.wall import Wall
         wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
+        
+        shared_state.add_wall(wall)
+
         print(wall.toString())
         
-        # Display success message
-        messagebox.showinfo("Success", f"Wall '{wall_name}' created successfully!")
-        
         # Navigate to PermanentObjectUI
-        self.show_permanent_object_ui()
-
-    def show_permanent_object_ui(self):
-        # Clear the current frame
-        for widget in self.root.winfo_children():
-            widget.destroy()
-        
-        # Initialize the PermanentObjectUI
+        from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
         PermanentObjectUI(self.root, self.return_to_home)
