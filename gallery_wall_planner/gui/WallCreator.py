@@ -1,4 +1,10 @@
-
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# DO NOT USE THIS IS LEGACY CODE FROM BEFORE WE STARTING USING NEWEXHIBIT.PY
+# this only continues to exist because it has some features the new version does not, and we may want to circle back to them if we have time
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #!/usr/bin/env python3
 import re
 import tkinter as tk
