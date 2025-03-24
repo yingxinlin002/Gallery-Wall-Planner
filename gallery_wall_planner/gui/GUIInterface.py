@@ -28,6 +28,23 @@ obstacle_names = [f"Obstacle{i+1}" for i in range(len(obstacles))]
 # Global variables for saving layout information
 # (After items are placed and/or edited)
 layout_items = {}  # keys will be obstacle names, values are dicts including position info
+popup_windows = {}  # Dictionary to store open popups by item index
+
+# -------------------------
+# Function: Enforce Boundaries
+# -------------------------
+def enforce_boundaries(x, y, width, height):
+    """Ensures the object remains inside the wall boundaries."""
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    if x + width > wall_width:
+        x = wall_width - width
+    if y + height > wall_height:
+        y = wall_height - height
+    return x, y
+
 
 # -------------------------
 # Main Application Window Setup
@@ -52,6 +69,9 @@ buttons_frame.pack(side="left", padx=20)
 # For each obstacle, create a button using its "Name".
 item_buttons = {}
 def show_item_popup(item_index):
+    # Close any existing popup for this item
+    if item_index in popup_windows:
+        popup_windows[item_index].destroy()
     # Popup that shows item details and allows editing.
     item_data = obstacles[item_index]
     item_name = obstacle_names[item_index]
@@ -78,32 +98,257 @@ def show_item_popup(item_index):
 
     popup = Toplevel(root)
     popup.title(f"Edit {item_name}")
+    popup.geometry("300x400")
+
+    # Create a frame inside the popup to center everything
+    content_frame = ttk.Frame(popup)
+    content_frame.pack(expand=True)  # Use expand to center in the popup
+
+    # Center all content
+    content_frame.grid_columnconfigure(0, weight=1)
+
+    # Variables for fields
+    name_var = tk.StringVar(value=item_data["Name"])
+    width_var = tk.DoubleVar(value=width_val)
+    height_var = tk.DoubleVar(value=height_val)
+
+    # Track the popup window globally
+    popup_windows[item_index] = popup
+
+    def update_popup_fields():
+        """Update all coordinate fields when the object moves."""
+        if popup.winfo_exists():
+            print(f"Popup update triggered for {item_name}")  # Debugging print
+            pos = layout_items.get(item_name, {"x": 0.0, "y": 0.0})
+            new_bl = (pos["x"], pos["y"])
+            new_tl = (new_bl[0], new_bl[1] + height_var.get())
+            new_tr = (new_bl[0] + width_var.get(), new_bl[1] + height_var.get())
+            new_br = (new_bl[0] + width_var.get(), new_bl[1])
+            new_center = (new_bl[0] + width_var.get() / 2, new_bl[1] + height_var.get() / 2)
+
+            # Update all popup fields dynamically
+            bl_var.set(f"{new_bl[0]:.2f}, {new_bl[1]:.2f}")
+            tl_var.set(f"{new_tl[0]:.2f}, {new_tl[1]:.2f}")
+            tr_var.set(f"{new_tr[0]:.2f}, {new_tr[1]:.2f}")
+            br_var.set(f"{new_br[0]:.2f}, {new_br[1]:.2f}")
+            center_var.set(f"{new_center[0]:.2f}, {new_center[1]:.2f}")
+            
+            popup.update_idletasks()  # Force the popup to refresh
+            popup.update()  # Force UI to redraw
+
+    items[item_index].update_popup_fields = update_popup_fields
+
+    # Register this function for real-time updates
+    items[item_index].update_popup_fields = update_popup_fields
+
+    # Define buttons first so we can modify them later
+    edit_button = ttk.Button(content_frame, text="Edit Physical Object")
+    save_button = ttk.Button(content_frame, text="Save Changes to Object")
+
+    # Editable fields for Name, Width, and Height (side-by-side layout)
+    ttk.Label(content_frame, text="Name:").grid(row=0, column=0, sticky="e", padx=5, pady=2)
+    name_entry = ttk.Entry(content_frame, textvariable=name_var, justify="center", state="disabled")
+    name_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
+
+    ttk.Label(content_frame, text="Width:").grid(row=1, column=0, sticky="e", padx=5, pady=2)
+    width_entry = ttk.Entry(content_frame, textvariable=width_var, justify="center", state="disabled")
+    width_entry.grid(row=1, column=1, sticky="w", padx=5, pady=2)
+
+    ttk.Label(content_frame, text="Height:").grid(row=2, column=0, sticky="e", padx=5, pady=2)
+    height_entry = ttk.Entry(content_frame, textvariable=height_var, justify="center", state="disabled")
+    height_entry.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+
+    #Enables editing of the Name, Width, and Height fields
+    def enable_editing():
+        name_entry.config(state="normal")
+        width_entry.config(state="normal")
+        height_entry.config(state="normal")
+
+        edit_button.config(state="disabled")  # Disable Edit button
+        save_button.config(state="normal")   # Enable Save button
+
+
+    def apply_physical_changes():
+        """Update the name, width, and height while keeping the center unchanged."""
+        new_name = name_var.get().strip()
+        try:
+            new_width = float(width_var.get())
+            new_height = float(height_var.get())
+        except ValueError:
+            messagebox.showerror("Error", "Width and Height must be numeric values")
+            return
     
-    # Display current info.
-    ttk.Label(popup, text=f"Name: {item_data['Name']}").grid(row=0, column=0, columnspan=2, pady=5)
-    ttk.Label(popup, text=f"Width: {width_val}").grid(row=1, column=0, columnspan=2, pady=5)
-    ttk.Label(popup, text=f"Height: {height_val}").grid(row=2, column=0, columnspan=2, pady=5)
+        if new_width <= 0 or new_height <= 0:
+            messagebox.showerror("Error", "Width and Height must be greater than zero")
+            return
+
+        # Preserve center, update bottom-left coordinates
+        new_bl_x = center[0] - new_width / 2
+        new_bl_y = center[1] - new_height / 2
+
+        # Keep track of the old name before renaming. If not done, the item will be lost in the layout_items dict.
+        old_name = items[item_index].name
+        # Reassign update_popup_fields before changing name. Second half of old_name is to ensure the popup continues updating.
+        item_obj = items[item_index]  # Assign reference to avoid modifying the list directly
+        update_func = item_obj.update_popup_fields  # Preserve update function
+
+        # Update obstacle properties
+        obstacles[item_index]["Name"] = new_name
+        obstacles[item_index]["Width"] = new_width
+        obstacles[item_index]["Height"] = new_height
+
+        # Update global layout info
+        layout_items[new_name] = {"x": new_bl_x, "y": new_bl_y}
+
+        # Update the GUI button name dynamically
+        item_buttons[item_index].config(text=new_name)
+
+        # Update the DraggableItem properties
+        item_obj = items[item_index]  # Assign the reference to a variable
+        item_obj.name = new_name
+        item_obj.width = new_width
+        item_obj.height = new_height
+        item_obj.x = new_bl_x
+        item_obj.y = new_bl_y
+
+        # **Fix: Restore update function reference**
+        item_obj.update_popup_fields = update_func  # Ensure function reference is maintained
+
+        # **Fix: Call `update_popup_fields()` explicitly after edit**
+        item_obj.update_popup_fields()  # Force update
+
+        # Move and resize the object on the canvas
+        move_item_to_canvas(item_index)
+
+        # Check for collisions after resizing
+        check_all_collisions()
+
+        # Reassign update_popup_fields to ensure the popup continues updating**
+        items[item_index].update_popup_fields = update_popup_fields
+
+        # Lock the fields again
+        name_entry.config(state="disabled")
+        width_entry.config(state="disabled")
+        height_entry.config(state="disabled")
+
+        # Swap button states back
+        save_button.config(state="disabled")
+        edit_button.config(state="normal")
+
+
+    # Configure buttons with initial states
+    edit_button.config(command=enable_editing, state="normal")  # Enabled initially
+    save_button.config(command=apply_physical_changes, state="disabled")  # Disabled initially
+
+    # Place buttons in the UI
+    edit_button.grid(row=3, column=0, columnspan=1, pady=10, padx=5)
+    save_button.grid(row=3, column=1, columnspan=1, pady=10, padx=5)
+
+    # Add a horizontal separator
+    ttk.Separator(content_frame, orient="horizontal").grid(row=4, column=0, columnspan=2, sticky="ew", pady=5)
+
+    # Show computed coordinates (keeping label & value side-by-side)
     
-    # Show computed coordinates.
+    # Removed: Static coordinate labels (now editable)
+    # ttk.Label(content_frame, text="Bottom Left:").grid(row=5, column=0, sticky="e", padx=5, pady=2)
+    # bl_var = tk.StringVar(value=f"{bl[0]:.2f}, {bl[1]:.2f}")
+    # ttk.Label(content_frame, textvariable=bl_var).grid(row=5, column=1, sticky="w", padx=5, pady=2)
+
+    # Updated: Make Bottom Left editable
+    ttk.Label(content_frame, text="Bottom Left:").grid(row=5, column=0, sticky="e", padx=5, pady=2)
     bl_var = tk.StringVar(value=f"{bl[0]:.2f}, {bl[1]:.2f}")
+    bl_entry = ttk.Entry(content_frame, textvariable=bl_var, justify="center")
+    bl_entry.grid(row=5, column=1, sticky="w", padx=5, pady=2)
+    
+    # Removed: Static Top Left label
+    # ttk.Label(content_frame, text="Top Left:").grid(row=6, column=0, sticky="e", padx=5, pady=2)
+    # tl_var = tk.StringVar(value=f"{tl[0]:.2f}, {tl[1]:.2f}")
+    # ttk.Label(content_frame, textvariable=tl_var).grid(row=6, column=1, sticky="w", padx=5, pady=2)
+
+    # Updated: Make Top Left editable
+    ttk.Label(content_frame, text="Top Left:").grid(row=6, column=0, sticky="e", padx=5, pady=2)
     tl_var = tk.StringVar(value=f"{tl[0]:.2f}, {tl[1]:.2f}")
+    tl_entry = ttk.Entry(content_frame, textvariable=tl_var, justify="center")
+    tl_entry.grid(row=6, column=1, sticky="w", padx=5, pady=2)
+
+    # Removed: Static Top Right label
+    # ttk.Label(content_frame, text="Top Right:").grid(row=7, column=0, sticky="e", padx=5, pady=2)
+    # tr_var = tk.StringVar(value=f"{tr[0]:.2f}, {tr[1]:.2f}")
+    # ttk.Label(content_frame, textvariable=tr_var).grid(row=7, column=1, sticky="w", padx=5, pady=2)
+
+    # Updated: Make Top Right editable
+    ttk.Label(content_frame, text="Top Right:").grid(row=7, column=0, sticky="e", padx=5, pady=2)
     tr_var = tk.StringVar(value=f"{tr[0]:.2f}, {tr[1]:.2f}")
+    tr_entry = ttk.Entry(content_frame, textvariable=tr_var, justify="center")
+    tr_entry.grid(row=7, column=1, sticky="w", padx=5, pady=2)
+
+    # Removed: Static Bottom Right label
+    # ttk.Label(content_frame, text="Bottom Right:").grid(row=8, column=0, sticky="e", padx=5, pady=2)
+    # br_var = tk.StringVar(value=f"{br[0]:.2f}, {br[1]:.2f}")
+    # ttk.Label(content_frame, textvariable=br_var).grid(row=8, column=1, sticky="w", padx=5, pady=2)
+
+    # Updated: Make Bottom Right editable
+    ttk.Label(content_frame, text="Bottom Right:").grid(row=8, column=0, sticky="e", padx=5, pady=2)
     br_var = tk.StringVar(value=f"{br[0]:.2f}, {br[1]:.2f}")
+    br_entry = ttk.Entry(content_frame, textvariable=br_var, justify="center")
+    br_entry.grid(row=8, column=1, sticky="w", padx=5, pady=2)
+
+    # Updated: Center remains editable
+    ttk.Label(content_frame, text="Center (editable):").grid(row=9, column=0, sticky="e", padx=5, pady=2)
     center_var = tk.StringVar(value=f"{center[0]:.2f}, {center[1]:.2f}")
-    
-    ttk.Label(popup, text="Bottom Left:").grid(row=3, column=0, sticky="e")
-    ttk.Label(popup, textvariable=bl_var).grid(row=3, column=1, sticky="w")
-    ttk.Label(popup, text="Top Left:").grid(row=4, column=0, sticky="e")
-    ttk.Label(popup, textvariable=tl_var).grid(row=4, column=1, sticky="w")
-    ttk.Label(popup, text="Top Right:").grid(row=5, column=0, sticky="e")
-    ttk.Label(popup, textvariable=tr_var).grid(row=5, column=1, sticky="w")
-    ttk.Label(popup, text="Bottom Right:").grid(row=6, column=0, sticky="e")
-    ttk.Label(popup, textvariable=br_var).grid(row=6, column=1, sticky="w")
-    
-    ttk.Label(popup, text="Center (editable):").grid(row=7, column=0, sticky="e")
-    center_entry = ttk.Entry(popup, textvariable=center_var)
-    center_entry.grid(row=7, column=1, sticky="w")
-    
+    center_entry = ttk.Entry(content_frame, textvariable=center_var, justify="center")
+    center_entry.grid(row=9, column=1, sticky="w", padx=5, pady=2)
+
+    # Function to update all coordinate fields dynamically
+    def update_coordinates(source_field):
+        try:
+            new_x, new_y = map(float, eval(f"{source_field}_var").get().split(','))
+
+            if source_field == "bl":
+                new_bl = (new_x, new_y)
+            elif source_field == "tl":
+                new_bl = (new_x, new_y - height_val)
+            elif source_field == "tr":
+                new_bl = (new_x - width_val, new_y - height_val)
+            elif source_field == "br":
+                new_bl = (new_x - width_val, new_y)
+            elif source_field == "center":
+                new_bl = (new_x - width_val / 2, new_y - height_val / 2)
+
+            new_bl = enforce_boundaries(new_bl[0], new_bl[1], width_val, height_val)
+            new_tl = (new_bl[0], new_bl[1] + height_val)
+            new_tr = (new_bl[0] + width_val, new_bl[1] + height_val)
+            new_br = (new_bl[0] + width_val, new_bl[1])
+            new_center = (new_bl[0] + width_val / 2, new_bl[1] + height_val / 2)
+
+            bl_var.set(f"{new_bl[0]:.2f}, {new_bl[1]:.2f}")
+            tl_var.set(f"{new_tl[0]:.2f}, {new_tl[1]:.2f}")
+            tr_var.set(f"{new_tr[0]:.2f}, {new_tr[1]:.2f}")
+            br_var.set(f"{new_br[0]:.2f}, {new_br[1]:.2f}")
+            center_var.set(f"{new_center[0]:.2f}, {new_center[1]:.2f}")
+
+            # Update object position immediately
+            layout_items[item_name] = {"x": new_bl[0], "y": new_bl[1]}
+            items[item_index].x = new_bl[0]
+            items[item_index].y = new_bl[1]
+
+            # Move the item on the canvas in real-time
+            move_item_to_canvas(item_index)
+
+            # Check for collisions dynamically
+            check_all_collisions()
+
+        except ValueError:
+            pass
+
+    # Bind coordinate fields to update on focus loss
+    bl_entry.bind("<FocusOut>", lambda e: update_coordinates("bl"))
+    tl_entry.bind("<FocusOut>", lambda e: update_coordinates("tl"))
+    tr_entry.bind("<FocusOut>", lambda e: update_coordinates("tr"))
+    br_entry.bind("<FocusOut>", lambda e: update_coordinates("br"))
+    center_entry.bind("<FocusOut>", lambda e: update_coordinates("center"))
+
+    # Save function remains unchanged
     def save_popup():
         try:
             cx_str, cy_str = center_var.get().split(',')
@@ -111,21 +356,32 @@ def show_item_popup(item_index):
         except Exception:
             messagebox.showerror("Error", "Center must be entered as 'x, y'")
             return
+
         new_bl, new_tl, new_tr, new_br, new_center = recalc_from_center(new_center)
-        # Update display fields.
-        bl_var.set(f"{new_bl[0]:.2f}, {new_bl[1]:.2f}")
-        tl_var.set(f"{new_tl[0]:.2f}, {new_tl[1]:.2f}")
-        tr_var.set(f"{new_tr[0]:.2f}, {new_tr[1]:.2f}")
-        br_var.set(f"{new_br[0]:.2f}, {new_br[1]:.2f}")
-        # Update the global layout info...
-        layout_items[item_name] = {"x": new_bl[0], "y": new_bl[1]}
-        # Also update the DraggableItem object's internal coordinates.
-        items[item_index].x = new_bl[0]
-        items[item_index].y = new_bl[1]
-        move_item_to_canvas(item_index)  # update its drawing
+        corrected_x, corrected_y = enforce_boundaries(new_bl[0], new_bl[1], width_val, height_val)
+        corrected_bl = (corrected_x, corrected_y)
+
+        # Recalculate other corners based on the corrected bottom-left
+        corrected_tl = (corrected_bl[0], corrected_bl[1] + height_val)
+        corrected_tr = (corrected_bl[0] + width_val, corrected_bl[1] + height_val)
+        corrected_br = (corrected_bl[0] + width_val, corrected_bl[1])
+        corrected_center = (corrected_bl[0] + width_val / 2, corrected_bl[1] + height_val / 2)
+
+        bl_var.set(f"{corrected_bl[0]:.2f}, {corrected_bl[1]:.2f}")
+        tl_var.set(f"{corrected_tl[0]:.2f}, {corrected_tl[1]:.2f}")
+        tr_var.set(f"{corrected_tr[0]:.2f}, {corrected_tr[1]:.2f}")
+        br_var.set(f"{corrected_br[0]:.2f}, {corrected_br[1]:.2f}")
+
+        layout_items[item_name] = {"x": corrected_bl[0], "y": corrected_bl[1]}
+        items[item_index].x = corrected_bl[0]
+        items[item_index].y = corrected_bl[1]
+        move_item_to_canvas(item_index)
+        check_all_collisions()
         popup.destroy()
-    
-    ttk.Button(popup, text="Save", command=save_popup).grid(row=8, column=0, columnspan=2, pady=10)
+
+    ttk.Button(content_frame, text="Save", command=save_popup).grid(row=18, column=0, columnspan=2, pady=10)
+
+
 
 # Create an Item Button for each obstacle.
 for i, obs in enumerate(obstacles):
@@ -175,6 +431,7 @@ class DraggableItem:
         self.id = None
         self.create_canvas_item()
         self._drag_data = {"x": 0, "y": 0}
+        self.update_popup_fields = None  # Placeholder for popup update function
 
     def create_canvas_item(self):
         # Convert from wall (inches, origin bottom-left) to canvas coordinates.
@@ -207,14 +464,7 @@ class DraggableItem:
         new_y = (canvas_height - coords[3] - wall_bottom) / scale
 
         # Constrain so item does not go outside the wall.
-        if new_x < 0:
-            new_x = 0
-        if new_y < 0:
-            new_y = 0
-        if new_x + self.width > wall_width:
-            new_x = wall_width - self.width
-        if new_y + self.height > wall_height:
-            new_y = wall_height - self.height
+        new_x, new_y = enforce_boundaries(new_x, new_y, self.width, self.height)
 
         self.x = new_x
         self.y = new_y
@@ -222,6 +472,10 @@ class DraggableItem:
         # Snap back into proper position.
         move_item_to_canvas(self.index)
         check_all_collisions()
+
+        if self.update_popup_fields:
+            print(f"Updating popup for {self.name}")  # Debugging line
+            self.update_popup_fields()
 
 def move_item_to_canvas(item_index):
     # Reposition the canvas rectangle for item at item_index.
