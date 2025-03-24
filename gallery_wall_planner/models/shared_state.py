@@ -5,3 +5,6 @@ def add_wall(wall):
 
 def get_walls():
     return walls
+
+def remove_wall(wall):
+    walls.remove(wall)
