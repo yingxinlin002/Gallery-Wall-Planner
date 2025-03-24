@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from gallery_wall_planner.models.ui_styles import get_ui_styles
+from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 import re
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
