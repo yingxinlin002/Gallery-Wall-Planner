@@ -99,11 +99,11 @@ class NewGalleryUI:
 
         # Pick Color Button
         tk.Button(color_frame, text="Pick Color", command=self.pick_color, width=10, bg="#5F3FCA", fg="white", font=("Helvetica", 10, "bold"), relief="raised", padx=5, pady=5).pack(side="left")
-        
+
         # Wall Preview Canvas
         self.preview_canvas = tk.Canvas(self.root, width=400, height=300, bg="white", highlightthickness=1, highlightbackground="black")
         self.preview_canvas.pack(pady=20)
-        
+
         # Bind events to update the preview when width or height changes
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
@@ -138,37 +138,37 @@ class NewGalleryUI:
     def update_preview(self, event=None):
         # Clear the canvas
         self.preview_canvas.delete("all")
-        
+
         # Get width and height from entries
         try:
             wall_width = float(re.sub(r"[^0-9.]", "", self.wall_width_entry.get()).strip())
             wall_height = float(re.sub(r"[^0-9.]", "", self.wall_height_entry.get()).strip())
         except ValueError:
             return  # Do nothing if inputs are invalid
-        
+
         # Calculate aspect ratio and scale to fit canvas
         canvas_width = 400
         canvas_height = 300
         ratio = min(canvas_width / wall_width, canvas_height / wall_height)
         scaled_width = wall_width * ratio
         scaled_height = wall_height * ratio
-        
+
         # Draw the wall preview
         x0 = (canvas_width - scaled_width) / 2
         y0 = (canvas_height - scaled_height) / 2
         x1 = x0 + scaled_width
         y1 = y0 + scaled_height
         self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=self.wall_color, outline="black")
-        
+
         # Draw height and width lines with labels
         self.preview_canvas.create_line(x0, y1, x0 - 10, y1, fill="black")  # Width line start
         self.preview_canvas.create_line(x1, y1, x1 + 10, y1, fill="black")  # Width line end
         self.preview_canvas.create_text((x0 + x1) / 2, y1 + 15, text=f"{wall_width} inches", anchor="n")
-        
+
         self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")  # Height line start
         self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")  # Height line end
         self.preview_canvas.create_text(x0 - 15, (y0 + y1) / 2, text=f"{wall_height} inches", anchor="e", angle=90)
-    
+
     def submit_wall_info(self):
         wall_name = self.wall_name_entry.get()
         wall_width_str = self.wall_width_entry.get()
@@ -189,10 +189,10 @@ class NewGalleryUI:
         # Create a new wall object
         from gallery_wall_planner.models.wall import Wall
         wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
-        
+
         shared_state.add_wall(wall)
 
-        print(wall.toString())
+        print(str(wall))
         
         # Navigate to PermanentObjectUI
         from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI

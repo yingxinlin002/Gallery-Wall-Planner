@@ -23,3 +23,6 @@ def import_wall(wall_name, file_name):
     with open(file_name, "rb") as f:
         data = f.read()
     wall_name = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
+
+def __str__(self):  # Added to allow degubbing. Following should be mostly readable: print(str(wall))
+        return f"Wall(Name: {self.name}, Width: {self.width}, Height: {self.height}, Color: {self.color})"

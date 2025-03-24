@@ -11,6 +11,7 @@ def create_home_menu():
     """Create the home menu with buttons."""
     for widget in root.winfo_children():
         widget.destroy()
+        
 
     # Add the title label
     tk.Label(root, text="Gallery Wall Planner", font=("Arial", 24)).pack(pady=50)
