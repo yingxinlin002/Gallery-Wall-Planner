@@ -1,15 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 from gallery_wall_planner.models.wall import Wall
-from gallery_wall_planner.models import shared_state
+from gallery_wall_planner.models.gallery import Gallery
 
 class SelectWallSpaceUI:
     def __init__(self, root, return_to_home):
         self.root = root
         self.return_to_home = return_to_home
-        # Create a default wall space for demonstration purposes
-        shared_state.add_wall(Wall("Example Wall", 100, 75, "grey"))
-        self.walls = shared_state.get_walls()
+        self.walls = Gallery.get_walls()
+        self.delete_buttons = {}
         self.create_ui()
 
     def create_ui(self):
@@ -28,16 +27,19 @@ class SelectWallSpaceUI:
         left_panel = tk.Frame(content_frame, width=300, bg="#f0f0f0")
         left_panel.pack(side="left", fill="y", padx=10, pady=10)
 
-        # Scrollable list for wall spaces
-        self.wall_listbox = tk.Listbox(left_panel, width=30, height=10, font=("Arial", 12))
-        self.wall_listbox.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+        # Scrollable list for wall spaces with a frame to hold both name and delete button
+        self.list_container = tk.Frame(left_panel)
+        self.list_container.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+
+        self.wall_listbox = tk.Listbox(self.list_container, width=25, height=10, font=("Arial", 12))
+        self.wall_listbox.pack(side="left", fill="both", expand=True)
 
         # Add walls to the listbox
         for wall in self.walls:
             self.wall_listbox.insert(tk.END, wall.name)
 
-        # Bind selection event to update the preview
-        self.wall_listbox.bind("<<ListboxSelect>>", self.update_wall_preview)
+        # Bind selection event to update the preview and show delete button
+        self.wall_listbox.bind("<<ListboxSelect>>", self.on_wall_selected)
 
         # Create New Wall Space Button
         tk.Button(left_panel, text="Create New Wall Space", command=self.create_new_wall_space, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="bottom", pady=10)
@@ -67,6 +69,86 @@ class SelectWallSpaceUI:
         # Continue Button (Right Side)
         tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="right", padx=10)
 
+    def on_wall_selected(self, event=None):
+        """Handle wall selection - update preview and show delete button"""
+        self.update_wall_preview()
+        
+        # Remove any existing delete button
+        for btn in self.delete_buttons.values():
+            btn.destroy()
+        self.delete_buttons.clear()
+
+        selected_index = self.wall_listbox.curselection()
+        if selected_index:
+            wall = self.walls[selected_index[0]]
+            
+            # Create delete button
+            delete_btn = tk.Button(
+                self.list_container,
+                text="×",  # Using × symbol instead of X
+                fg="red",
+                font=("Arial", 12, "bold"),
+                bd=0,
+                command=lambda w=wall: self.delete_wall(w)
+            )
+            delete_btn.pack(side="right", padx=(0, 5))
+            
+            # Add tooltip
+            self.create_tooltip(delete_btn, f"Delete {wall.name}")
+            
+            # Store reference to button
+            self.delete_buttons[wall.name] = delete_btn
+
+    def create_tooltip(self, widget, text):
+        """Create a simple tooltip that appears on hover"""
+        tooltip = tk.Toplevel(self.root)
+        tooltip.withdraw()
+        tooltip.overrideredirect(True)
+        
+        label = tk.Label(tooltip, text=text, bg="lightyellow", relief="solid", borderwidth=1)
+        label.pack()
+        
+        def enter(event):
+            x, y, _, _ = widget.bbox("insert")
+            x += widget.winfo_rootx() + 25
+            y += widget.winfo_rooty() + 25
+            tooltip.geometry(f"+{x}+{y}")
+            tooltip.deiconify()
+        
+        def leave(event):
+            tooltip.withdraw()
+        
+        widget.bind("<Enter>", enter)
+        widget.bind("<Leave>", leave)
+        tooltip.bind("<Leave>", leave)
+
+    def delete_wall(self, wall):
+        """Handle wall deletion with confirmation"""
+        confirm = messagebox.askyesno(
+            "Delete Wall", 
+            f"Are you sure you want to delete '{wall.name}'?",
+            parent=self.root
+        )
+        
+        if confirm:
+            # Remove from gallery
+            Gallery.remove_wall(wall)
+            
+            # Update UI
+            self.walls = Gallery.get_walls()
+            self.wall_listbox.delete(0, tk.END)
+            for wall in self.walls:
+                self.wall_listbox.insert(tk.END, wall.name)
+            
+            # Clear preview
+            self.preview_canvas.delete("all")
+            self.wall_details_label.config(text="Select a wall to preview")
+            
+            # Remove delete button
+            if wall.name in self.delete_buttons:
+                self.delete_buttons[wall.name].destroy()
+                del self.delete_buttons[wall.name]
+
     def create_new_wall_space(self):
         # Navigate to NewGalleryUI to create a new wall space
         from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
@@ -82,10 +164,14 @@ class SelectWallSpaceUI:
             messagebox.showwarning("Error", "Please select a wall space to export.")
 
     def continue_to_next(self):
-        # Continue to the next step with the selected wall
         selected_wall = self.get_selected_wall()
         if selected_wall:
-            messagebox.showinfo("Continue", f"Selected Wall: {selected_wall.toString()}")
+            # Clear current UI
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            # Navigate to EditorUI
+            from gallery_wall_planner.gui.editorUI import EditorUI
+            EditorUI(self.root, self.return_to_home, selected_wall)
         else:
             messagebox.showwarning("Error", "Please select a wall space to continue.")
 

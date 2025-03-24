@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
-from gallery_wall_planner.models.ui_styles import get_ui_styles
+from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 import re
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
@@ -77,39 +77,57 @@ class PermanentObjectUI:
         for widget in self.permanent_item_frame.winfo_children():
             widget.destroy()
 
-        tk.Label(self.permanent_item_frame, text="Name:", font=self.styles["label_font"]).pack(pady=5)
-        self.name_entry = tk.Entry(self.permanent_item_frame, font=self.styles["label_font"])
+        # Create a container frame for input fields and preview
+        input_preview_container = tk.Frame(self.permanent_item_frame)
+        input_preview_container.pack(fill="both", expand=True)
+
+        # Left side - Input fields
+        input_frame = tk.Frame(input_preview_container)
+        input_frame.pack(side="left", padx=20, pady=10)
+
+        tk.Label(input_frame, text="Name:", font=self.styles["label_font"]).pack(pady=5)
+        self.name_entry = tk.Entry(input_frame, font=self.styles["label_font"])
         self.name_entry.insert(0, "door sign")
         self.name_entry.config(fg="grey")
         self.name_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.name_entry, "door sign"))
         self.name_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.name_entry, "door sign"))
         self.name_entry.pack(pady=5)
 
-        tk.Label(self.permanent_item_frame, text="Width (inches):", font=self.styles["label_font"]).pack(pady=5)
-        self.width_entry = tk.Entry(self.permanent_item_frame, font=self.styles["label_font"])
+        tk.Label(input_frame, text="Width (inches):", font=self.styles["label_font"]).pack(pady=5)
+        self.width_entry = tk.Entry(input_frame, font=self.styles["label_font"])
         self.width_entry.insert(0, "36 inches")
         self.width_entry.config(fg="grey")
         self.width_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.width_entry, "36 inches"))
         self.width_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.width_entry, "36 inches"))
         self.width_entry.pack(pady=5)
 
-        tk.Label(self.permanent_item_frame, text="Height (inches):", font=self.styles["label_font"]).pack(pady=5)
-        self.height_entry = tk.Entry(self.permanent_item_frame, font=self.styles["label_font"])
+        tk.Label(input_frame, text="Height (inches):", font=self.styles["label_font"]).pack(pady=5)
+        self.height_entry = tk.Entry(input_frame, font=self.styles["label_font"])
         self.height_entry.insert(0, "72 inches")
         self.height_entry.config(fg="grey")
         self.height_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.height_entry, "72 inches"))
         self.height_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.height_entry, "72 inches"))
         self.height_entry.pack(pady=5)
 
-        tk.Label(self.permanent_item_frame, text="Upload Image (optional):", font=self.styles["label_font"]).pack(pady=5)
+        tk.Label(input_frame, text="Upload Image (optional):", font=self.styles["label_font"]).pack(pady=5)
         self.image_path = tk.StringVar()
-        tk.Button(self.permanent_item_frame, text="Browse", command=self.upload_image, width=self.styles["button_width"],
-                  bg=self.styles["bg_info"], fg=self.styles["fg_white"], font=self.styles["button_font"], relief="raised",
-                  padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=5)
+        tk.Button(input_frame, text="Browse", command=self.upload_image, width=self.styles["button_width"],
+                bg=self.styles["bg_info"], fg=self.styles["fg_white"], font=self.styles["button_font"], relief="raised",
+                padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=5)
 
-        tk.Button(self.permanent_item_frame, text="Add Permanent Object", command=self.save_permanent_object,
-                  width=20, bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"], relief="raised",
-                  padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=10)
+        tk.Button(input_frame, text="Add Permanent Object", command=self.save_permanent_object,
+                width=20, bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"], relief="raised",
+                padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=10)
+
+        # Right side - Preview of saved objects
+        preview_frame = tk.Frame(input_preview_container, padx=20, pady=10)
+        preview_frame.pack(side="right", fill="both", expand=True)
+
+        self.object_preview_frame = tk.Frame(preview_frame)
+        self.object_preview_frame.pack(fill="both", expand=True)
+
+        # Initialize preview
+        self.refresh_object_preview()
 
     def hide_permanent_item_inputs(self):
         for widget in self.permanent_item_frame.winfo_children():
@@ -158,7 +176,6 @@ class PermanentObjectUI:
             "image": image
         })
 
-        messagebox.showinfo("Success", "Permanent object added successfully!")
         self.clear_inputs()
         self.refresh_object_preview()
         self.submit_button.config(state="normal")
@@ -168,19 +185,51 @@ class PermanentObjectUI:
             widget.destroy()
 
         if not self.permanent_objects:
+            # Show empty state message
+            tk.Label(self.object_preview_frame, 
+                    text="No permanent objects added yet",
+                    font=self.styles["label_font"],
+                    fg="gray").pack(pady=20)
             return
 
-        tk.Label(self.object_preview_frame, text="Saved Permanent Objects:", font=self.styles["label_font"]).pack(pady=(10, 5))
+        tk.Label(self.object_preview_frame, 
+                text="Saved Permanent Objects:", 
+                font=self.styles["label_font"]).pack(pady=(0, 10))
+
+        # Create a canvas for scrollable content
+        canvas = tk.Canvas(self.object_preview_frame, height=200)
+        canvas.pack(side="left", fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(self.object_preview_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Frame to hold the objects
+        objects_container = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=objects_container, anchor="nw")
 
         for index, obj in enumerate(self.permanent_objects):
-            obj_frame = tk.Frame(self.object_preview_frame)
-            obj_frame.pack(fill="x", padx=10, pady=2)
+            obj_frame = tk.Frame(objects_container)
+            obj_frame.pack(fill="x", padx=5, pady=2)
 
             label_text = f"{obj['name']} - {obj['width']}\" x {obj['height']}\""
             tk.Label(obj_frame, text=label_text, font=self.styles["label_font"]).pack(side="left")
-            tk.Button(obj_frame, text="Delete", command=lambda i=index: self.delete_object(i),
-                      bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"], relief="raised",
-                      padx=5, pady=2).pack(side="right")
+            
+            # Add delete button with hover effect
+            delete_btn = tk.Button(obj_frame, text="×", 
+                                command=lambda i=index: self.delete_object(i),
+                                font=("Arial", 10, "bold"),
+                                fg="red",
+                                bd=0,
+                                relief="flat",
+                                activeforeground="darkred")
+            delete_btn.pack(side="right")
+            
+            # Add hover effect
+            delete_btn.bind("<Enter>", lambda e, btn=delete_btn: btn.config(fg="darkred"))
+            delete_btn.bind("<Leave>", lambda e, btn=delete_btn: btn.config(fg="red"))
 
     def delete_object(self, index):
         del self.permanent_objects[index]
@@ -205,9 +254,9 @@ class PermanentObjectUI:
             messagebox.showerror("Error", "Please add at least one permanent object.")
             return
 
-        # If "No" is selected, proceed to the next step
-        if not self.has_permanent_items.get():
-            SelectWallSpaceUI(self.root, self.return_to_previous)
-        else:
-            messagebox.showinfo("Success", "Wall information submitted successfully!")
-            self.return_to_previous()
+        # Clear the current UI
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+        # Proceed to SelectWallSpaceUI in either case (Yes or No selected)
+        SelectWallSpaceUI(self.root, self.return_to_previous)

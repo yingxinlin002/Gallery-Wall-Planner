@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, filedialog
 import os
 from gallery_wall_planner.gui.popup_editor import open_popup_editor
-from gallery_wall_planner.models.ui_styles import (
+from gallery_wall_planner.gui.ui_styles import (
     init_styles,
     apply_primary_button_style,
     apply_header_label_style,
