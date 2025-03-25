@@ -11,7 +11,9 @@ class WallLine:
         self.moveable = moveable
 
     def export_wall_line(self):
-        return json.dumps(self.__dict__)
+        #Temp way to export object to json, can be refined later
+        with open(f"{self}wall_line_export", "wb") as f:
+            f.write(json.dumps(self.__dict__))
 
 
 class SingleLine:
@@ -38,7 +40,9 @@ class SingleLine:
         self.distance = distance
 
     def export_snap_line(self):
-        return json.dumps(self.__dict__)
+        #Temp way to export object to json, can be refined later
+        with open(f"{self}_snap_line_export", "wb") as f:
+            f.write(json.dumps(self.__dict__))
 
 
 def import_wall_line(file_name):
