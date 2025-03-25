@@ -1,5 +1,8 @@
+
+
 #!/usr/bin/env python3
 import tkinter as tk
+import os
 
 def on_new():
     print("New button pressed")
@@ -75,15 +78,36 @@ def on_load():
 def on_quit():
     root.quit()
 
+try:
+    resample_filter = Image.Resampling.LANCZOS  # Pillow ≥ 9.1.0
+except AttributeError:
+    resample_filter = Image.ANTIALIAS  # Older versions
+
 def resize_background(event):
-    # Resize the original image to the current window size
-    new_width = event.width
-    new_height = event.height
-    resized = original_image.resize((new_width, new_height), Image.ANTIALIAS)
-    # Update the PhotoImage and the label displaying it
-    bg_image = ImageTk.PhotoImage(resized)
-    background_label.config(image=bg_image)
-    background_label.image = bg_image  # Keep a reference!
+    if original_image is not None:
+        try:
+            # Resize the original image to the current window size
+            new_width = event.width
+            new_height = event.height
+            resized = original_image.resize((new_width, new_height), resample_filter)
+            # Update the PhotoImage and the label displaying it
+            bg_image = ImageTk.PhotoImage(resized)
+            background_label.config(image=bg_image)
+            background_label.image = bg_image  # Keep a reference!
+        except Exception as e:
+            print(f"Error resizing background image: {e}")
+
+def resize_background(event):
+    if original_image is not None:
+        new_width = max(event.width, 1)
+        new_height = max(event.height, 1)
+        try:
+            resized = original_image.resize((new_width, new_height), resample_filter)
+            bg_image = ImageTk.PhotoImage(resized)
+            background_label.config(image=bg_image)
+            background_label.image = bg_image  # prevent garbage collection
+        except Exception as e:
+            print(f"[Warning] Failed to resize background: {e}")
 
 # Create the main window
 root = tk.Tk()
@@ -91,7 +115,9 @@ root.title("Gallery Wall Planner")
 root.geometry("600x400")  # initial size
 
 # Load the background image (hard-coded to GalleryWall.png)
-original_image = Image.open("GalleryWall.png")
+original_image = None
+if os.path.exists("GalleryWall.png"):
+    original_image = Image.open("GalleryWall.png")
 
 # Create a label to display the background image and fill the entire window.
 background_label = tk.Label(root)
@@ -138,3 +164,6 @@ container.lift()
 
 # Start the main event loop
 root.mainloop()
+
+
+
