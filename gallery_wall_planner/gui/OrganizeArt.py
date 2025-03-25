@@ -8,6 +8,9 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_header_label_style,
     apply_canvas_style
 )
+from gallery_wall_planner.models.wall_line import SingleLine
+from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+
 
 
 def enforce_boundaries(x, y, width, height):
@@ -27,7 +30,9 @@ def launch_organize_art_ui(root):
     root.title("Organize Artwork")
 
     global wall_name, wall_width, wall_height, wall_color
-    global layout_items, popup_windows, items
+    global layout_items, popup_windows, items, snap_lines
+
+    snap_lines = []
 
     wall_name = "My Gallery Wall"
     wall_width = 220.0
@@ -72,7 +77,121 @@ def launch_organize_art_ui(root):
     canvas_height = 600
     canvas = tk.Canvas(main_frame, width=canvas_width, height=canvas_height)
     apply_canvas_style(canvas)
-    canvas.pack(fill="both", expand=True, padx=10, pady=10)
+    canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
+
+    # Frame for buttons below the wall
+    snap_button_frame = ttk.Frame(main_frame)
+    snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+    # Buttons inside that frame
+    def add_new_snap_line():
+        def handle_save(new_line):
+            # Check for duplicate: same orientation & distance to give user option to duplicate location
+            for existing in snap_lines:
+                if (existing.orientation == new_line.orientation
+                        and abs(existing.distance - new_line.distance) < 0.05):
+                    def confirm_add():
+                        try:
+                            if confirm_popup.winfo_exists():
+                                add_btn.config(state="disabled")
+                                cancel_btn.config(state="disabled")
+                                snap_lines.append(new_line)
+                                draw_snap_line(new_line)
+                                confirm_popup.destroy()
+                        except tk.TclError:
+                            pass  # Silently fail if window is already gone
+
+                    confirm_popup = Toplevel(root)
+                    confirm_popup.title("Line Already Exists")
+
+                    ttk.Label(confirm_popup, text="A snap line at this location already exists.\nWould you like to add it anyway?").pack(padx=20, pady=(15, 10))
+
+                    button_frame = ttk.Frame(confirm_popup)
+                    button_frame.pack(pady=10)
+
+                    cancel_btn = ttk.Button(button_frame, text="Cancel", command=confirm_popup.destroy)
+                    apply_primary_button_style(cancel_btn)
+                    cancel_btn.pack(side="left", padx=5)
+
+                    add_btn = ttk.Button(button_frame, text="Add Anyway", command=confirm_add)
+                    apply_primary_button_style(add_btn)
+                    add_btn.pack(side="left", padx=5)
+
+                    return  # Pause normal flow until user makes a decision
+
+            # No conflict: add line right away
+            snap_lines.append(new_line)
+            draw_snap_line(new_line)
+        open_snap_line_popup(root, handle_save, wall_width=wall_width, wall_height=wall_height)
+
+
+
+    add_line_btn = ttk.Button(snap_button_frame, text="Add Snap Line", command=add_new_snap_line)
+    apply_primary_button_style(add_line_btn)
+    add_line_btn.pack(side="left", padx=5)
+
+    #functionality for add/delete button
+    def open_manage_lines_popup():
+        popup = Toplevel(root)
+        popup.title("Manage Snap Lines")
+        popup.geometry("600x300")
+
+        # Create a canvas + scrollbar combo for scrolling
+        popup_canvas = tk.Canvas(popup)
+        scrollbar = ttk.Scrollbar(popup, orient="vertical", command=popup_canvas.yview)
+        popup_canvas.configure(yscrollcommand=scrollbar.set)
+
+        scrollbar.pack(side="right", fill="y")
+        popup_canvas.pack(side="left", fill="both", expand=True)
+
+        # Frame inside the canvas for scrollable content
+        scrollable_frame = ttk.Frame(popup_canvas)
+        popup_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        def on_configure(event):
+            popup_canvas.configure(scrollregion=popup_canvas.bbox("all"))
+
+        scrollable_frame.bind("<Configure>", on_configure)
+
+        if not snap_lines:
+            ttk.Label(scrollable_frame, text="No snap lines to manage.").pack(padx=10, pady=10)
+            return
+
+        for idx, line in enumerate(snap_lines):
+            line_frame = ttk.Frame(scrollable_frame)
+            line_frame.pack(fill="x", pady=5, padx=10)
+
+            label_text = f"{line.orientation.capitalize()} - {line.alignment.capitalize()} - {line.distance:.2f}\""
+            ttk.Label(line_frame, text=label_text).pack(side="left")
+
+            def make_edit_handler(index=idx):
+                def edit():
+                    def save_changes(updated_line):
+                        snap_lines[index] = updated_line
+                        redraw_snap_lines()
+                        popup.destroy()
+                    open_snap_line_popup(
+                        root,
+                        save_changes,
+                        existing_line=snap_lines[index],
+                        wall_width=wall_width,
+                        wall_height=wall_height
+                    )
+                return edit
+
+            def make_delete_handler(index=idx):
+                def delete():
+                    del snap_lines[index]
+                    redraw_snap_lines()
+                    popup.destroy()
+                return delete
+
+            ttk.Button(line_frame, text="Edit", command=make_edit_handler()).pack(side="right", padx=5)
+            ttk.Button(line_frame, text="Delete", command=make_delete_handler()).pack(side="right", padx=5)
+
+    edit_line_btn = ttk.Button(snap_button_frame, text="Move/Delete Line", command=open_manage_lines_popup)
+    apply_primary_button_style(edit_line_btn)
+    edit_line_btn.pack(side="left", padx=5)
 
     margin = 50
     scale = min((canvas_width - 2*margin) / wall_width, (canvas_height - 2*margin) / wall_height)
@@ -84,6 +203,39 @@ def launch_organize_art_ui(root):
     canvas.create_rectangle(wall_left, canvas_height - wall_top,
                             wall_right, canvas_height - wall_bottom,
                             fill=wall_color, outline="black", width=2)
+    
+    # Create snap line 62 inches from bottom (y = 62)
+    snap_lines = []
+
+    default_snap_line = SingleLine(
+        orientation="horizontal",
+        alignment="center",
+        distance=62.0,
+        snap_to=True,
+        moveable=True
+    )
+
+    snap_lines.append(default_snap_line)
+
+    def draw_snap_line(line):
+        if line.orientation == "horizontal":
+            y = canvas_height - (wall_bottom + line.distance * scale)
+            canvas.create_line(wall_left, y, wall_right, y, fill="blue", dash=(4, 2), width=2, tags="snap_line")
+        elif line.orientation == "vertical":
+            x = wall_left + line.distance * scale
+            canvas.create_line(x, canvas_height - wall_top, x, canvas_height - wall_bottom, fill="blue", dash=(4, 2), width=2, tags="snap_line")
+
+    def redraw_snap_lines():
+        # Clear all snap lines (only blue dashed lines)
+        canvas.delete("snap_line")
+        for line in snap_lines:
+            draw_snap_line(line)
+
+
+    # Draw all snap lines
+    for line in snap_lines:
+        draw_snap_line(line)
+
 
     def create_fixed_item(obstacle):
         x1 = wall_left + obstacle["X"] * scale
@@ -160,6 +312,11 @@ def launch_organize_art_ui(root):
             new_x, new_y = enforce_boundaries(new_x, new_y, self.width, self.height)
             self.x = new_x
             self.y = new_y
+            snap_to_lines(self)  # snap after placing
+            
+            # Now enforce boundaries on final snapped position
+            self.x, self.y = enforce_boundaries(self.x, self.y, self.width, self.height)
+            
             layout_items[self.name] = {"x": self.x, "y": self.y}
             move_item_to_canvas(self.index)
             self.check_all_collisions()
@@ -213,6 +370,56 @@ def launch_organize_art_ui(root):
         bx1, by1 = item2.x, item2.y
         bx2, by2 = item2.x + item2.width, item2.y + item2.height
         return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
+    
+    def snap_to_lines(art):
+        for line in snap_lines:
+            if not line.snap_to:
+                continue
+
+            if line.orientation == "horizontal":
+                target_y = line.distance
+
+                if line.alignment == "top":
+                    candidate_y = target_y - art.height
+                    if 0 <= candidate_y <= wall_height - art.height:
+                        if abs(art.y + art.height - target_y) < 5:
+                            art.y = candidate_y
+
+                elif line.alignment == "center":
+                    candidate_y = target_y - art.height / 2
+                    if 0 <= candidate_y <= wall_height - art.height:
+                        if abs(art.y + art.height / 2 - target_y) < 5:
+                            art.y = candidate_y
+
+                elif line.alignment == "bottom":
+                    candidate_y = target_y
+                    if 0 <= candidate_y <= wall_height - art.height:
+                        if abs(art.y - target_y) < 5:
+                            art.y = candidate_y
+
+            elif line.orientation == "vertical":
+                target_x = line.distance
+
+                if line.alignment == "left":
+                    candidate_x = target_x
+                    if 0 <= candidate_x <= wall_width - art.width:
+                        if abs(art.x - target_x) < 5:
+                            art.x = candidate_x
+
+                elif line.alignment == "center":
+                    candidate_x = target_x - art.width / 2
+                    if 0 <= candidate_x <= wall_width - art.width:
+                        if abs(art.x + art.width / 2 - target_x) < 5:
+                            art.x = candidate_x
+
+                elif line.alignment == "right":
+                    candidate_x = target_x - art.width
+                    if 0 <= candidate_x <= wall_width - art.width:
+                        if abs(art.x + art.width - target_x) < 5:
+                            art.x = candidate_x
+
+
+
 
     offset = 0
     for i, art in enumerate(art_pieces):
