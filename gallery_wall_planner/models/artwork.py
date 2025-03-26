@@ -13,7 +13,7 @@ class Artwork:
 
     def export_artwork(self):
         #Temp way to export object to json, can be refined later
-        with open(f"{self}_artwork_export", "wb") as f:
+        with open(f"{self.title}_artwork_export", "wb") as f:
             f.write(json.dumps(self.__dict__))
 
 def import_artwork(art_name, file_name):
