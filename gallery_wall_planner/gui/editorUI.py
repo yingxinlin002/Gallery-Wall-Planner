@@ -57,7 +57,7 @@ class EditorUI:
         
         manual_button = tk.Button(self.add_artwork_frame,
                                 text="Add Artwork Manually",
-                                command=lambda: messagebox.showinfo("Info", "Add Artwork Manually button pushed"),
+                                command=self.open_artwork_manual_ui,
                                 bg=self.styles["bg_info"],
                                 fg=self.styles["fg_white"],
                                 font=self.styles["button_font"],
@@ -139,3 +139,11 @@ class EditorUI:
     def back_to_wall_selection(self):
         """Navigate back to the SelectWallSpaceUI"""
         SelectWallSpaceUI(self.root, self.return_to_home)
+
+    def open_artwork_manual_ui(self):
+        from gallery_wall_planner.gui.ArtworkManuallyUI import ArtworkManuallyUI
+        # Clear current UI
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        # Open manual artwork UI
+        ArtworkManuallyUI(self.root, self.return_to_home, self.selected_wall)

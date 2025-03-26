@@ -9,7 +9,7 @@ class Gallery:
         self.name = name  # Exhibit title
         self.walls = []  # List of Wall objects for this specific gallery
 
-    # Class methods to manage all walls (formerly in shared_state.py)
+    # Class methods to manage all walls
     @classmethod
     def add_wall(cls, wall):
         cls._all_walls.append(wall)
@@ -22,6 +22,45 @@ class Gallery:
     def remove_wall(cls, wall):
         cls._all_walls.remove(wall)
 
+    @classmethod
+    def get_wall_by_name(cls, name):
+        """Find a wall by its name"""
+        for wall in cls._all_walls:
+            if wall.name == name:
+                return wall
+        return None
+
+    @classmethod
+    def add_artwork_to_wall(cls, wall_name, artwork):
+        """
+        Add an artwork to a specific wall
+        Args:
+            wall_name: Name of the wall to add artwork to
+            artwork: Artwork object to add
+        Returns:
+            bool: True if successful, False if wall not found
+        """
+        wall = cls.get_wall_by_name(wall_name)
+        if wall:
+            wall.add_artwork(artwork)
+            return True
+        return False
+
+    @classmethod
+    def remove_artwork_from_wall(cls, wall_name, artwork):
+        """
+        Remove an artwork from a specific wall
+        Args:
+            wall_name: Name of the wall to remove artwork from
+            artwork: Artwork object to remove
+        Returns:
+            bool: True if successful, False if wall not found or artwork not in wall
+        """
+        wall = cls.get_wall_by_name(wall_name)
+        if wall:
+            return wall.remove_artwork(artwork)
+        return False
+
     def export_gallery(self, filename="gallery_export.xlsx"):
         wb = openpyxl.Workbook()
         ws = wb.active
@@ -31,7 +70,7 @@ class Gallery:
         ws.merge_cells("A1:I1")
         ws["A1"] = self.name
         ws["A1"].font = Font(size=14, bold=True)
-        ws["A1"].fill = PatternFill(start_color="D8BFD8", end_color="D8BFD8", fill_type="solid")  # Purple
+        ws["A1"].fill = PatternFill(start_color="D8BFD8", end_color="D8BFD8", fill_type="solid")
 
         # Define headers and colors
         headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS"]
@@ -49,7 +88,7 @@ class Gallery:
                 ws.append([
                     getattr(artwork, "id", "N/A"),
                     artwork.title,
-                    "",  # Placeholder for photos, we can implement later
+                    "",  # Placeholder for photos
                     artwork.medium,
                     artwork.width,
                     artwork.height,

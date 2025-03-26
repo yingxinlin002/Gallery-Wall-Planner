@@ -7,9 +7,23 @@ class Wall:
         self.width = width
         self.height = height
         self.color = color
-
         self.artwork = []
         self.wall_lines = []
+
+    def add_artwork(self, artwork):
+        self.artwork.append(artwork)
+
+    def remove_artwork(self, artwork):
+        if artwork in self.artwork:
+            self.artwork.remove(artwork)
+            return True
+        return False
+
+    def get_artwork_by_name(self, name):
+        for art in self.artwork:
+            if art.name == name:
+                return art
+        return None
 
     def export_wall(self):
         #TODO: way to export object to json, can be refined later
