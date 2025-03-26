@@ -32,19 +32,12 @@ class Gallery:
 
     @classmethod
     def add_artwork_to_wall(cls, wall_name, artwork):
-        """
-        Add an artwork to a specific wall
-        Args:
-            wall_name: Name of the wall to add artwork to
-            artwork: Artwork object to add
-        Returns:
-            bool: True if successful, False if wall not found
-        """
         wall = cls.get_wall_by_name(wall_name)
         if wall:
             wall.add_artwork(artwork)
             return True
         return False
+    
 
     @classmethod
     def remove_artwork_from_wall(cls, wall_name, artwork):
