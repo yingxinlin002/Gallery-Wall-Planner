@@ -236,7 +236,7 @@ class ArtworkManuallyUI:
         ]
         
         for field_name, field_value, example_text in required_fields:
-            if not field_value or field_value == example_text:
+            if not field_value:
                 messagebox.showerror("Error", f"Please fill in {field_name}")
                 return
 
