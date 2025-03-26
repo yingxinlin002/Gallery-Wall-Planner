@@ -26,8 +26,9 @@ class Wall:
         return None
 
     def export_wall(self):
-        #TODO: way to export object to json, can be refined later
-        return(json.dumps(self.__dict__))
+        #Temp way to export object to json, can be refined later
+        with open(f"{self.name}_wall_export", "wb") as f:
+            f.write(json.dumps(self.__dict__))
     
     def toString(self):
         return f"Wall: {self.name}, {self.width}, {self.height}, {self.color}"

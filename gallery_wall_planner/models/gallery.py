@@ -83,10 +83,12 @@ class Gallery:
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
 
         # Populate artwork data
+        art_counter = 0 # Counter to track id's
         for wall in self.walls:
             for artwork in wall.artwork:
+                art_counter += 1
                 ws.append([
-                    getattr(artwork, "id", "N/A"),
+                    getattr(artwork, "id", art_counter),
                     artwork.title,
                     "",  # Placeholder for photos
                     artwork.medium,
@@ -105,3 +107,46 @@ class Gallery:
         # Save the excel file
         wb.save(filename)
         print(f"Gallery exported to {filename}")
+
+    @classmethod
+    def import_gallery(cls, filename="gallery_export.xlsx"):
+        wb = openpyxl.load_workbook(filename)
+        ws = wb["Artworks"]
+
+        # Read the exhibit title
+        exhibit_name = ws["A1"].value or "Imported Exhibit"
+
+        # Create a new Gallery object
+        gallery = cls(name=exhibit_name)
+
+        # Create a generic wall to hold artworks (since Excel currently does not store wall info)
+        imported_wall = Wall(name="Imported Wall", width=0, height=0)
+
+        # Read the artwork data from row 3 onwards
+        for row in ws.iter_rows(min_row=3, values_only=True):
+            if not any(row):  # Skip empty rows
+                continue
+
+            # Extract values based on the expected column order
+            art_id, title, _, medium, width, height, depth, price, nfs = row
+
+            #Create Artwork objects
+            artwork = Artwork(
+                title=title or "",
+                medium=medium or "",
+                width=width or 0,
+                height=height or 0,
+                depth=depth or 0,
+                price=price or 0,
+                nfs=bool(nfs)
+            )
+            setattr(artwork, "id", art_id)  # Set the ID manually (not part of Artwork class by default as usually not needed)
+
+            # Add to the imported wall
+            imported_wall.artwork.append(artwork)
+
+        # Add the wall to the gallery
+        gallery.walls.append(imported_wall)
+
+        print(f"Gallery '{gallery.name}' imported successfully with {len(imported_wall.artwork)} artworks.")
+        return gallery
