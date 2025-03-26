@@ -13,7 +13,7 @@ class Wall:
 
     def export_wall(self):
         #Temp way to export object to json, can be refined later
-        with open(f"{self}_wall_export", "wb") as f:
+        with open(f"{self.name}_wall_export", "wb") as f:
             f.write(json.dumps(self.__dict__))
     
     def toString(self):
