@@ -59,45 +59,53 @@ class Gallery:
         ws = wb.active
         ws.title = "Artworks"
 
+        # Add wall information first
+        for wall in self.walls:
+            ws.append([wall.name, wall.width, wall.height, getattr(wall, "color", "")])
+        ws.append([])  # Empty row before exhibit title
+
         # Exhibit title
-        ws.merge_cells("A1:I1")
-        ws["A1"] = self.name
-        ws["A1"].font = Font(size=14, bold=True)
-        ws["A1"].fill = PatternFill(start_color="D8BFD8", end_color="D8BFD8", fill_type="solid")
-
-        # Define headers and colors
-        headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS"]
-        colors = ["ADD8E6", "90EE90", "ADD8E6", "FFFF99", "FFFF99", "FFFF99", "FFFF99", "FA8072", "D8BFD8"]
-
-        # Apply headers
+        ws.append([self.name])
+        title_row = ws.max_row
+        ws.merge_cells(start_row=title_row, start_column=1, end_row=title_row, end_column=10)
+        title_cell = ws.cell(row=title_row, column=1)
+        title_cell.font = Font(size=14, bold=True)
+        title_cell.fill = PatternFill(start_color="D8BFD8", end_color="D8BFD8", fill_type="solid")
+        
+        ws.append([])  # Empty row before headers
+        
+        headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS", "Notes"]
+        colors = ["ADD8E6", "90EE90", "ADD8E6", "FFFF99", "FFFF99", "FFFF99", "FFFF99", "FA8072", "D8BFD8", "FFFFFF"]
+        #Loop to apply header styles
+        header_row = ws.max_row + 1
         for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
-            cell = ws.cell(row=2, column=col_num, value=header)
+            cell = ws.cell(row=header_row, column=col_num, value=header)
             cell.font = Font(bold=True)
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
-
-        # Populate artwork data
-        art_counter = 0 # Counter to track id's
+        #Counter for artwork ID's
+        art_counter = 0
+        #Loop thru walls
         for wall in self.walls:
+            #Loop thru artwork inside the walls
             for artwork in wall.artwork:
                 art_counter += 1
                 ws.append([
                     getattr(artwork, "id", art_counter),
                     artwork.title,
-                    "",  # Placeholder for photos
+                    "",
                     artwork.medium,
                     artwork.width,
                     artwork.height,
                     artwork.depth,
                     artwork.price,
-                    artwork.nfs
+                    artwork.nfs,
+                    artwork.notes
                 ])
-
-        # Adjust column width
-        for col in ws.iter_cols(min_row=2, max_row=ws.max_row):
+        #Apply artwork data
+        for col in ws.iter_cols(min_row=header_row, max_row=ws.max_row):
             max_length = max((len(str(cell.value)) if cell.value else 0) for cell in col)
             ws.column_dimensions[col[0].column_letter].width = max_length + 2
 
-        # Save the excel file
         wb.save(filename)
         print(f"Gallery exported to {filename}")
 
@@ -105,25 +113,31 @@ class Gallery:
     def import_gallery(cls, filename="gallery_export.xlsx"):
         wb = openpyxl.load_workbook(filename)
         ws = wb["Artworks"]
+        #Initialize row and gallery
+        row_idx = 1
+        gallery = cls()
 
-        # Read the exhibit title
-        exhibit_name = ws["A1"].value or "Imported Exhibit"
-
-        # Create a new Gallery object
-        gallery = cls(name=exhibit_name)
-
-        # Create a generic wall to hold artworks (since Excel currently does not store wall info)
-        imported_wall = Wall(name="Imported Wall", width=0, height=0)
-
-        # Read the artwork data from row 3 onwards
-        for row in ws.iter_rows(min_row=3, values_only=True):
-            if not any(row):  # Skip empty rows
-                continue
-
-            # Extract values based on the expected column order
-            art_id, title, _, medium, width, height, depth, price, nfs = row
-
-            #Create Artwork objects
+        # Read wall information
+        while ws.cell(row=row_idx, column=1).value:
+            wall_name = ws.cell(row=row_idx, column=1).value
+            wall_width = ws.cell(row=row_idx, column=2).value
+            wall_height = ws.cell(row=row_idx, column=3).value
+            wall_color = ws.cell(row=row_idx, column=4).value
+            imported_wall = Wall(name=wall_name, width=wall_width, height=wall_height, color=wall_color)
+            gallery.walls.append(imported_wall)
+            row_idx += 1
+        
+        row_idx += 1  # Skip empty row before exhibit title
+        gallery.name = ws.cell(row=row_idx, column=1).value or "Imported Exhibit" #Dynamically get gallery name
+        
+        row_idx += 2  # Skip empty row and headers
+        
+        for row in ws.iter_rows(min_row=row_idx, values_only=True):
+            if not any(row):
+                break
+            # Get artwork based on expected data structure
+            art_id, title, _, medium, width, height, depth, price, nfs, notes = row
+            # Create artwork
             artwork = Artwork(
                 title=title or "",
                 medium=medium or "",
@@ -132,14 +146,12 @@ class Gallery:
                 depth=depth or 0,
                 price=price or 0,
                 nfs=bool(nfs)
+                notes = notes or ""
             )
-            setattr(artwork, "id", art_id)  # Set the ID manually (not part of Artwork class by default as usually not needed)
+            setattr(artwork, "id", art_id)
+            # Append artwork to wall
+            if gallery.walls:
+                gallery.walls[-1].artwork.append(artwork)
 
-            # Add to the imported wall
-            imported_wall.artwork.append(artwork)
-
-        # Add the wall to the gallery
-        gallery.walls.append(imported_wall)
-
-        print(f"Gallery '{gallery.name}' imported successfully with {len(imported_wall.artwork)} artworks.")
+        print(f"Gallery '{gallery.name}' imported successfully with {sum(len(w.artwork) for w in gallery.walls)} artworks.")
         return gallery
