@@ -1,15 +1,17 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
+from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
 from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 import re
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 class PermanentObjectUI:
-    def __init__(self, root, return_to_previous):
+    def __init__(self, root, return_to_previous, wall):  #  receive wall
         self.root = root
         self.return_to_previous = return_to_previous
         self.permanent_objects = []
+        self.wall = wall  # store wall
         self.styles = get_ui_styles()
         self.create_ui()
 
@@ -187,14 +189,14 @@ class PermanentObjectUI:
         if not self.permanent_objects:
             # Show empty state message
             tk.Label(self.object_preview_frame, 
-                    text="No permanent objects added yet",
-                    font=self.styles["label_font"],
-                    fg="gray").pack(pady=20)
+                     text="No permanent objects added yet",
+                     font=self.styles["label_font"],
+                     fg="gray").pack(pady=20)
             return
 
         tk.Label(self.object_preview_frame, 
-                text="Saved Permanent Objects:", 
-                font=self.styles["label_font"]).pack(pady=(0, 10))
+                 text="Saved Permanent Objects:", 
+                 font=self.styles["label_font"]).pack(pady=(0, 10))
 
         # Create a canvas for scrollable content
         canvas = tk.Canvas(self.object_preview_frame, height=200)
@@ -216,18 +218,16 @@ class PermanentObjectUI:
 
             label_text = f"{obj['name']} - {obj['width']}\" x {obj['height']}\""
             tk.Label(obj_frame, text=label_text, font=self.styles["label_font"]).pack(side="left")
-            
-            # Add delete button with hover effect
+
             delete_btn = tk.Button(obj_frame, text="×", 
-                                command=lambda i=index: self.delete_object(i),
-                                font=("Arial", 10, "bold"),
-                                fg="red",
-                                bd=0,
-                                relief="flat",
-                                activeforeground="darkred")
+                                   command=lambda i=index: self.delete_object(i),
+                                   font=("Arial", 10, "bold"),
+                                   fg="red",
+                                   bd=0,
+                                   relief="flat",
+                                   activeforeground="darkred")
             delete_btn.pack(side="right")
-            
-            # Add hover effect
+
             delete_btn.bind("<Enter>", lambda e, btn=delete_btn: btn.config(fg="darkred"))
             delete_btn.bind("<Leave>", lambda e, btn=delete_btn: btn.config(fg="red"))
 
@@ -249,14 +249,23 @@ class PermanentObjectUI:
         self.height_entry.config(fg="grey")
         self.image_path.set("")
 
+
     def submit(self):
-        if self.has_permanent_items.get() and not self.permanent_objects:
-            messagebox.showerror("Error", "Please add at least one permanent object.")
-            return
+        if self.has_permanent_items.get():  # If "Yes" radial is selected
+            if len(self.permanent_objects) == 0:
+                messagebox.showwarning("Missing Data", "You must add at least one permanent object before proceeding.")
+                return
+            # Go to LockObjectsToWall.py
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            # I'm unsure what this area will look like when we have full import/export, so I am leaving the old launch here in case the new becomes unneeded
+            # launch_lock_objects_ui(self.root)
+            launch_lock_objects_ui(self.root, self.permanent_objects, self.wall)
+            # New launch_lock_objects_ui is based on updated definition includes. Be sure to remove permanenet_objects from that definition if we go back
 
-        # Clear the current UI
-        for widget in self.root.winfo_children():
-            widget.destroy()
+        else:
+        # Go forward normally as it used to
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            SelectWallSpaceUI(self.root, self.return_to_previous)
 
-        # Proceed to SelectWallSpaceUI in either case (Yes or No selected)
-        SelectWallSpaceUI(self.root, self.return_to_previous)

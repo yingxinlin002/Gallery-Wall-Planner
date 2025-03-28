@@ -9,8 +9,8 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_canvas_style
 )
 from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
-
-
+from gallery_wall_planner.models.project_exporter import export_project
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 # -------------------------
 # Function: Enforce Boundaries
@@ -29,25 +29,29 @@ def enforce_boundaries(x, y, width, height):
 # -------------------------
 # Main Entry Point for Embedding
 # -------------------------
-def launch_lock_objects_ui(root):
+def launch_lock_objects_ui(root, permanent_objects, wall):
+    print("imediate~~~~PERMANENT OBJECTS RECEIVED:", permanent_objects)
     init_styles(root)
     root.title("Place fixtures")
 
     global wall_name, wall_width, wall_height, wall_color
     global obstacles, obstacle_names, layout_items, popup_windows, items
 
-    wall_name = "My Gallery Wall"
-    wall_width = 220.0
-    wall_height = 120.0
-    wall_color = "#d4d4d4"
+    wall_name = wall.name
+    wall_width = wall.width
+    wall_height = wall.height
+    wall_color = wall.color
 
-    obstacles = [
-        {"Name": "Door", "Width": 40.25, "Height": 83.0125, "Image": False},
-        {"Name": "Fire Alarm", "Width": 4.0, "Height": 5.5, "Image": False},
-        {"Name": "Fire Sprinkler", "Width": 3.25, "Height": 3.25, "Image": False},
-        {"Name": "Light Switch", "Width": 2.75, "Height": 4.625, "Image": False},
-        {"Name": "Custom", "Width": 10.0, "Height": 15.0, "Image": False},
-    ]
+    obstacles = []
+
+    for obj in permanent_objects:
+        obstacles.append({
+            "Name": obj["name"],
+            "Width": obj["width"],
+            "Height": obj["height"],
+            "Image": obj.get("image", False) or False
+        })
+
     obstacle_names = [f"Obstacle{i+1}" for i in range(len(obstacles))]
     layout_items = {}
     popup_windows = {}
@@ -70,11 +74,15 @@ def launch_lock_objects_ui(root):
     buttons_frame.pack(side="left", padx=20)
     item_buttons = {}
 
+    # Make canvas non-expanding to free space below
+    canvas_frame = ttk.Frame(main_frame)
+    canvas_frame.pack(side="top", fill="both", expand=True)
+
     canvas_width = 800
-    canvas_height = 600
-    canvas = tk.Canvas(main_frame, width=canvas_width, height=canvas_height)
+    canvas_height = 500   # Reduced from 600
+    canvas = tk.Canvas(canvas_frame, width=canvas_width, height=canvas_height)
     apply_canvas_style(canvas)
-    canvas.pack(fill="both", expand=True, padx=10, pady=10)
+    canvas.pack(padx=10, pady=10)
 
     margin = 50
     scale = min((canvas_width - 2*margin) / wall_width, (canvas_height - 2*margin) / wall_height)
@@ -155,7 +163,6 @@ def launch_lock_objects_ui(root):
             layout_items[self.name] = {"x": self.x, "y": self.y}
             move_item_to_canvas(self.index)
             self.check_all_collisions()
-
             if self.update_popup_fields and self.index in popup_windows and popup_windows[self.index].winfo_exists():
                 print(f"[DEBUG] Calling update_popup_fields for {self.name}")
                 self.update_popup_fields()
@@ -203,7 +210,15 @@ def launch_lock_objects_ui(root):
         btn.pack(side="left", padx=3)
         item_buttons[i] = btn
 
-    def save_layout():
+    # Ensure the button frame is visible
+    button_frame = ttk.Frame(main_frame)
+    button_frame.pack(side="bottom", fill="x", pady=10)
+
+    next_button = ttk.Button(button_frame, text="Save and next", command=save_and_continue)
+    apply_primary_button_style(next_button)
+    next_button.pack(side="right", padx=10)
+
+    def save_and_continue():
         if check_all_collisions():
             popup = Toplevel(root)
             popup.title("Collision Detected")
@@ -211,40 +226,17 @@ def launch_lock_objects_ui(root):
             btn_frame = ttk.Frame(popup)
             btn_frame.pack(pady=10)
             btn_edit = ttk.Button(btn_frame, text="Keep Editing", command=popup.destroy)
-            btn_save = ttk.Button(btn_frame, text="Save as is", command=lambda: (popup.destroy(), write_to_file(), launch_organize_art_ui(root)))
+            btn_save = ttk.Button(btn_frame, text="Export Anyway", command=lambda: (popup.destroy(), export_then_continue()))
             apply_primary_button_style(btn_edit)
             apply_primary_button_style(btn_save)
             btn_edit.pack(side="left", padx=5)
             btn_save.pack(side="left", padx=5)
         else:
-            write_to_file()
-            launch_organize_art_ui(root)
+            export_then_continue()
 
-    def write_to_file():
-        filename = filedialog.asksaveasfilename(defaultextension=".txt", title="Save Layout")
-        if not filename:
-            return
-        with open(filename, "w") as f:
-            f.write(f"Wall Name: {wall_name}\n")
-            f.write(f"Wall Width: {wall_width}\n")
-            f.write(f"Wall Height: {wall_height}\n")
-            f.write(f"Wall Color: {wall_color}\n\n")
-            for i, obs in enumerate(obstacles):
-                item_name = obstacle_names[i]
-                pos = layout_items.get(item_name, {"x": 0.0, "y": 0.0})
-                center_x = pos["x"] + obs["Width"] / 2
-                center_y = pos["y"] + obs["Height"] / 2
-                f.write(f"Item Type: {obs['Name']}, Name: {obs['Name']}, Width: {obs['Width']}, Height: {obs['Height']}, Center: ({center_x:.2f}, {center_y:.2f})\n")
-        messagebox.showinfo("Saved", f"Layout saved to {os.path.basename(filename)}")
-
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# ONLY COMMENTED OUT UNTIL WE HAVE THE ABILITY TO SAVE
-    # save_button = ttk.Button(root, text="Save and next", command=save_layout)
-    # apply_primary_button_style(save_button)
-    # save_button.pack(side="bottom", anchor="e", padx=10, pady=10)
-
-        
-    next_button = ttk.Button(root, text="Save and next", command=lambda: launch_organize_art_ui(root))
-    apply_primary_button_style(next_button)
-    next_button.pack(side="bottom", anchor="e", padx=10, pady=10)
+    def export_then_continue():
+        file_path = filedialog.asksaveasfilename(defaultextension=".json", title="Save Project")
+        if not file_path:
+            return  # User cancelled
+        export_project(file_path, wall, permanent_objects, layout_items)
+        SelectWallSpaceUI(root, file_path)

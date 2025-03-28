@@ -2,6 +2,8 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
+from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
+from gallery_wall_planner.models.gallery import Gallery  #  ADDED to carry wall info forward
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -196,4 +198,4 @@ class NewGalleryUI:
         
         # Navigate to PermanentObjectUI
         from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
-        PermanentObjectUI(self.root, self.return_to_home)
+        PermanentObjectUI(self.root, self.return_to_home, wall)
