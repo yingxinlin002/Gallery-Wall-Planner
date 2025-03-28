@@ -15,6 +15,7 @@ def get_ui_styles():
         "bg_secondary": "#69718A",
         "bg_success": "#4CAF50",
         "bg_info": "#2196F3",
+        "small_font": ("Arial", 10),
         "fg_white": "white"
     }
 

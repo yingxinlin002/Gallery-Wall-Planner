@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
-from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI  # Import SelectWallSpaceUI
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 class EditorUI:
     def __init__(self, root, return_to_home, selected_wall):
@@ -10,6 +10,7 @@ class EditorUI:
         self.return_to_home = return_to_home
         self.selected_wall = selected_wall
         self.styles = get_ui_styles()
+        self.artwork_list = []  # Initialize the artwork_list
         self.create_ui()
 
     def create_ui(self):
@@ -67,12 +68,10 @@ class EditorUI:
 
         # Collapsible menu for Imported Artwork
         self.imported_artwork_frame = self.create_collapsible_menu(
-            control_panel, "Imported Artwork", expanded=False)
+            control_panel, "Imported Artwork", expanded=True)
         
-        # Placeholder for imported artwork list
-        tk.Label(self.imported_artwork_frame, 
-                text="Imported artwork will appear here",
-                fg="gray").pack(pady=50)
+        # Create a scrollable frame for artwork list
+        self.create_artwork_list_frame()
 
         # Calculate Installation Instruction Button
         calc_button = tk.Button(control_panel,
@@ -94,6 +93,69 @@ class EditorUI:
                 text=f"Wall Space: {self.selected_wall.name}\n{self.selected_wall.width}\" x {self.selected_wall.height}\"",
                 font=self.styles["title_font"],
                 bg="white").pack(expand=True)
+
+    def create_artwork_list_frame(self):
+        """Create a scrollable frame for artwork list"""
+        # Clear existing widgets and artwork list
+        for widget in self.imported_artwork_frame.winfo_children():
+            widget.destroy()
+        self.artwork_list = []  # Reset the artwork list
+        
+        # Rest of the method remains the same...
+        canvas = tk.Canvas(self.imported_artwork_frame, bg="white")
+        scrollbar = tk.Scrollbar(self.imported_artwork_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg="white")
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Display all artworks in the selected wall
+        if hasattr(self.selected_wall, 'artwork'):
+            for artwork in self.selected_wall.artwork:
+                self.add_artwork_item(scrollable_frame, artwork)
+        else:
+            tk.Label(scrollable_frame, 
+                    text="No artworks added yet",
+                    fg="gray").pack(pady=20)
+
+    def add_artwork_item(self, parent, artwork):
+        """Add a single artwork item to the list"""
+        frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
+        frame.pack(fill="x", pady=2, padx=2)
+        
+        # Artwork name and basic info
+        tk.Label(frame, 
+                text=f"{artwork.name} ({artwork.width}\" x {artwork.height}\")",
+                font=self.styles["label_font"],
+                bg="white").pack(anchor="w")
+        
+        # Additional details
+        details = []
+        if artwork.medium:
+            details.append(f"Medium: {artwork.medium}")
+        if artwork.price > 0:
+            details.append(f"Price: ${artwork.price:,.2f}")
+        if artwork.nfs:
+            details.append("Not For Sale")
+            
+        if details:
+            tk.Label(frame,
+                    text=", ".join(details),
+                    font=self.styles.get("small_font", ("Arial", 10)),
+                    bg="white").pack(anchor="w")
+
+        # Add to our tracking list
+        self.artwork_list.append(frame)
 
     def create_collapsible_menu(self, parent, title, expanded=True):
         """Create a collapsible menu frame with toggle button"""
@@ -145,5 +207,11 @@ class EditorUI:
         # Clear current UI
         for widget in self.root.winfo_children():
             widget.destroy()
-        # Open manual artwork UI
-        ArtworkManuallyUI(self.root, self.return_to_home, self.selected_wall)
+        # Open manual artwork UI with a callback to refresh the editor
+        ArtworkManuallyUI(self.root, 
+                         lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
+                         self.selected_wall)
+
+    def refresh_artwork_list(self):
+        """Refresh the artwork list display"""
+        self.create_artwork_list_frame()
