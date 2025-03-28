@@ -16,7 +16,7 @@ class Artwork:
 
     def __str__(self):
         #return all info about the artwork
-        return f"Name: {self.name}\nMedium: {self.medium}\nHeight: {self.height}\nWidth: {self.width}\nDepth: {self.depth}\nHanging Point: {self.hanging_point}\nPrice: {self.price}\nNFS: {self.nfs}\nImage Path: {self.image_path}"
+        return f"Name: {self.name}\nMedium: {self.medium}\nHeight: {self.height}\nWidth: {self.width}\nDepth: {self.depth}\nHanging Point: {self.hanging_point}\nPrice: {self.price}\nNFS: {self.nfs}\nImage Path: {self.image_path}\nNotes: {self.notes}"
     
     def export_artwork(self):
         #Temp way to export object to json, can be refined later
