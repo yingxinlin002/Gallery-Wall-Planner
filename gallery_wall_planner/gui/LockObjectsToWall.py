@@ -79,7 +79,7 @@ def launch_lock_objects_ui(root, permanent_objects, wall):
     canvas_frame.pack(side="top", fill="both", expand=True)
 
     canvas_width = 800
-    canvas_height = 500   # Reduced from 600
+    canvas_height = 350   # Reduced from 600
     canvas = tk.Canvas(canvas_frame, width=canvas_width, height=canvas_height)
     apply_canvas_style(canvas)
     canvas.pack(padx=10, pady=10)
@@ -194,7 +194,9 @@ def launch_lock_objects_ui(root, permanent_objects, wall):
         bx2, by2 = item2.x + item2.width, item2.y + item2.height
         return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
 
+    # Create buttons for each fixture (items on the wall)
     offset = 0
+    buttons_per_row = 4  # Maximum buttons per row
     for i, obs in enumerate(obstacles):
         layout_items[obstacle_names[i]] = {"x": offset, "y": 0.0}
         offset += obs["Width"] + 2
@@ -205,18 +207,18 @@ def launch_lock_objects_ui(root, permanent_objects, wall):
             check_all_collisions=check_all_collisions
         )
         items.append(di)
+        
+        # Calculate row and column for each button to ensure max 4 buttons per row
+        row = i // buttons_per_row
+        col = i % buttons_per_row
+
+        # Create the button for each item
         btn = ttk.Button(buttons_frame, text=obs["Name"], command=lambda idx=i: show_item_popup(idx))
         apply_primary_button_style(btn)
-        btn.pack(side="left", padx=3)
+        btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
         item_buttons[i] = btn
 
-    # Ensure the button frame is visible
-    button_frame = ttk.Frame(main_frame)
-    button_frame.pack(side="bottom", fill="x", pady=10)
 
-    next_button = ttk.Button(button_frame, text="Save and next", command=save_and_continue)
-    apply_primary_button_style(next_button)
-    next_button.pack(side="right", padx=10)
 
     def save_and_continue():
         if check_all_collisions():
@@ -240,3 +242,22 @@ def launch_lock_objects_ui(root, permanent_objects, wall):
             return  # User cancelled
         export_project(file_path, wall, permanent_objects, layout_items)
         SelectWallSpaceUI(root, file_path)
+        
+    # Function to handle back-to-home action
+    def return_to_home():
+        # Implement the logic to navigate back to the home screen
+        print("Returning to Home...")
+        root.quit() 
+
+    # Ensure the button frame is visible
+    button_frame = ttk.Frame(main_frame)
+    button_frame.pack(side="bottom", fill="x", pady=10)
+
+    # Back to Home Button (Left Side)
+    back_to_home_button = ttk.Button(button_frame, text="< Back to Home", command=lambda: return_to_home(), width=15)
+    apply_primary_button_style(back_to_home_button)  # Applying the style from ui_styles.py
+    back_to_home_button.pack(side="left", padx=10)
+
+    next_button = ttk.Button(button_frame, text="Save and Next >", command=save_and_continue)
+    apply_primary_button_style(next_button)
+    next_button.pack(side="right", padx=10)

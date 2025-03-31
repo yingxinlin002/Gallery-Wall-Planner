@@ -16,7 +16,7 @@ def get_ui_styles():
         "bg_success": "#4CAF50",
         "bg_info": "#2196F3",
         "small_font": ("Arial", 10),
-        "fg_white": "white"
+        "fg_white": "white",
     }
 
 def init_styles(root):
@@ -34,6 +34,14 @@ def apply_primary_button_style(widget):
                     padding=(styles["button_padx"], styles["button_pady"]))
     widget.config(style="Primary.TButton", width=styles["button_width"])
 
+def apply_previous_button_style(widget):
+    styles = get_ui_styles()
+    style = ttk.Style()
+    style.configure("Previous.TButton",
+                    font=styles["button_font"],
+                    padding=(styles["button_padx"], styles["button_pady"]),
+                    background=styles["bg_back_home"])
+    widget.config(style="Previous.TButton", width=styles["button_width"])
 
 def apply_header_label_style(widget):
     styles = get_ui_styles()
