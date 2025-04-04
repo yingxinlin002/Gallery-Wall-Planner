@@ -2,8 +2,10 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 
 class Show:
+    # Class level list of all galleries in the show
+    # This may not be the correct way to name things but we can always refactor if needed
     _all_galleries = []
-    
+    # Constructor
     def __init__(self, name="Roberta's Gallery"):
         self.name = name
         self.galleries = []
@@ -28,10 +30,16 @@ class Show:
         return None
 
     def export_show(self, filename="show_export.xlsx"):
+        """
+        Export Show Function
+        Inputs: Self and a name for the export
+        Process: Automatically writes all artwork, wall data and gallery data to an excel file
+        Outputs: An excel file with each gallery on a seperate sheet, with all relevant wall and artwork data
+        """
         wb = openpyxl.Workbook()
         default_sheet = wb.active
         wb.remove(default_sheet)  # Remove default sheet
-        
+        # Creating seperate sheets for each gallery
         for gallery in self.galleries:
             ws = wb.create_sheet(title=gallery.name[:31])  # Excel limits sheet names to 31 chars
             
@@ -47,16 +55,16 @@ class Show:
             for wall in gallery.walls:
                 ws.append([wall.name, wall.width, wall.height, getattr(wall, "color", "")])
             ws.append([])
-            
+            # Replace later with a call to the config file to get headers and colors
             headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS", "Notes"]
             colors = ["ADD8E6", "90EE90", "ADD8E6", "FFFF99", "FFFF99", "FFFF99", "FFFF99", "FA8072", "D8BFD8", "FFFFFF"]
-
+            # Adding headers
             header_row = ws.max_row + 1
             for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
                 cell = ws.cell(row=header_row, column=col_num, value=header)
                 cell.font = Font(bold=True)
                 cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
-            
+            # Getting all walls and adding any artwork associated with them for the excel
             for wall in gallery.walls:
                 for artwork in wall.artwork:
                     ws.append([
@@ -78,15 +86,21 @@ class Show:
 
     @classmethod
     def import_show(cls, filename="show_export.xlsx"):
+        """
+        Import show function
+        Input: The object we're storing to and the name of the file to import from
+        Process: Gets all artwork, wall and gallery data from an excel sheet (if in correct format)
+        Output: A show object with all gallery, wall and artwork data
+        """
         wb = openpyxl.load_workbook(filename)
         show = cls(name=wb.sheetnames[0])
-        
+        # Get gallery from sheet names
         for sheet_name in wb.sheetnames:
             ws = wb[sheet_name]
             gallery = Gallery(name=sheet_name)
             show.galleries.append(gallery)
             row_idx = 2
-            
+            # Get all the walls from the sheet
             while row_idx <= ws.max_row:
                 wall_name = ws.cell(row=row_idx, column=1).value
                 if wall_name:
@@ -97,7 +111,7 @@ class Show:
                 row_idx += 1
             
             row_idx += 1  # Move past the empty row after walls
-            
+            # Get all of the artwork data from the walls
             for row in ws.iter_rows(min_row=row_idx, values_only=True):
                 if not any(row):
                     continue  # Skip empty rows
