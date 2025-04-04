@@ -9,13 +9,13 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_canvas_style
 )
 from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
-
-
+from gallery_wall_planner.models.project_exporter import export_project
+from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 # -------------------------
 # Function: Enforce Boundaries
 # -------------------------
-def enforce_boundaries(x, y, width, height):
+def enforce_boundaries(x, y, width, height, wall_width, wall_height):
     if x < 0:
         x = 0
     if y < 0:
@@ -29,26 +29,21 @@ def enforce_boundaries(x, y, width, height):
 # -------------------------
 # Main Entry Point for Embedding
 # -------------------------
-def launch_lock_objects_ui(root):
+def launch_lock_objects_ui(root, wall):
     init_styles(root)
     root.title("Place fixtures")
 
     global wall_name, wall_width, wall_height, wall_color
-    global obstacles, obstacle_names, layout_items, popup_windows, items
+    global obstacle_names, layout_items, popup_windows, items
 
-    wall_name = "My Gallery Wall"
-    wall_width = 220.0
-    wall_height = 120.0
-    wall_color = "#d4d4d4"
+    wall_name = wall.name
+    wall_width = wall.width
+    wall_height = wall.height
+    wall_color = wall.color
 
-    obstacles = [
-        {"Name": "Door", "Width": 40.25, "Height": 83.0125, "Image": False},
-        {"Name": "Fire Alarm", "Width": 4.0, "Height": 5.5, "Image": False},
-        {"Name": "Fire Sprinkler", "Width": 3.25, "Height": 3.25, "Image": False},
-        {"Name": "Light Switch", "Width": 2.75, "Height": 4.625, "Image": False},
-        {"Name": "Custom", "Width": 10.0, "Height": 15.0, "Image": False},
-    ]
-    obstacle_names = [f"Obstacle{i+1}" for i in range(len(obstacles))]
+    # Get permanent objects from wall
+    permanent_objects = wall.get_permanent_objects()
+    obstacle_names = [f"Obstacle{i+1}" for i in range(len(permanent_objects))]
     layout_items = {}
     popup_windows = {}
     items = []
@@ -70,11 +65,15 @@ def launch_lock_objects_ui(root):
     buttons_frame.pack(side="left", padx=20)
     item_buttons = {}
 
+    # Canvas setup
+    canvas_frame = ttk.Frame(main_frame)
+    canvas_frame.pack(side="top", fill="both", expand=True)
+
     canvas_width = 800
-    canvas_height = 600
-    canvas = tk.Canvas(main_frame, width=canvas_width, height=canvas_height)
+    canvas_height = 350
+    canvas = tk.Canvas(canvas_frame, width=canvas_width, height=canvas_height)
     apply_canvas_style(canvas)
-    canvas.pack(fill="both", expand=True, padx=10, pady=10)
+    canvas.pack(padx=10, pady=10)
 
     margin = 50
     scale = min((canvas_width - 2*margin) / wall_width, (canvas_height - 2*margin) / wall_height)
@@ -83,15 +82,36 @@ def launch_lock_objects_ui(root):
     wall_right = wall_left + wall_width * scale
     wall_top = wall_bottom + wall_height * scale
 
-    canvas.create_rectangle(wall_left, canvas_height - wall_top,
-                            wall_right, canvas_height - wall_bottom,
-                            fill=wall_color, outline="black", width=2)
+    # Draw wall background
+    canvas.create_rectangle(wall_left, canvas_height - wall_bottom - wall_height*scale,
+                      wall_right, canvas_height - wall_bottom,
+                      fill=wall_color, outline="black", width=2)
+    
+    # Add coordinate indicators
+    canvas.create_text(wall_left - 10, canvas_height - wall_bottom + 5, text="0", anchor="e")
+    canvas.create_text(wall_left - 10, canvas_height - wall_bottom - wall_height*scale - 5, 
+                    text=f"{wall_height}\"", anchor="e")
+    canvas.create_text(wall_left + 5, canvas_height - wall_bottom + 15, text="0", anchor="n")
+    canvas.create_text(wall_right - 5, canvas_height - wall_bottom + 15, text=f"{wall_width}\"", anchor="n")
 
     def show_item_popup(item_index):
+        # Get the permanent object and its position
+        permanent_object, position = permanent_objects[item_index]
+        
+        # Prepare the item data as a dictionary that popup_editor expects
+        item_data = {
+            "Name": permanent_object.name,  # Using the object's actual name
+            "Width": permanent_object.width,
+            "Height": permanent_object.height,
+            "x": position["x"] if position else 0.0,
+            "y": position["y"] if position else 0.0
+        }
+        
         open_popup_editor(
             root=root,
             item_index=item_index,
-            obstacles=obstacles,
+            item_data=item_data,  # Pass the prepared dictionary
+            obstacles=[(obj.name, obj.width, obj.height) for obj, _ in permanent_objects],
             obstacle_names=obstacle_names,
             layout_items=layout_items,
             items=items,
@@ -103,21 +123,26 @@ def launch_lock_objects_ui(root):
             canvas_height=canvas_height,
             move_item_to_canvas=move_item_to_canvas,
             check_all_collisions=check_all_collisions,
-            enforce_boundaries=enforce_boundaries,
+            enforce_boundaries=lambda x, y, w, h: enforce_boundaries(x, y, w, h, wall_width, wall_height),
             popup_windows=popup_windows,
         )
 
     class DraggableItem:
-        def __init__(self, index, obstacle, move_item_to_canvas, check_all_collisions):
+        def __init__(self, index, permanent_object, move_item_to_canvas, check_all_collisions):
             self.index = index
-            self.obstacle = obstacle
+            self.permanent_object = permanent_object[0]  # Get the PermanentObject instance
             self.name = obstacle_names[index]
-            pos = layout_items.get(self.name, {"x": 0.0, "y": 0.0})
+            self.width = self.permanent_object.width
+            self.height = self.permanent_object.height
+            
+            # Initialize position from wall or default to (0,0)
+            pos = permanent_object[1] if permanent_object[1] else {"x": 0.0, "y": 0.0}
             self.x = pos["x"]
             self.y = pos["y"]
-            self.width = obstacle["Width"]
-            self.height = obstacle["Height"]
+            
             self.id = None
+            self.reference_lines = []  # Stores line IDs
+            self.distance_labels = []  # Stores label IDs
             self.create_canvas_item()
             self._drag_data = {"x": 0, "y": 0}
             self.update_popup_fields = None
@@ -125,10 +150,11 @@ def launch_lock_objects_ui(root):
             self.check_all_collisions = check_all_collisions
 
         def create_canvas_item(self):
+            # Convert from bottom-left origin to canvas coordinates
             x1 = wall_left + self.x * scale
-            y1 = canvas_height - (wall_bottom + (self.y + self.height) * scale)
+            y1 = canvas_height - (wall_bottom + self.y * scale)  # Changed from (y + height)
             x2 = wall_left + (self.x + self.width) * scale
-            y2 = canvas_height - (wall_bottom + self.y * scale)
+            y2 = canvas_height - (wall_bottom + (self.y + self.height) * scale)  # Changed from just y
             self.id = canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=2)
             canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
             canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
@@ -137,6 +163,19 @@ def launch_lock_objects_ui(root):
         def on_start(self, event):
             self._drag_data["x"] = event.x
             self._drag_data["y"] = event.y
+            # Initialize reference lines (but don't show yet)
+            self.reference_lines = [
+                canvas.create_line(0, 0, 0, 0, dash=(2,2), fill="blue", state='hidden'),  # Left
+                canvas.create_line(0, 0, 0, 0, dash=(2,2), fill="blue", state='hidden'),  # Right
+                canvas.create_line(0, 0, 0, 0, dash=(2,2), fill="blue", state='hidden'),  # Top
+                canvas.create_line(0, 0, 0, 0, dash=(2,2), fill="blue", state='hidden')   # Bottom
+            ]
+            self.distance_labels = [
+                canvas.create_text(0, 0, text="", fill="blue", state='hidden'),  # Left
+                canvas.create_text(0, 0, text="", fill="blue", state='hidden'),  # Right
+                canvas.create_text(0, 0, text="", fill="blue", angle=90, state='hidden'),  # Top
+                canvas.create_text(0, 0, text="", fill="blue", angle=90, state='hidden')   # Bottom
+            ]
 
         def on_drag(self, event):
             dx = event.x - self._drag_data["x"]
@@ -144,28 +183,98 @@ def launch_lock_objects_ui(root):
             canvas.move(self.id, dx, dy)
             self._drag_data["x"] = event.x
             self._drag_data["y"] = event.y
+            self.update_reference_lines()
 
         def on_drop(self, event):
             coords = canvas.coords(self.id)
+            # Convert from canvas coordinates back to bottom-left origin
             new_x = (coords[0] - wall_left) / scale
-            new_y = (canvas_height - coords[3] - wall_bottom) / scale
-            new_x, new_y = enforce_boundaries(new_x, new_y, self.width, self.height)
+            new_y = (canvas_height - coords[3] - wall_bottom) / scale  # Using bottom coordinate (y2)
+            new_x, new_y = enforce_boundaries(new_x, new_y, self.width, self.height, wall_width, wall_height)
+            
             self.x = new_x
             self.y = new_y
+            # Update position directly in the permanent object
+            self.permanent_object.position = {"x": self.x, "y": self.y}
             layout_items[self.name] = {"x": self.x, "y": self.y}
-            move_item_to_canvas(self.index)
+            
+            self.clear_reference_lines()
+            self.move_item_to_canvas(self.index)
             self.check_all_collisions()
-
+            
             if self.update_popup_fields and self.index in popup_windows and popup_windows[self.index].winfo_exists():
-                print(f"[DEBUG] Calling update_popup_fields for {self.name}")
                 self.update_popup_fields()
+
+        def update_reference_lines(self):
+            """Update existing reference lines instead of creating new ones"""
+            coords = canvas.coords(self.id)
+            
+            # Left distance (from left wall edge)
+            left_dist = (coords[0] - wall_left) / scale
+            canvas.coords(self.reference_lines[0], 
+                        wall_left, canvas_height-wall_bottom,
+                        coords[0], canvas_height-wall_bottom)
+            
+            # Right distance (from right wall edge)
+            right_dist = (wall_right - coords[2]) / scale
+            canvas.coords(self.reference_lines[1],
+                        coords[2], canvas_height-wall_bottom,
+                        wall_right, canvas_height-wall_bottom)
+            
+            # Top distance (from top wall edge)
+            top_dist = (wall_height - ((canvas_height - coords[1] - wall_bottom)/scale))  # Changed calculation
+            canvas.coords(self.reference_lines[2],
+                        wall_left, coords[1],
+                        wall_left, canvas_height-wall_bottom-wall_height*scale)
+            
+            # Bottom distance (from bottom wall edge)
+            bottom_dist = ((canvas_height - coords[3] - wall_bottom)/scale)  # Changed calculation
+            canvas.coords(self.reference_lines[3],
+                        wall_left, coords[3],
+                        wall_left, canvas_height-wall_bottom)
+            
+            # Update all lines and labels
+            for line in self.reference_lines:
+                canvas.itemconfig(line, state='normal')
+            
+            # Update distance labels
+            canvas.coords(self.distance_labels[0],
+                        (wall_left + coords[0])/2,
+                        canvas_height-wall_bottom+15)
+            canvas.itemconfig(self.distance_labels[0], 
+                            text=f"{left_dist:.1f}\"", state='normal')
+            
+            canvas.coords(self.distance_labels[1],
+                        (coords[2] + wall_right)/2,
+                        canvas_height-wall_bottom+15)
+            canvas.itemconfig(self.distance_labels[1],
+                            text=f"{right_dist:.1f}\"", state='normal')
+            
+            canvas.coords(self.distance_labels[2],
+                        wall_left-15,
+                        (coords[1] + canvas_height-wall_bottom-wall_height*scale)/2)
+            canvas.itemconfig(self.distance_labels[2],
+                            text=f"{top_dist:.1f}\"", state='normal')
+            
+            canvas.coords(self.distance_labels[3],
+                        wall_left-15,
+                        (coords[3] + canvas_height-wall_bottom)/2)
+            canvas.itemconfig(self.distance_labels[3],
+                            text=f"{bottom_dist:.1f}\"", state='normal')
+
+        def clear_reference_lines(self):
+            """Hide all measurement lines"""
+            for line in self.reference_lines:
+                canvas.itemconfig(line, state='hidden')
+            for label in self.distance_labels:
+                canvas.itemconfig(label, state='hidden')
 
     def move_item_to_canvas(item_index):
         item = items[item_index]
         x1 = wall_left + item.x * scale
-        y1 = canvas_height - (wall_bottom + (item.y + item.height) * scale)
+        y1 = canvas_height - (wall_bottom + item.y * scale)  # Changed from (y + height)
         x2 = wall_left + (item.x + item.width) * scale
-        y2 = canvas_height - (wall_bottom + item.y * scale)
+        y2 = canvas_height - (wall_bottom + (item.y + item.height) * scale)  # Changed from just y
         canvas.coords(item.id, x1, y1, x2, y2)
 
     def check_all_collisions():
@@ -187,23 +296,32 @@ def launch_lock_objects_ui(root):
         bx2, by2 = item2.x + item2.width, item2.y + item2.height
         return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
 
-    offset = 0
-    for i, obs in enumerate(obstacles):
-        layout_items[obstacle_names[i]] = {"x": offset, "y": 0.0}
-        offset += obs["Width"] + 2
+    # Create draggable items for each permanent object
+    buttons_per_row = 4
+    for i, (obj, pos) in enumerate(permanent_objects):
+        # Initialize position in layout_items
+        layout_items[obstacle_names[i]] = pos if pos else {"x": 0.0, "y": 0.0}
+        
+        # Create draggable item
         di = DraggableItem(
             index=i,
-            obstacle=obs,
+            permanent_object=(obj, pos),
             move_item_to_canvas=move_item_to_canvas,
             check_all_collisions=check_all_collisions
         )
         items.append(di)
-        btn = ttk.Button(buttons_frame, text=obs["Name"], command=lambda idx=i: show_item_popup(idx))
+        
+        # Create button for this item
+        row = i // buttons_per_row
+        col = i % buttons_per_row
+        btn = ttk.Button(buttons_frame, 
+                        text=obj.name, 
+                        command=lambda idx=i: show_item_popup(idx))
         apply_primary_button_style(btn)
-        btn.pack(side="left", padx=3)
+        btn.grid(row=row, column=col, padx=5, pady=5)
         item_buttons[i] = btn
 
-    def save_layout():
+    def save_and_continue():
         if check_all_collisions():
             popup = Toplevel(root)
             popup.title("Collision Detected")
@@ -211,40 +329,40 @@ def launch_lock_objects_ui(root):
             btn_frame = ttk.Frame(popup)
             btn_frame.pack(pady=10)
             btn_edit = ttk.Button(btn_frame, text="Keep Editing", command=popup.destroy)
-            btn_save = ttk.Button(btn_frame, text="Save as is", command=lambda: (popup.destroy(), write_to_file(), launch_organize_art_ui(root)))
+            btn_save = ttk.Button(btn_frame, text="Continue Anyway", command=lambda: (popup.destroy(), continue_to_next()))
             apply_primary_button_style(btn_edit)
             apply_primary_button_style(btn_save)
             btn_edit.pack(side="left", padx=5)
             btn_save.pack(side="left", padx=5)
         else:
-            write_to_file()
-            launch_organize_art_ui(root)
+            continue_to_next()
 
-    def write_to_file():
-        filename = filedialog.asksaveasfilename(defaultextension=".txt", title="Save Layout")
-        if not filename:
-            return
-        with open(filename, "w") as f:
-            f.write(f"Wall Name: {wall_name}\n")
-            f.write(f"Wall Width: {wall_width}\n")
-            f.write(f"Wall Height: {wall_height}\n")
-            f.write(f"Wall Color: {wall_color}\n\n")
-            for i, obs in enumerate(obstacles):
-                item_name = obstacle_names[i]
-                pos = layout_items.get(item_name, {"x": 0.0, "y": 0.0})
-                center_x = pos["x"] + obs["Width"] / 2
-                center_y = pos["y"] + obs["Height"] / 2
-                f.write(f"Item Type: {obs['Name']}, Name: {obs['Name']}, Width: {obs['Width']}, Height: {obs['Height']}, Center: ({center_x:.2f}, {center_y:.2f})\n")
-        messagebox.showinfo("Saved", f"Layout saved to {os.path.basename(filename)}")
+    def continue_to_next():
+        # Positions are already saved in the wall object through the DraggableItem class
+        # Now just launch the SelectWallSpaceUI with the updated wall
+        SelectWallSpaceUI(root, wall)
 
-
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# ONLY COMMENTED OUT UNTIL WE HAVE THE ABILITY TO SAVE
-    # save_button = ttk.Button(root, text="Save and next", command=save_layout)
-    # apply_primary_button_style(save_button)
-    # save_button.pack(side="bottom", anchor="e", padx=10, pady=10)
-
+    def export_then_continue():
+        file_path = filedialog.asksaveasfilename(defaultextension=".json", title="Save Project")
+        if not file_path:
+            return  # User cancelled
         
-    next_button = ttk.Button(root, text="Save and next", command=lambda: launch_organize_art_ui(root))
+        # Export the wall with updated permanent object positions
+        export_project(file_path, wall)
+        SelectWallSpaceUI(root, file_path)
+        
+    def return_to_home():
+        print("Returning to Home...")
+        root.quit() 
+
+    # Bottom buttons
+    button_frame = ttk.Frame(main_frame)
+    button_frame.pack(side="bottom", fill="x", pady=10)
+
+    back_to_home_button = ttk.Button(button_frame, text="< Back to Home", command=lambda: return_to_home(), width=15)
+    apply_primary_button_style(back_to_home_button)
+    back_to_home_button.pack(side="left", padx=10)
+
+    next_button = ttk.Button(button_frame, text="Save and Next >", command=save_and_continue)
     apply_primary_button_style(next_button)
-    next_button.pack(side="bottom", anchor="e", padx=10, pady=10)
+    next_button.pack(side="right", padx=10)

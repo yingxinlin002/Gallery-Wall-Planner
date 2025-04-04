@@ -207,14 +207,41 @@ class SelectWallSpaceUI:
             y1 = y0 + scaled_height
             self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=selected_wall.color, outline="black")
 
+            # Draw permanent objects
+            for obj, pos in selected_wall.get_permanent_objects():
+                if pos:  # Only draw if object has a position
+                    obj_x0 = x0 + pos['x'] * ratio
+                    obj_y0 = y0 + (wall_height - pos['y'] - obj.height) * ratio  # Adjust for bottom-left origin
+                    obj_x1 = obj_x0 + obj.width * ratio
+                    obj_y1 = obj_y0 + obj.height * ratio
+                    
+                    # Draw object rectangle
+                    self.preview_canvas.create_rectangle(
+                        obj_x0, obj_y0, obj_x1, obj_y1,
+                        fill="lightblue", outline="black", width=2
+                    )
+                    
+                    # Draw object name (if space allows)
+                    if (obj_x1 - obj_x0) > 40 and (obj_y1 - obj_y0) > 20:  # Only draw if object is large enough
+                        self.preview_canvas.create_text(
+                            (obj_x0 + obj_x1)/2, (obj_y0 + obj_y1)/2,
+                            text=obj.name, fill="black", font=("Arial", 8)
+                        )
+
             # Draw height and width lines with labels
             self.preview_canvas.create_line(x0, y1, x0 - 10, y1, fill="black")  # Width line start
             self.preview_canvas.create_line(x1, y1, x1 + 10, y1, fill="black")  # Width line end
-            self.preview_canvas.create_text((x0 + x1) / 2, y1 + 15, text=f"{wall_width} inches", anchor="n")
+            self.preview_canvas.create_text((x0 + x1)/2, y1 + 15, text=f"{wall_width}\"", anchor="n")
 
             self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")  # Height line start
             self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")  # Height line end
-            self.preview_canvas.create_text(x0 - 15, (y0 + y1) / 2, text=f"{wall_height} inches", anchor="e", angle=90)
+            self.preview_canvas.create_text(x0 - 15, (y0 + y1)/2, text=f"{wall_height}\"", anchor="e", angle=90)
 
-            # Update wall details label
-            self.wall_details_label.config(text=f"Wall: {selected_wall.name}\nColor: {selected_wall.color}")
+            # Update wall details label with object count
+            obj_count = len(selected_wall.get_permanent_objects())
+            self.wall_details_label.config(
+                text=f"Wall: {selected_wall.name}\n"
+                    f"Dimensions: {wall_width}\" x {wall_height}\"\n"
+                    f"Color: {selected_wall.color}\n"
+                    f"Permanent Objects: {obj_count}"
+            )

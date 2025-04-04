@@ -1,7 +1,8 @@
-# NewExhibitUI.py
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
+from gallery_wall_planner.models.wall import Wall
+from gallery_wall_planner.models.gallery import Gallery
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -13,168 +14,278 @@ class NewGalleryUI:
         self.create_new_exhibit_popup()
 
     def create_new_exhibit_popup(self):
-        # Create a popup window for new exhibit options
+        """Create initial popup window for new exhibit options"""
         self.popup = tk.Toplevel(self.root)
         self.popup.title("New Exhibit")
         self.popup.geometry("300x150")
-
-        # Center the popup on the screen
-        self.center_popup(self.popup, 300, 150)  # Width: 300, Height: 150
+        self.center_popup(self.popup, 300, 150)
 
         # Add buttons to the popup window
-        tk.Button(self.popup, text="Start from Scratch", command=self.start_from_scratch, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(pady=10)
-        tk.Button(self.popup, text="Load from an Existing Wall", command=self.load_from_existing, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(pady=10)
+        tk.Button(
+            self.popup, 
+            text="Start from Scratch", 
+            command=self.start_from_scratch,
+            width=20, 
+            bg="#5F3FCA", 
+            fg="white", 
+            font=("Helvetica", 12, "bold"), 
+            relief="raised", 
+            padx=10, 
+            pady=5
+        ).pack(pady=10)
+        
+        tk.Button(
+            self.popup, 
+            text="Load from an Existing Wall", 
+            command=self.load_from_existing,
+            width=20, 
+            bg="#5F3FCA", 
+            fg="white", 
+            font=("Helvetica", 12, "bold"), 
+            relief="raised", 
+            padx=10, 
+            pady=5
+        ).pack(pady=10)
 
     def center_popup(self, popup, width, height):
-        """
-        Center the popup window on the screen.
-        :param popup: The popup window to center.
-        :param width: The width of the popup window.
-        :param height: The height of the popup window.
-        """
-        # Get the screen width and height
+        """Center the popup window on screen"""
         screen_width = popup.winfo_screenwidth()
         screen_height = popup.winfo_screenheight()
-
-        # Calculate the x and y coordinates to center the popup
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
-
-        # Set the popup's geometry
         popup.geometry(f"{width}x{height}+{x}+{y}")
 
     def start_from_scratch(self):
-        self.popup.destroy()  # Close the popup
+        """Handle starting a new wall from scratch"""
+        self.popup.destroy()
         self.show_wall_info_page()
 
     def load_from_existing(self):
-        messagebox.showerror("Error", "No existing walls found.")
+        """Handle loading from existing wall"""
+        existing_walls = Gallery.get_walls()
+        if not existing_walls:
+            messagebox.showerror("Error", "No existing walls found.")
+        else:
+            # Implement logic to select from existing walls
+            messagebox.showinfo("Info", "Feature coming soon!")
         self.popup.destroy()
 
     def show_wall_info_page(self):
-        # Clear the current frame
+        """Show the wall creation form with centered inputs"""
         for widget in self.root.winfo_children():
             widget.destroy()
         
-        # Add a title
-        tk.Label(self.root, text="New Gallery Wall", font=("Arial", 24)).pack(pady=20)
+        # Main container
+        main_frame = tk.Frame(self.root)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
-        # Wall Name
-        tk.Label(self.root, text="Wall Name:", font=("Arial", 12)).pack(pady=5)
-        self.wall_name_entry = tk.Entry(self.root, font=("Arial", 12))
-        self.wall_name_entry.insert(0, "South Wall")  # Placeholder text
+        # Title
+        tk.Label(
+            main_frame, 
+            text="New Gallery Wall", 
+            font=("Arial", 24)
+        ).pack(pady=(0, 20))
+        
+        # Centered form container
+        form_container = tk.Frame(main_frame)
+        form_container.pack()
+        
+        # Form frame with centered contents
+        form_frame = tk.Frame(form_container)
+        form_frame.pack()
+        
+        # Wall Name - Centered row
+        name_frame = tk.Frame(form_frame)
+        name_frame.pack(pady=5)
+        tk.Label(
+            name_frame, 
+            text="Wall Name:", 
+            font=("Arial", 12)
+        ).pack(side="left", padx=(0, 10))
+        self.wall_name_entry = tk.Entry(name_frame, font=("Arial", 12), width=15)
+        self.wall_name_entry.insert(0, "South Wall")
         self.wall_name_entry.config(fg="grey")
-        self.wall_name_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.wall_name_entry, "South Wall"))
-        self.wall_name_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.wall_name_entry, "South Wall"))
-        self.wall_name_entry.pack(pady=5)
+        self.wall_name_entry.bind("<FocusIn>", lambda e: self.clear_placeholder(self.wall_name_entry, "South Wall"))
+        self.wall_name_entry.bind("<FocusOut>", lambda e: self.add_placeholder(self.wall_name_entry, "South Wall"))
+        self.wall_name_entry.pack(side="left")
         
-        # Wall Width
-        tk.Label(self.root, text="Wall Width (inches):", font=("Arial", 12)).pack(pady=5)
-        self.wall_width_entry = tk.Entry(self.root, font=("Arial", 12))
-        self.wall_width_entry.insert(0, "313")  # Placeholder text
+        # Wall Width - Centered row
+        width_frame = tk.Frame(form_frame)
+        width_frame.pack(pady=5)
+        tk.Label(
+            width_frame, 
+            text="Width (inches):", 
+            font=("Arial", 12)
+        ).pack(side="left", padx=(0, 10))
+        self.wall_width_entry = tk.Entry(width_frame, font=("Arial", 12), width=10)
+        self.wall_width_entry.insert(0, "313")
         self.wall_width_entry.config(fg="grey")
-        self.wall_width_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.wall_width_entry, "inches"))
-        self.wall_width_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.wall_width_entry, "inches"))
-        self.wall_width_entry.pack(pady=5)
+        self.wall_width_entry.bind("<FocusIn>", lambda e: self.clear_placeholder(self.wall_width_entry, "313"))
+        self.wall_width_entry.bind("<FocusOut>", lambda e: self.add_placeholder(self.wall_width_entry, "313"))
+        self.wall_width_entry.pack(side="left")
         
-        # Wall Height
-        tk.Label(self.root, text="Wall Height (inches):", font=("Arial", 12)).pack(pady=5)
-        self.wall_height_entry = tk.Entry(self.root, font=("Arial", 12))
-        self.wall_height_entry.insert(0, "96")  # Placeholder text
+        # Wall Height - Centered row
+        height_frame = tk.Frame(form_frame)
+        height_frame.pack(pady=5)
+        tk.Label(
+            height_frame, 
+            text="Height (inches):", 
+            font=("Arial", 12)
+        ).pack(side="left", padx=(0, 10))
+        self.wall_height_entry = tk.Entry(height_frame, font=("Arial", 12), width=10)
+        self.wall_height_entry.insert(0, "96")
         self.wall_height_entry.config(fg="grey")
-        self.wall_height_entry.bind("<FocusIn>", lambda event: self.clear_placeholder(self.wall_height_entry, "inches"))
-        self.wall_height_entry.bind("<FocusOut>", lambda event: self.add_placeholder(self.wall_height_entry, "inches"))
-        self.wall_height_entry.pack(pady=5)
+        self.wall_height_entry.bind("<FocusIn>", lambda e: self.clear_placeholder(self.wall_height_entry, "96"))
+        self.wall_height_entry.bind("<FocusOut>", lambda e: self.add_placeholder(self.wall_height_entry, "96"))
+        self.wall_height_entry.pack(side="left")
         
-        # Wall Color
-        color_frame = tk.Frame(self.root)
+        # Wall Color - Centered row
+        color_frame = tk.Frame(form_frame)
         color_frame.pack(pady=5)
-
-        tk.Label(color_frame, text="Wall Color:", font=("Arial", 12)).pack(side="left", padx=(0, 10))
-
-        # Color Box
-        self.color_box = tk.Label(color_frame, bg=self.wall_color, width=10, height=2)
+        tk.Label(
+            color_frame, 
+            text="Wall Color:", 
+            font=("Arial", 12)
+        ).pack(side="left", padx=(0, 10))
+        
+        self.color_box = tk.Label(color_frame, bg=self.wall_color, width=10, height=1)
         self.color_box.pack(side="left", padx=(0, 10))
+        
+        tk.Button(
+            color_frame, 
+            text="Pick", 
+            command=self.pick_color,
+            width=5, 
+            bg="#5F3FCA", 
+            fg="white", 
+            font=("Helvetica", 10), 
+            relief="raised"
+        ).pack(side="left")
+        
+        # Create a container for canvas and buttons
+        canvas_button_container = tk.Frame(main_frame)
+        canvas_button_container.pack(pady=(20, 0), fill="both", expand=True)
+        
+        # Wall Preview
+        preview_frame = tk.Frame(canvas_button_container)
+        preview_frame.pack(fill="both", expand=True)
+        
+        self.preview_canvas = tk.Canvas(
+            preview_frame, 
+            width=400, 
+            height=250,
+            bg="white", 
+            highlightthickness=1, 
+            highlightbackground="black"
+        )
+        self.preview_canvas.pack()
+        
+        # Buttons at bottom of canvas container
+        button_frame = tk.Frame(canvas_button_container)
+        button_frame.pack(fill="x", pady=(10, 0))
 
-        # Pick Color Button
-        tk.Button(color_frame, text="Pick Color", command=self.pick_color, width=10, bg="#5F3FCA", fg="white", font=("Helvetica", 10, "bold"), relief="raised", padx=5, pady=5).pack(side="left")
+        tk.Button(
+            button_frame, 
+            text="< Back to Home", 
+            command=self.return_to_home,
+            width=15, 
+            bg="#69718A", 
+            fg="white", 
+            font=("Helvetica", 12, "bold"), 
+            relief="raised"
+        ).pack(side="left", padx=10)
 
-        # Wall Preview Canvas
-        self.preview_canvas = tk.Canvas(self.root, width=400, height=300, bg="white", highlightthickness=1, highlightbackground="black")
-        self.preview_canvas.pack(pady=20)
-
-        # Bind events to update the preview when width or height changes
+        tk.Button(
+            button_frame, 
+            text="Submit and Next >", 
+            command=self.submit_wall_info,
+            width=15, 
+            bg="#5F3FCA", 
+            fg="white", 
+            font=("Helvetica", 12, "bold"), 
+            relief="raised"
+        ).pack(side="right", padx=10)
+        
+        # Bind events
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
-        
-        # Back and Submit Buttons
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(fill="x", pady=10)
 
-        # Back to Home Button (Left Side)
-        tk.Button(button_frame, text="< Back to Home", command=self.return_to_home, width=15, bg="#69718A", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="left", padx=10)
-
-        # Submit and Next Button (Right Side)
-        tk.Button(button_frame, text="Submit and Next >", command=self.submit_wall_info, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="right", padx=10)
+        # Initial preview
+        self.update_preview()
 
     def clear_placeholder(self, entry, placeholder):
+        """Clear placeholder text"""
         if entry.get() == placeholder:
             entry.delete(0, tk.END)
             entry.config(fg="black")
 
     def add_placeholder(self, entry, placeholder):
+        """Add placeholder text"""
         if entry.get() == "":
             entry.insert(0, placeholder)
             entry.config(fg="grey")
 
     def pick_color(self):
-        color = colorchooser.askcolor()[1]  # Open color picker
+        """Open color picker and update wall color"""
+        color = colorchooser.askcolor()[1]
         if color:
             self.wall_color = color
             self.color_box.config(bg=self.wall_color)
             self.update_preview()
 
     def update_preview(self, event=None):
-        # Clear the canvas
+        """Update the wall preview canvas"""
         self.preview_canvas.delete("all")
-
-        # Get width and height from entries
+        
         try:
             wall_width = float(re.sub(r"[^0-9.]", "", self.wall_width_entry.get()).strip())
             wall_height = float(re.sub(r"[^0-9.]", "", self.wall_height_entry.get()).strip())
         except ValueError:
-            return  # Do nothing if inputs are invalid
+            return
 
-        # Calculate aspect ratio and scale to fit canvas
         canvas_width = 400
         canvas_height = 300
         ratio = min(canvas_width / wall_width, canvas_height / wall_height)
         scaled_width = wall_width * ratio
         scaled_height = wall_height * ratio
 
-        # Draw the wall preview
         x0 = (canvas_width - scaled_width) / 2
         y0 = (canvas_height - scaled_height) / 2
         x1 = x0 + scaled_width
         y1 = y0 + scaled_height
-        self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=self.wall_color, outline="black")
+        
+        # Draw wall
+        self.preview_canvas.create_rectangle(
+            x0, y0, x1, y1, 
+            fill=self.wall_color, 
+            outline="black"
+        )
+        
+        # Draw dimensions
+        self.preview_canvas.create_line(x0, y1, x0 - 10, y1, fill="black")
+        self.preview_canvas.create_line(x1, y1, x1 + 10, y1, fill="black")
+        self.preview_canvas.create_text(
+            (x0 + x1)/2, y1 + 15, 
+            text=f"{wall_width} inches", 
+            anchor="n"
+        )
 
-        # Draw height and width lines with labels
-        self.preview_canvas.create_line(x0, y1, x0 - 10, y1, fill="black")  # Width line start
-        self.preview_canvas.create_line(x1, y1, x1 + 10, y1, fill="black")  # Width line end
-        self.preview_canvas.create_text((x0 + x1) / 2, y1 + 15, text=f"{wall_width} inches", anchor="n")
-
-        self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")  # Height line start
-        self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")  # Height line end
-        self.preview_canvas.create_text(x0 - 15, (y0 + y1) / 2, text=f"{wall_height} inches", anchor="e", angle=90)
+        self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")
+        self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")
+        self.preview_canvas.create_text(
+            x0 - 15, (y0 + y1)/2, 
+            text=f"{wall_height} inches", 
+            anchor="e", 
+            angle=90
+        )
 
     def submit_wall_info(self):
+        """Validate and submit the new wall information"""
         wall_name = self.wall_name_entry.get()
         wall_width_str = self.wall_width_entry.get()
         wall_height_str = self.wall_height_entry.get()
         
-        # Validate inputs
-        if wall_name == "" or wall_width_str == "" or wall_height_str == "":
+        if not all([wall_name, wall_width_str, wall_height_str]):
             messagebox.showerror("Error", "Please fill in all fields.")
             return
         
@@ -185,15 +296,18 @@ class NewGalleryUI:
             messagebox.showerror("Error", "Width and height must be numbers.")
             return
         
-        # Create a new wall object
-        from gallery_wall_planner.models.wall import Wall
-        from gallery_wall_planner.models.gallery import Gallery
-
-        wall = Wall(wall_name, wall_width, wall_height, self.wall_color)
-        Gallery.add_wall(wall)
-
-        print(str(wall))
+        # Create and save the new wall
+        new_wall = Wall(
+            name=wall_name,
+            width=wall_width,
+            height=wall_height,
+            color=self.wall_color
+        )
+        
+        Gallery.add_wall(new_wall)
         
         # Navigate to PermanentObjectUI
         from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
-        PermanentObjectUI(self.root, self.return_to_home)
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        PermanentObjectUI(self.root, self.return_to_home, new_wall)
