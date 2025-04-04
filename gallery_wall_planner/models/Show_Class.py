@@ -1,5 +1,6 @@
 import openpyxl
 from openpyxl.styles import Font, PatternFill
+from config_create-read import read_config
 
 class Show:
     # Class level list of all galleries in the show
@@ -39,6 +40,9 @@ class Show:
         wb = openpyxl.Workbook()
         default_sheet = wb.active
         wb.remove(default_sheet)  # Remove default sheet
+        # Getting data from config file for headers and colors
+        config_values = read_config()
+        
         # Creating seperate sheets for each gallery
         for gallery in self.galleries:
             ws = wb.create_sheet(title=gallery.name[:31])  # Excel limits sheet names to 31 chars
@@ -55,9 +59,9 @@ class Show:
             for wall in gallery.walls:
                 ws.append([wall.name, wall.width, wall.height, getattr(wall, "color", "")])
             ws.append([])
-            # Replace later with a call to the config file to get headers and colors
-            headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS", "Notes"]
-            colors = ["ADD8E6", "90EE90", "ADD8E6", "FFFF99", "FFFF99", "FFFF99", "FFFF99", "FA8072", "D8BFD8", "FFFFFF"]
+            # Replaced with a call to the config file to get headers and colors
+            headers = config_values['headers']
+            colors = config_values['header_colors']
             # Adding headers
             header_row = ws.max_row + 1
             for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
