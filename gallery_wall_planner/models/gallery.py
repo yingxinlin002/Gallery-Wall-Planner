@@ -145,7 +145,7 @@ class Gallery:
                 height=height or 0,
                 depth=depth or 0,
                 price=price or 0,
-                nfs=bool(nfs)
+                nfs=bool(nfs),
                 notes = notes or ""
             )
             setattr(artwork, "id", art_id)
