@@ -178,11 +178,33 @@ def launch_lock_objects_ui(root, wall):
             ]
 
         def on_drag(self, event):
+            # Calculate proposed movement
             dx = event.x - self._drag_data["x"]
             dy = event.y - self._drag_data["y"]
+            
+            # Get current canvas coordinates
+            coords = canvas.coords(self.id)
+            
+            # Calculate new position in canvas coordinates
+            new_x1 = coords[0] + dx
+            new_y1 = coords[1] + dy
+            new_x2 = coords[2] + dx
+            new_y2 = coords[3] + dy
+            
+            # Check boundaries in canvas coordinates
+            if new_x1 < wall_left:
+                dx = wall_left - coords[0]
+            if new_x2 > wall_right:
+                dx = wall_right - coords[2]
+            if new_y1 < canvas_height - wall_bottom - wall_height*scale:
+                dy = (canvas_height - wall_bottom - wall_height*scale) - coords[1]
+            if new_y2 > canvas_height - wall_bottom:
+                dy = (canvas_height - wall_bottom) - coords[3]
+            
+            # Apply constrained movement
             canvas.move(self.id, dx, dy)
-            self._drag_data["x"] = event.x
-            self._drag_data["y"] = event.y
+            self._drag_data["x"] += dx
+            self._drag_data["y"] += dy
             self.update_reference_lines()
 
         def on_drop(self, event):
