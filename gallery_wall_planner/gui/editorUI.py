@@ -61,15 +61,15 @@ class EditorUI:
         self.add_artwork_frame = self.create_collapsible_menu(
             self.control_panel, "Add Artwork", expanded=True)
         
-        # Add Artwork Content
+        # In your EditorUI.py, update the csv_button creation to:
         csv_button = tk.Button(self.add_artwork_frame,
-                             text="Import Artwork by CSV file",
-                             command=lambda: messagebox.showinfo("Info", "Import Artwork by CSV file button pushed"),
-                             bg=self.styles["bg_info"],
-                             fg=self.styles["fg_white"],
-                             font=self.styles["button_font"],
-                             padx=self.styles["button_padx"],
-                             pady=self.styles["button_pady"])
+                            text="Add Artwork by xlsx file",
+                            command=self.open_artwork_xlsx_ui,
+                            bg=self.styles["bg_info"],
+                            fg=self.styles["fg_white"],
+                            font=self.styles["button_font"],
+                            padx=self.styles["button_padx"],
+                            pady=self.styles["button_pady"])
         csv_button.pack(pady=5, fill="x")
         
         manual_button = tk.Button(self.add_artwork_frame,
@@ -111,6 +111,16 @@ class EditorUI:
                 bg="white")
         self.wall_label.pack(expand=True)
 
+    def open_artwork_xlsx_ui(self):
+        from gallery_wall_planner.gui.ArtworkxlsxUI import ArtworkxlsxUI
+        # Clear current UI
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        # Open xlsx artwork UI with a callback to refresh the editor
+        ArtworkxlsxUI(self.root, 
+                    lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
+                    self.selected_wall)
+    
     def toggle_sidebar(self):
         """Toggle the sidebar visibility"""
         if self.sidebar_visible:
