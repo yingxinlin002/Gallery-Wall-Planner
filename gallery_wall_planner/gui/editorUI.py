@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
+from gallery_wall_planner.gui.virtualWall import VirtualWall
 
 class EditorUI:
     def __init__(self, root, return_to_home, selected_wall):
@@ -14,7 +15,9 @@ class EditorUI:
         self.sidebar_visible = True
         self.sidebar_width = 300
         self.sidebar_animation_running = False
+        self.virtual_wall = None
         self.create_ui()
+
 
     def create_ui(self):
         for widget in self.root.winfo_children():
@@ -101,11 +104,28 @@ class EditorUI:
         self.wall_space = tk.Frame(content_frame, bg="white")
         self.wall_space.pack(side="right", fill="both", expand=True)
 
-        self.wall_label = tk.Label(self.wall_space,
-                                 text=f"Wall Space: {self.selected_wall.name}\n{self.selected_wall.width}\" x {self.selected_wall.height}\"",
-                                 font=self.styles["title_font"],
-                                 bg="white")
-        self.wall_label.pack(expand=True)
+        # Initialize VirtualWall when artworks are available
+        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
+            self.initialize_virtual_wall()
+        else:
+            tk.Label(self.wall_space,
+                   text="No artworks added yet",
+                   font=self.styles["title_font"],
+                   bg="white").pack(expand=True)
+            
+    def initialize_virtual_wall(self):
+        """Initialize the virtual wall display"""
+        # Clear existing wall if any
+        for widget in self.wall_space.winfo_children():
+            widget.destroy()
+        
+        # Create new virtual wall
+        self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
+        
+        # Add existing artworks
+        for artwork in self.selected_wall.artwork:
+            self.virtual_wall.add_artwork(artwork)
+            
 
     def animate_sidebar(self, target_width):
         """Smoothly animate the sidebar width change"""
@@ -188,9 +208,13 @@ class EditorUI:
                    fg="gray").pack(pady=20)
 
     def add_artwork_item(self, parent, artwork):
+        """Create a clickable artwork item in the sidebar"""
         frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
         frame.pack(fill="x", pady=2, padx=2)
-
+        
+        # Make the whole frame clickable
+        frame.bind("<Button-1>", lambda e, a=artwork: self.add_artwork_to_wall(a))
+        
         tk.Label(frame,
                text=f"{artwork.name} ({artwork.width}\" x {artwork.height}\")",
                font=self.styles["label_font"],
@@ -211,6 +235,11 @@ class EditorUI:
                    bg="white").pack(anchor="w")
 
         self.artwork_list.append(frame)
+
+    def add_artwork_to_wall(self, artwork):
+        if not hasattr(self, 'virtual_wall'):
+            self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
+        self.virtual_wall.add_artwork(artwork)
 
     def create_collapsible_menu(self, parent, title, expanded=True):
         menu_frame = tk.Frame(parent, bg="#e0e0e0", bd=1, relief="raised")
@@ -269,4 +298,39 @@ class EditorUI:
                     self.selected_wall)
 
     def refresh_artwork_list(self):
+        """Refresh both the sidebar list and virtual wall"""
         self.create_artwork_list_frame()
+        
+        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
+            if not self.virtual_wall:
+                self.initialize_virtual_wall()
+            else:
+                # Clear and repopulate virtual wall
+                for widget in self.wall_space.winfo_children():
+                    widget.destroy()
+                self.initialize_virtual_wall()
+        else:
+            # Clear virtual wall if no artworks
+            if hasattr(self, 'virtual_wall'):
+                for widget in self.wall_space.winfo_children():
+                    widget.destroy()
+                self.virtual_wall = None
+            tk.Label(self.wall_space,
+                   text="No artworks added yet",
+                   font=self.styles["title_font"],
+                   bg="white").pack(expand=True)
+            
+    def add_to_virtual_wall(self, artwork):
+        """Add artwork to the virtual wall when clicked"""
+        if not hasattr(self, 'virtual_wall'):
+            # Initialize virtual wall if not exists
+            for widget in self.wall_space.winfo_children():
+                widget.destroy()
+            self.virtual_wall = VirtualWall(
+                self.wall_space,
+                self.selected_wall,
+                [artwork]
+            )
+        else:
+            # Add to existing virtual wall
+            self.virtual_wall.add_artwork_to_wall(artwork)
