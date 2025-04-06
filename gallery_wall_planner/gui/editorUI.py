@@ -11,6 +11,7 @@ class EditorUI:
         self.selected_wall = selected_wall
         self.styles = get_ui_styles()
         self.artwork_list = []  # Initialize the artwork_list
+        self.sidebar_visible = True  # Track sidebar state
         self.create_ui()
 
     def create_ui(self):
@@ -37,13 +38,28 @@ class EditorUI:
         content_frame = tk.Frame(main_frame)
         content_frame.pack(fill="both", expand=True)
 
-        # Left Panel - Control Panel with collapsible menus
-        control_panel = tk.Frame(content_frame, width=300, bg="#f0f0f0")
-        control_panel.pack(side="left", fill="y")
+        # Container for sidebar and toggle button
+        self.sidebar_container = tk.Frame(content_frame)
+        self.sidebar_container.pack(side="left", fill="y")
+
+        # Left Panel - Control Panel
+        self.control_panel = tk.Frame(self.sidebar_container, width=300, bg="#f0f0f0")
+        self.control_panel.pack(side="left", fill="y")
+
+        # Sidebar toggle button - placed to the right of control panel
+        self.toggle_btn = tk.Button(self.sidebar_container,
+                                  text="◀",  # Arrow pointing left when sidebar is visible
+                                  command=self.toggle_sidebar,
+                                  bg="#e0e0e0",
+                                  fg="black",
+                                  bd=1,
+                                  relief="raised",
+                                  font=("Arial", 10))
+        self.toggle_btn.pack(side="right", fill="y")
 
         # Collapsible menu for Add Artwork
         self.add_artwork_frame = self.create_collapsible_menu(
-            control_panel, "Add Artwork", expanded=True)
+            self.control_panel, "Add Artwork", expanded=True)
         
         # Add Artwork Content
         csv_button = tk.Button(self.add_artwork_frame,
@@ -68,13 +84,13 @@ class EditorUI:
 
         # Collapsible menu for Imported Artwork
         self.imported_artwork_frame = self.create_collapsible_menu(
-            control_panel, "Imported Artwork", expanded=True)
+            self.control_panel, "Imported Artwork", expanded=True)
         
         # Create a scrollable frame for artwork list
         self.create_artwork_list_frame()
 
         # Calculate Installation Instruction Button
-        calc_button = tk.Button(control_panel,
+        self.calc_button = tk.Button(self.control_panel,
                               text="Calculate Installation Instruction",
                               command=lambda: messagebox.showinfo("Info", "Calculate Installation Instruction button pushed"),
                               bg=self.styles["bg_primary"],
@@ -82,18 +98,43 @@ class EditorUI:
                               font=self.styles["button_font"],
                               padx=self.styles["button_padx"],
                               pady=self.styles["button_pady"])
-        calc_button.pack(side="bottom", pady=10, fill="x")
+        self.calc_button.pack(side="bottom", pady=10, fill="x")
 
         # Right Panel - Gallery Wall Space
-        wall_space = tk.Frame(content_frame, bg="white")
-        wall_space.pack(side="right", fill="both", expand=True)
+        self.wall_space = tk.Frame(content_frame, bg="white")
+        self.wall_space.pack(side="right", fill="both", expand=True)
 
         # Placeholder for wall space
-        tk.Label(wall_space, 
+        self.wall_label = tk.Label(self.wall_space, 
                 text=f"Wall Space: {self.selected_wall.name}\n{self.selected_wall.width}\" x {self.selected_wall.height}\"",
                 font=self.styles["title_font"],
-                bg="white").pack(expand=True)
+                bg="white")
+        self.wall_label.pack(expand=True)
 
+    def toggle_sidebar(self):
+        """Toggle the sidebar visibility"""
+        if self.sidebar_visible:
+            # Hide the control panel
+            self.control_panel.pack_forget()
+            # Move toggle button to left side (now acts as the only visible element)
+            self.toggle_btn.pack_forget()
+            self.toggle_btn.pack(side="left", fill="y")
+            self.toggle_btn.config(text="▶")  # Arrow pointing right when sidebar is hidden
+            # Expand the wall space
+            self.wall_space.pack_configure(expand=True, fill="both")
+        else:
+            # Show the control panel
+            self.control_panel.pack(side="left", fill="y")
+            # Move toggle button back to right side
+            self.toggle_btn.pack_forget()
+            self.toggle_btn.pack(side="right", fill="y")
+            self.toggle_btn.config(text="◀")  # Arrow pointing left when sidebar is visible
+            # Reset wall space packing
+            self.wall_space.pack(side="right", fill="both", expand=True)
+        
+        self.sidebar_visible = not self.sidebar_visible
+
+    # ... (rest of your methods remain exactly the same)
     def create_artwork_list_frame(self):
         """Create a scrollable frame for artwork list"""
         # Clear existing widgets and artwork list
