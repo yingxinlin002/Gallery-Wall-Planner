@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, filedialog
 from gallery_wall_planner.models.wall_line import SingleLine
 from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+import math
 
 class VirtualWall:
     def __init__(self, parent_frame, selected_wall):
@@ -14,6 +15,11 @@ class VirtualWall:
         self.draggable_items = []
         self.snap_lines = []
         self.popup_windows = {}
+        self.undo_stack = []
+        self.redo_stack = []
+        self.zoom_level = 1.0
+        self.pan_x = 0
+        self.pan_y = 0
         
         # Canvas setup
         self.canvas_width = 800
@@ -29,22 +35,53 @@ class VirtualWall:
         
         self.create_ui()
         self.setup_default_snap_lines()
+        self.draw_permanent_objects()
     
     def create_ui(self):
         """Create the main UI components"""
         self.calculate_scale()
         
+        # Main frame for canvas and scrollbars
+        self.canvas_frame = tk.Frame(self.parent)
+        self.canvas_frame.pack(fill="both", expand=True)
+        
+        # Add scrollbars
+        self.h_scroll = tk.Scrollbar(self.canvas_frame, orient="horizontal")
+        self.v_scroll = tk.Scrollbar(self.canvas_frame, orient="vertical")
+        
         # Main canvas
-        self.canvas = tk.Canvas(self.parent, bg="white", 
-                              width=self.canvas_width, 
-                              height=self.canvas_height)
-        self.canvas.pack(fill="both", expand=True, padx=10, pady=10)
+        self.canvas = tk.Canvas(
+            self.canvas_frame,
+            bg="white",
+            width=self.canvas_width,
+            height=self.canvas_height,
+            xscrollcommand=self.h_scroll.set,
+            yscrollcommand=self.v_scroll.set,
+            scrollregion=(0, 0, self.canvas_width, self.canvas_height))
         
-        # Draw the wall
+        self.h_scroll.config(command=self.canvas.xview)
+        self.v_scroll.config(command=self.canvas.yview)
+        
+        # Grid layout
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.v_scroll.grid(row=0, column=1, sticky="ns")
+        self.h_scroll.grid(row=1, column=0, sticky="ew")
+        
+        self.canvas_frame.grid_rowconfigure(0, weight=1)
+        self.canvas_frame.grid_columnconfigure(0, weight=1)
+        
+        # Draw the wall and permanent objects
         self.draw_wall()
+        self.draw_permanent_objects()
         
-        # Draw the grid (starts empty except for default snap line)
+        # Draw the grid
         self.draw_grid()
+        
+        # Bind zoom and pan events
+        self.canvas.bind("<MouseWheel>", self.on_mousewheel)
+        self.canvas.bind("<ButtonPress-2>", self.on_pan_start)
+        self.canvas.bind("<B2-Motion>", self.on_pan_move)
+        self.canvas.bind("<ButtonRelease-2>", self.on_pan_end)
         
         # Snap line controls frame
         self.snap_button_frame = ttk.Frame(self.parent)
@@ -74,6 +111,23 @@ class VirtualWall:
         )
         self.edit_lines_btn.pack(side="left", padx=5)
         
+        # Undo/Redo buttons
+        self.undo_btn = ttk.Button(
+            self.snap_button_frame,
+            text="Undo",
+            command=self.undo_action,
+            state="disabled"
+        )
+        self.undo_btn.pack(side="right", padx=5)
+        
+        self.redo_btn = ttk.Button(
+            self.snap_button_frame,
+            text="Redo",
+            command=self.redo_action,
+            state="disabled"
+        )
+        self.redo_btn.pack(side="right", padx=5)
+        
         # Save layout button
         self.save_btn = ttk.Button(
             self.snap_button_frame,
@@ -81,6 +135,132 @@ class VirtualWall:
             command=self.save_layout
         )
         self.save_btn.pack(side="right", padx=5)
+
+    def draw_permanent_objects(self):
+        """Draw all permanent objects on the wall"""
+        for obj, pos in self.selected_wall.get_permanent_objects():
+            x1 = self.margin + pos['x'] * self.scale
+            y1 = self.canvas_height - (self.margin + (pos['y'] + obj.height) * self.scale)
+            x2 = self.margin + (pos['x'] + obj.width) * self.scale
+            y2 = self.canvas_height - (self.margin + pos['y'] * self.scale)
+            
+            # Draw with a distinct color and pattern
+            self.canvas.create_rectangle(
+                x1, y1, x2, y2,
+                fill="#cccccc", outline="black", width=2,
+                stipple="gray50", tags="permanent_object"
+            )
+            
+            # Add label
+            self.canvas.create_text(
+                (x1 + x2) / 2, (y1 + y2) / 2,
+                text=obj.name, font=("Arial", 8),
+                tags="permanent_object"
+            )
+    
+    def on_mousewheel(self, event):
+        """Handle mouse wheel for zooming"""
+        if event.delta > 0:
+            self.zoom_in()
+        else:
+            self.zoom_out()
+    
+    def zoom_in(self):
+        """Zoom in by 10%"""
+        if self.zoom_level < 3.0:  # Max zoom level
+            self.zoom_level *= 1.1
+            self.update_zoom()
+    
+    def zoom_out(self):
+        """Zoom out by 10%"""
+        if self.zoom_level > 0.5:  # Min zoom level
+            self.zoom_level /= 1.1
+            self.update_zoom()
+    
+    def update_zoom(self):
+        """Update the canvas with current zoom level"""
+        self.canvas.scale("all", 0, 0, self.zoom_level, self.zoom_level)
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+    
+    def on_pan_start(self, event):
+        """Start panning the canvas"""
+        self.canvas.scan_mark(event.x, event.y)
+    
+    def on_pan_move(self, event):
+        """Pan the canvas"""
+        self.canvas.scan_dragto(event.x, event.y, gain=1)
+    
+    def on_pan_end(self, event):
+        """End panning"""
+        pass
+    
+    def push_to_undo_stack(self, action_type, data):
+        """Push current state to undo stack"""
+        self.undo_stack.append((action_type, data))
+        self.redo_stack = []  # Clear redo stack when new action is performed
+        self.update_undo_redo_buttons()
+    
+    def undo_action(self):
+        """Undo the last action"""
+        if not self.undo_stack:
+            return
+            
+        action_type, data = self.undo_stack.pop()
+        
+        if action_type == "move":
+            item_id, old_x, old_y = data
+            for item in self.draggable_items:
+                if item['id'] == item_id:
+                    # Get current position for redo
+                    current_x, current_y = item['x'], item['y']
+                    # Restore old position
+                    item['x'], item['y'] = old_x, old_y
+                    self.move_item_to_position(item)
+                    # Push to redo stack
+                    self.redo_stack.append(("move", (item_id, current_x, current_y)))
+                    break
+        
+        self.update_undo_redo_buttons()
+    
+    def redo_action(self):
+        """Redo the last undone action"""
+        if not self.redo_stack:
+            return
+            
+        action_type, data = self.redo_stack.pop()
+        
+        if action_type == "move":
+            item_id, new_x, new_y = data
+            for item in self.draggable_items:
+                if item['id'] == item_id:
+                    # Get current position for undo
+                    current_x, current_y = item['x'], item['y']
+                    # Apply redo position
+                    item['x'], item['y'] = new_x, new_y
+                    self.move_item_to_position(item)
+                    # Push to undo stack
+                    self.undo_stack.append(("move", (item_id, current_x, current_y)))
+                    break
+        
+        self.update_undo_redo_buttons()
+    
+    def update_undo_redo_buttons(self):
+        """Update button states based on stack contents"""
+        self.undo_btn.config(state="normal" if self.undo_stack else "disabled")
+        self.redo_btn.config(state="normal" if self.redo_stack else "disabled")
+    
+    def check_collision_with_permanent_objects(self, x, y, width, height):
+        """Check if artwork would collide with permanent objects"""
+        for obj, pos in self.selected_wall.get_permanent_objects():
+            obj_x1 = pos['x']
+            obj_y1 = pos['y']
+            obj_x2 = obj_x1 + obj.width
+            obj_y2 = obj_y1 + obj.height
+            
+            # Check for overlap
+            if not (x + width <= obj_x1 or obj_x2 <= x or y + height <= obj_y1 or obj_y2 <= y):
+                return True
+        return False
 
     def toggle_grid(self):
         """Toggle grid visibility"""
@@ -451,6 +631,22 @@ class VirtualWall:
         # Move the artwork
         self.canvas.coords(item_id, new_x1, new_y1, new_x1 + width, new_y1 + height)
         
+        # Check for collisions with permanent objects
+        colliding = False
+        for item in self.draggable_items:
+            if item['id'] == item_id:
+                x_in = (new_x1 - self.margin) / self.scale
+                y_in = (self.canvas_height - new_y1 - height - self.margin) / self.scale
+                colliding = self.check_collision_with_permanent_objects(
+                    x_in, y_in,
+                    item['artwork'].width,
+                    item['artwork'].height
+                )
+                break
+        
+        # Visual feedback for collision
+        self.canvas.itemconfig(item_id, outline="red" if colliding else "black")
+        
         # Move associated text
         for item in self.draggable_items:
             if item['id'] == item_id:
@@ -463,7 +659,7 @@ class VirtualWall:
 
     
     def on_drop(self, event, item_id):
-        """Handle drop event with snapping to lines"""
+        """Handle drop event with snapping to lines and collision checks"""
         # Find the draggable item
         for item in self.draggable_items:
             if item['id'] == item_id:
@@ -474,6 +670,9 @@ class VirtualWall:
                 
                 item['x'] = (coords[0] - wall_left) / self.scale
                 item['y'] = (self.canvas_height - coords[3] - wall_bottom) / self.scale
+                
+                # Store old position for undo
+                old_x, old_y = item['x'], item['y']
                 
                 # Snap to nearby lines
                 item['x'], item['y'] = self.snap_to_lines(
@@ -489,12 +688,30 @@ class VirtualWall:
                     item['artwork'].height
                 )
                 
+                # Check for collisions with permanent objects
+                colliding = self.check_collision_with_permanent_objects(
+                    item['x'], item['y'],
+                    item['artwork'].width,
+                    item['artwork'].height
+                )
+                
+                # Visual feedback for collision
+                self.canvas.itemconfig(item_id, outline="red" if colliding else "black")
+                
+                # Add to undo stack if position changed
+                if old_x != item['x'] or old_y != item['y']:
+                    self.push_to_undo_stack(
+                        "move",
+                        (item_id, old_x, old_y)
+                    )
+                
                 # Update position
                 self.move_item_to_position(item)
                 break
     
     def enforce_boundaries(self, x, y, width, height):
-        """Ensure artwork stays within wall boundaries"""
+        """Ensure artwork stays within wall boundaries and doesn't overlap permanent objects"""
+        # First enforce wall boundaries
         if x < 0:
             x = 0
         if y < 0:
@@ -503,6 +720,23 @@ class VirtualWall:
             x = self.selected_wall.width - width
         if y + height > self.selected_wall.height:
             y = self.selected_wall.height - height
+        
+        # Then check for permanent object collisions
+        if self.check_collision_with_permanent_objects(x, y, width, height):
+            # Try to find nearest valid position
+            for offset in [1, 2, 5, 10]:  # Try small offsets first
+                # Check all directions
+                for dx, dy in [(offset, 0), (-offset, 0), (0, offset), (0, -offset)]:
+                    new_x = x + dx
+                    new_y = y + dy
+                    if (0 <= new_x <= self.selected_wall.width - width and
+                        0 <= new_y <= self.selected_wall.height - height and
+                        not self.check_collision_with_permanent_objects(new_x, new_y, width, height)):
+                        return new_x, new_y
+            
+            # If no valid position found, revert to original
+            return x, y
+        
         return x, y
     
     def snap_to_lines(self, x, y, width, height, threshold_pixels=8):
