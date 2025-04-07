@@ -104,14 +104,8 @@ class EditorUI:
         self.wall_space = tk.Frame(content_frame, bg="white")
         self.wall_space.pack(side="right", fill="both", expand=True)
 
-        # Initialize VirtualWall when artworks are available
-        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
-            self.initialize_virtual_wall()
-        else:
-            tk.Label(self.wall_space,
-                   text="No artworks added yet",
-                   font=self.styles["title_font"],
-                   bg="white").pack(expand=True)
+        # Initialize VirtualWall - always show the wall
+        self.initialize_virtual_wall()
             
     def initialize_virtual_wall(self):
         """Initialize the virtual wall display"""
@@ -122,9 +116,10 @@ class EditorUI:
         # Create new virtual wall
         self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
         
-        # Add existing artworks
-        for artwork in self.selected_wall.artwork:
-            self.virtual_wall.add_artwork(artwork)
+        # Add existing artworks if any
+        if hasattr(self.selected_wall, 'artwork'):
+            for artwork in self.selected_wall.artwork:
+                self.virtual_wall.add_artwork(artwork)
             
 
     def animate_sidebar(self, target_width):

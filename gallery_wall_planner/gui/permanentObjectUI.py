@@ -8,7 +8,7 @@ import re
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 
 class PermanentObjectUI:
-    def __init__(self, root, return_to_previous, wall):
+    def __init__(self, root, return_to_previous, wall):  #  receive wall
         self.root = root
         self.return_to_previous = return_to_previous
         self.wall = wall
@@ -27,7 +27,7 @@ class PermanentObjectUI:
         top_frame.pack(fill="x")
 
         tk.Label(top_frame, text="Permanent Objects on the Wall", font=self.styles["title_font"]).pack(pady=20)
-        tk.Label(top_frame, text="Is there any permanent items on the wall (e.g., door, light switch)?", 
+        tk.Label(top_frame, text="Is there any permanent items on the wall (e.g., door, light switch)?",
                 font=self.styles["label_font"]).pack(pady=10)
 
         yes_no_frame = tk.Frame(top_frame)
@@ -65,11 +65,11 @@ class PermanentObjectUI:
         button_frame.pack(side="bottom", fill="x", pady=20)
 
         tk.Button(button_frame, text="Back", command=self.return_to_previous, width=self.styles["button_width"],
-                 bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"], 
+                 bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"],
                  relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(side=tk.LEFT, padx=10)
 
         self.submit_button = tk.Button(button_frame, text="Submit", command=self.submit, width=self.styles["button_width"],
-                                      bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"], 
+                                      bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"],
                                       relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"])
         self.submit_button.pack(side=tk.RIGHT, padx=10)
         self.submit_button.config(state="normal")
@@ -116,12 +116,12 @@ class PermanentObjectUI:
         tk.Label(input_frame, text="Upload Image (optional):", font=self.styles["label_font"]).pack(pady=5)
         self.image_path = tk.StringVar()
         tk.Button(input_frame, text="Browse", command=self.upload_image, width=self.styles["button_width"],
-                 bg=self.styles["bg_info"], fg=self.styles["fg_white"], font=self.styles["button_font"], 
+                 bg=self.styles["bg_info"], fg=self.styles["fg_white"], font=self.styles["button_font"],
                  relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=5)
 
         # Add button
         tk.Button(input_frame, text="Add Permanent Object", command=self.save_permanent_object,
-                 width=20, bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"], 
+                 width=20, bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"],
                  relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=10)
 
         # Preview frame
@@ -167,7 +167,7 @@ class PermanentObjectUI:
         try:
             width = float(re.sub(r"[^0-9.]", "", width).strip())
             height = float(re.sub(r"[^0-9.]", "", height).strip())
-            
+
             # Create PermanentObject instance
             permanent_obj = PermanentObject(
                 name=name,
@@ -175,14 +175,14 @@ class PermanentObjectUI:
                 height=height,
                 image_path=image_path if image_path else None
             )
-            
+
             # Add to wall (position will be set in LockObjectsToWall)
             self.wall.add_permanent_object(permanent_obj)
-            
+
             self.clear_inputs()
             self.refresh_object_preview()
             self.submit_button.config(state="normal")
-            
+
         except ValueError as e:
             messagebox.showerror("Error", f"Invalid dimensions: {str(e)}")
 
@@ -193,14 +193,14 @@ class PermanentObjectUI:
         permanent_objects = self.wall.get_permanent_objects()
         if not permanent_objects:
             tk.Label(self.object_preview_frame, 
-                    text="No permanent objects added yet",
-                    font=self.styles["label_font"],
-                    fg="gray").pack(pady=20)
+                     text="No permanent objects added yet",
+                     font=self.styles["label_font"],
+                     fg="gray").pack(pady=20)
             return
 
         tk.Label(self.object_preview_frame, 
-                text="Saved Permanent Objects:", 
-                font=self.styles["label_font"]).pack(pady=(0, 10))
+                 text="Saved Permanent Objects:",
+                 font=self.styles["label_font"]).pack(pady=(0, 10))
 
         canvas = tk.Canvas(self.object_preview_frame, height=200)
         canvas.pack(side="left", fill="both", expand=True)
@@ -227,6 +227,8 @@ class PermanentObjectUI:
                                  relief="flat",
                                  activeforeground="darkred")
             delete_btn.pack(side="right")
+
+            # Add hover effect
             delete_btn.bind("<Enter>", lambda e, btn=delete_btn: btn.config(fg="darkred"))
             delete_btn.bind("<Leave>", lambda e, btn=delete_btn: btn.config(fg="red"))
 
@@ -235,7 +237,7 @@ class PermanentObjectUI:
         obj, _ = self.wall.get_permanent_objects()[index]
         self.wall.remove_permanent_object(obj)
         self.refresh_object_preview()
-        
+
         if not self.wall.get_permanent_objects() and self.has_permanent_items.get():
             self.submit_button.config(state="disabled")
 
@@ -257,7 +259,7 @@ class PermanentObjectUI:
                 if not self.wall.get_permanent_objects():
                     messagebox.showwarning("Missing Data", "You must add at least one permanent object before proceeding.")
                     return
-                
+
                 for widget in self.root.winfo_children():
                     widget.destroy()
                 launch_lock_objects_ui(self.root, self.wall)
