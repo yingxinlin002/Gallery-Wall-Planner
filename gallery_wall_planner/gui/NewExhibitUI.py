@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
-from gallery_wall_planner.models.wall import Wall
-from gallery_wall_planner.models.gallery import Gallery
+from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
+from gallery_wall_planner.models.gallery import Gallery  #  ADDED to carry wall info forward
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -22,28 +22,28 @@ class NewGalleryUI:
 
         # Add buttons to the popup window
         tk.Button(
-            self.popup, 
-            text="Start from Scratch", 
+            self.popup,
+            text="Start from Scratch",
             command=self.start_from_scratch,
-            width=20, 
-            bg="#5F3FCA", 
-            fg="white", 
-            font=("Helvetica", 12, "bold"), 
-            relief="raised", 
-            padx=10, 
+            width=20,
+            bg="#5F3FCA",
+            fg="white",
+            font=("Helvetica", 12, "bold"),
+            relief="raised",
+            padx=10,
             pady=5
         ).pack(pady=10)
-        
+
         tk.Button(
-            self.popup, 
-            text="Load from an Existing Wall", 
+            self.popup,
+            text="Load from an Existing Wall",
             command=self.load_from_existing,
-            width=20, 
-            bg="#5F3FCA", 
-            fg="white", 
-            font=("Helvetica", 12, "bold"), 
-            relief="raised", 
-            padx=10, 
+            width=20,
+            bg="#5F3FCA",
+            fg="white",
+            font=("Helvetica", 12, "bold"),
+            relief="raised",
+            padx=10,
             pady=5
         ).pack(pady=10)
 
@@ -78,28 +78,28 @@ class NewGalleryUI:
         # Main container
         main_frame = tk.Frame(self.root)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
+
         # Title
         tk.Label(
-            main_frame, 
-            text="New Gallery Wall", 
+            main_frame,
+            text="New Gallery Wall",
             font=("Arial", 24)
         ).pack(pady=(0, 20))
         
         # Centered form container
         form_container = tk.Frame(main_frame)
         form_container.pack()
-        
+
         # Form frame with centered contents
         form_frame = tk.Frame(form_container)
         form_frame.pack()
-        
+
         # Wall Name - Centered row
         name_frame = tk.Frame(form_frame)
         name_frame.pack(pady=5)
         tk.Label(
-            name_frame, 
-            text="Wall Name:", 
+            name_frame,
+            text="Wall Name:",
             font=("Arial", 12)
         ).pack(side="left", padx=(0, 10))
         self.wall_name_entry = tk.Entry(name_frame, font=("Arial", 12), width=15)
@@ -113,8 +113,8 @@ class NewGalleryUI:
         width_frame = tk.Frame(form_frame)
         width_frame.pack(pady=5)
         tk.Label(
-            width_frame, 
-            text="Width (inches):", 
+            width_frame,
+            text="Width (inches):",
             font=("Arial", 12)
         ).pack(side="left", padx=(0, 10))
         self.wall_width_entry = tk.Entry(width_frame, font=("Arial", 12), width=10)
@@ -128,8 +128,8 @@ class NewGalleryUI:
         height_frame = tk.Frame(form_frame)
         height_frame.pack(pady=5)
         tk.Label(
-            height_frame, 
-            text="Height (inches):", 
+            height_frame,
+            text="Height (inches):",
             font=("Arial", 12)
         ).pack(side="left", padx=(0, 10))
         self.wall_height_entry = tk.Entry(height_frame, font=("Arial", 12), width=10)
@@ -143,69 +143,69 @@ class NewGalleryUI:
         color_frame = tk.Frame(form_frame)
         color_frame.pack(pady=5)
         tk.Label(
-            color_frame, 
-            text="Wall Color:", 
+            color_frame,
+            text="Wall Color:",
             font=("Arial", 12)
         ).pack(side="left", padx=(0, 10))
-        
+
         self.color_box = tk.Label(color_frame, bg=self.wall_color, width=10, height=1)
         self.color_box.pack(side="left", padx=(0, 10))
-        
+
         tk.Button(
-            color_frame, 
-            text="Pick", 
+            color_frame,
+            text="Pick",
             command=self.pick_color,
-            width=5, 
-            bg="#5F3FCA", 
-            fg="white", 
-            font=("Helvetica", 10), 
+            width=5,
+            bg="#5F3FCA",
+            fg="white",
+            font=("Helvetica", 10),
             relief="raised"
         ).pack(side="left")
-        
+
         # Create a container for canvas and buttons
         canvas_button_container = tk.Frame(main_frame)
         canvas_button_container.pack(pady=(20, 0), fill="both", expand=True)
-        
+
         # Wall Preview
         preview_frame = tk.Frame(canvas_button_container)
         preview_frame.pack(fill="both", expand=True)
-        
+
         self.preview_canvas = tk.Canvas(
-            preview_frame, 
-            width=400, 
+            preview_frame,
+            width=400,
             height=250,
-            bg="white", 
-            highlightthickness=1, 
+            bg="white",
+            highlightthickness=1,
             highlightbackground="black"
         )
         self.preview_canvas.pack()
-        
+
         # Buttons at bottom of canvas container
         button_frame = tk.Frame(canvas_button_container)
         button_frame.pack(fill="x", pady=(10, 0))
 
         tk.Button(
-            button_frame, 
-            text="< Back to Home", 
+            button_frame,
+            text="< Back to Home",
             command=self.return_to_home,
-            width=15, 
-            bg="#69718A", 
-            fg="white", 
-            font=("Helvetica", 12, "bold"), 
+            width=15,
+            bg="#69718A",
+            fg="white",
+            font=("Helvetica", 12, "bold"),
             relief="raised"
         ).pack(side="left", padx=10)
 
         tk.Button(
-            button_frame, 
-            text="Submit and Next >", 
+            button_frame,
+            text="Submit and Next >",
             command=self.submit_wall_info,
-            width=15, 
-            bg="#5F3FCA", 
-            fg="white", 
-            font=("Helvetica", 12, "bold"), 
+            width=15,
+            bg="#5F3FCA",
+            fg="white",
+            font=("Helvetica", 12, "bold"),
             relief="raised"
         ).pack(side="right", padx=10)
-        
+
         # Bind events
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
@@ -236,7 +236,7 @@ class NewGalleryUI:
     def update_preview(self, event=None):
         """Update the wall preview canvas"""
         self.preview_canvas.delete("all")
-        
+
         try:
             wall_width = float(re.sub(r"[^0-9.]", "", self.wall_width_entry.get()).strip())
             wall_height = float(re.sub(r"[^0-9.]", "", self.wall_height_entry.get()).strip())
@@ -253,29 +253,29 @@ class NewGalleryUI:
         y0 = (canvas_height - scaled_height) / 2
         x1 = x0 + scaled_width
         y1 = y0 + scaled_height
-        
+
         # Draw wall
         self.preview_canvas.create_rectangle(
-            x0, y0, x1, y1, 
-            fill=self.wall_color, 
+            x0, y0, x1, y1,
+            fill=self.wall_color,
             outline="black"
         )
-        
+
         # Draw dimensions
         self.preview_canvas.create_line(x0, y1, x0 - 10, y1, fill="black")
         self.preview_canvas.create_line(x1, y1, x1 + 10, y1, fill="black")
         self.preview_canvas.create_text(
-            (x0 + x1)/2, y1 + 15, 
-            text=f"{wall_width} inches", 
+            (x0 + x1)/2, y1 + 15,
+            text=f"{wall_width} inches",
             anchor="n"
         )
 
         self.preview_canvas.create_line(x0, y0, x0, y0 - 10, fill="black")
         self.preview_canvas.create_line(x0, y1, x0, y1 + 10, fill="black")
         self.preview_canvas.create_text(
-            x0 - 15, (y0 + y1)/2, 
-            text=f"{wall_height} inches", 
-            anchor="e", 
+            x0 - 15, (y0 + y1)/2,
+            text=f"{wall_height} inches",
+            anchor="e",
             angle=90
         )
 
@@ -303,7 +303,7 @@ class NewGalleryUI:
             height=wall_height,
             color=self.wall_color
         )
-        
+
         Gallery.add_wall(new_wall)
         
         # Navigate to PermanentObjectUI
