@@ -9,7 +9,7 @@ from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 
 # Initialize example wall once at startup
-Gallery.add_wall(Wall("Example Wall", 100, 75, "grey"))
+Gallery.add_wall(Wall("Example Wall", 200, 125, "grey"))
 
 def create_home_menu():
     """Create the home menu with buttons."""

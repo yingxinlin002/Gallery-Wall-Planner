@@ -5,6 +5,7 @@ import os
 def open_popup_editor(
     root,
     item_index,
+    item_data,  # This is now our prepared dictionary
     obstacles,
     obstacle_names,
     layout_items,
@@ -20,18 +21,15 @@ def open_popup_editor(
     enforce_boundaries,
     popup_windows,
 ):
-    # Close any existing popup for this item
     if item_index in popup_windows:
         popup_windows[item_index].destroy()
 
-    item_data = obstacles[item_index]
-    if not item_data.get("Name"):
-        item_data["Name"] = obstacle_names[item_index]
-
+    # Use the provided item_data dictionary directly
     item_name = item_data["Name"]
-    pos = {"x": items[item_index].x, "y": items[item_index].y}
+    pos = {"x": item_data["x"], "y": item_data["y"]}
     width_val = item_data["Width"]
     height_val = item_data["Height"]
+    
     bl = (pos["x"], pos["y"])
     center = (bl[0] + width_val / 2, bl[1] + height_val / 2)
     tl = (bl[0], bl[1] + height_val)

@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
+from gallery_wall_planner.gui.virtualWall import VirtualWall
 
 class EditorUI:
     def __init__(self, root, return_to_home, selected_wall):
@@ -10,19 +11,21 @@ class EditorUI:
         self.return_to_home = return_to_home
         self.selected_wall = selected_wall
         self.styles = get_ui_styles()
-        self.artwork_list = []  # Initialize the artwork_list
+        self.artwork_list = []
+        self.sidebar_visible = True
+        self.sidebar_width = 300
+        self.sidebar_animation_running = False
+        self.virtual_wall = None
         self.create_ui()
 
+
     def create_ui(self):
-        # Clear any existing widgets
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        # Main container
         main_frame = tk.Frame(self.root)
         main_frame.pack(fill="both", expand=True)
 
-        # Back button at top left
         back_button = tk.Button(main_frame,
                               text="< Back to Wall Selection",
                               command=self.back_to_wall_selection,
@@ -33,29 +36,46 @@ class EditorUI:
                               pady=self.styles["button_pady"])
         back_button.pack(side="top", anchor="nw", padx=10, pady=10)
 
-        # Content frame below back button
         content_frame = tk.Frame(main_frame)
         content_frame.pack(fill="both", expand=True)
 
-        # Left Panel - Control Panel with collapsible menus
-        control_panel = tk.Frame(content_frame, width=300, bg="#f0f0f0")
-        control_panel.pack(side="left", fill="y")
+        # Sidebar container setup
+        self.sidebar_container = tk.Frame(content_frame)
+        self.sidebar_container.pack(side="left", fill="y")
 
-        # Collapsible menu for Add Artwork
+        # Control panel with initial width
+        self.control_panel = tk.Frame(self.sidebar_container, 
+                                    width=self.sidebar_width, 
+                                    bg="#f0f0f0")
+        self.control_panel.pack(side="left", fill="y")
+        self.control_panel.pack_propagate(False)  # Prevent children from changing width
+
+        # Toggle button with improved styling
+        self.toggle_btn = tk.Button(self.sidebar_container,
+                                  text="◀",
+                                  command=self.toggle_sidebar,
+                                  bg="#e0e0e0",
+                                  fg="black",
+                                  bd=1,
+                                  relief="raised",
+                                  font=("Arial", 10),
+                                  width=3)
+        self.toggle_btn.pack(side="right", fill="y")
+
+        # Add collapsible menus
         self.add_artwork_frame = self.create_collapsible_menu(
-            control_panel, "Add Artwork", expanded=True)
-        
-        # Add Artwork Content
+            self.control_panel, "Add Artwork", expanded=True)
+
         csv_button = tk.Button(self.add_artwork_frame,
-                             text="Import Artwork by CSV file",
-                             command=lambda: messagebox.showinfo("Info", "Import Artwork by CSV file button pushed"),
+                             text="Add Artwork by xlsx file",
+                             command=self.open_artwork_xlsx_ui,
                              bg=self.styles["bg_info"],
                              fg=self.styles["fg_white"],
                              font=self.styles["button_font"],
                              padx=self.styles["button_padx"],
                              pady=self.styles["button_pady"])
         csv_button.pack(pady=5, fill="x")
-        
+
         manual_button = tk.Button(self.add_artwork_frame,
                                 text="Add Artwork Manually",
                                 command=self.open_artwork_manual_ui,
@@ -66,51 +86,111 @@ class EditorUI:
                                 pady=self.styles["button_pady"])
         manual_button.pack(pady=5, fill="x")
 
-        # Collapsible menu for Imported Artwork
         self.imported_artwork_frame = self.create_collapsible_menu(
-            control_panel, "Imported Artwork", expanded=True)
-        
-        # Create a scrollable frame for artwork list
+            self.control_panel, "Imported Artwork", expanded=True)
+
         self.create_artwork_list_frame()
 
-        # Calculate Installation Instruction Button
-        calc_button = tk.Button(control_panel,
-                              text="Calculate Installation Instruction",
-                              command=lambda: messagebox.showinfo("Info", "Calculate Installation Instruction button pushed"),
-                              bg=self.styles["bg_primary"],
-                              fg=self.styles["fg_white"],
-                              font=self.styles["button_font"],
-                              padx=self.styles["button_padx"],
-                              pady=self.styles["button_pady"])
-        calc_button.pack(side="bottom", pady=10, fill="x")
+        self.calc_button = tk.Button(self.control_panel,
+                                   text="Calculate Installation Instruction",
+                                   command=lambda: messagebox.showinfo("Info", "Calculate Installation Instruction button pushed"),
+                                   bg=self.styles["bg_primary"],
+                                   fg=self.styles["fg_white"],
+                                   font=self.styles["button_font"],
+                                   padx=self.styles["button_padx"],
+                                   pady=self.styles["button_pady"])
+        self.calc_button.pack(side="bottom", pady=10, fill="x")
 
-        # Right Panel - Gallery Wall Space
-        wall_space = tk.Frame(content_frame, bg="white")
-        wall_space.pack(side="right", fill="both", expand=True)
+        self.wall_space = tk.Frame(content_frame, bg="white")
+        self.wall_space.pack(side="right", fill="both", expand=True)
 
-        # Placeholder for wall space
-        tk.Label(wall_space, 
-                text=f"Wall Space: {self.selected_wall.name}\n{self.selected_wall.width}\" x {self.selected_wall.height}\"",
-                font=self.styles["title_font"],
-                bg="white").pack(expand=True)
+        # Initialize VirtualWall when artworks are available
+        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
+            self.initialize_virtual_wall()
+        else:
+            tk.Label(self.wall_space,
+                   text="No artworks added yet",
+                   font=self.styles["title_font"],
+                   bg="white").pack(expand=True)
+            
+    def initialize_virtual_wall(self):
+        """Initialize the virtual wall display"""
+        # Clear existing wall if any
+        for widget in self.wall_space.winfo_children():
+            widget.destroy()
+        
+        # Create new virtual wall
+        self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
+        
+        # Add existing artworks
+        for artwork in self.selected_wall.artwork:
+            self.virtual_wall.add_artwork(artwork)
+            
+
+    def animate_sidebar(self, target_width):
+        """Smoothly animate the sidebar width change"""
+        if self.sidebar_animation_running:
+            return
+            
+        self.sidebar_animation_running = True
+        
+        current_width = self.control_panel.winfo_width()
+        step = 15  # Pixels to move each frame
+        direction = 1 if target_width > current_width else -1
+        
+        def update_animation():
+            nonlocal current_width
+            current_width += step * direction
+            
+            # Check if we've reached or passed the target
+            if (direction == 1 and current_width >= target_width) or \
+               (direction == -1 and current_width <= target_width):
+                current_width = target_width
+                self.control_panel.config(width=current_width)
+                self.sidebar_animation_running = False
+                self.finalize_sidebar_state()
+                return
+            
+            self.control_panel.config(width=current_width)
+            self.root.after(10, update_animation)
+        
+        update_animation()
+
+    def finalize_sidebar_state(self):
+        """Final adjustments after animation completes"""
+        if self.sidebar_visible:
+            self.toggle_btn.config(text="◀")
+            self.toggle_btn.pack_forget()
+            self.toggle_btn.pack(side="right", fill="y")
+        else:
+            self.toggle_btn.config(text="▶")
+            self.toggle_btn.pack_forget()
+            self.toggle_btn.pack(side="left", fill="y")
+
+    def toggle_sidebar(self):
+        """Toggle sidebar visibility with animation"""
+        if self.sidebar_animation_running:
+            return
+            
+        if self.sidebar_visible:
+            self.animate_sidebar(0)
+        else:
+            self.animate_sidebar(self.sidebar_width)
+        
+        self.sidebar_visible = not self.sidebar_visible
 
     def create_artwork_list_frame(self):
-        """Create a scrollable frame for artwork list"""
-        # Clear existing widgets and artwork list
         for widget in self.imported_artwork_frame.winfo_children():
             widget.destroy()
-        self.artwork_list = []  # Reset the artwork list
-        
-        # Rest of the method remains the same...
+        self.artwork_list = []
+
         canvas = tk.Canvas(self.imported_artwork_frame, bg="white")
         scrollbar = tk.Scrollbar(self.imported_artwork_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = tk.Frame(canvas, bg="white")
 
         scrollable_frame.bind(
             "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
-            )
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
@@ -119,27 +199,27 @@ class EditorUI:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # Display all artworks in the selected wall
         if hasattr(self.selected_wall, 'artwork'):
             for artwork in self.selected_wall.artwork:
                 self.add_artwork_item(scrollable_frame, artwork)
         else:
-            tk.Label(scrollable_frame, 
-                    text="No artworks added yet",
-                    fg="gray").pack(pady=20)
+            tk.Label(scrollable_frame,
+                   text="No artworks added yet",
+                   fg="gray").pack(pady=20)
 
     def add_artwork_item(self, parent, artwork):
-        """Add a single artwork item to the list"""
+        """Create a clickable artwork item in the sidebar"""
         frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
         frame.pack(fill="x", pady=2, padx=2)
         
-        # Artwork name and basic info
-        tk.Label(frame, 
-                text=f"{artwork.name} ({artwork.width}\" x {artwork.height}\")",
-                font=self.styles["label_font"],
-                bg="white").pack(anchor="w")
+        # Make the whole frame clickable
+        frame.bind("<Button-1>", lambda e, a=artwork: self.add_artwork_to_wall(a))
         
-        # Additional details
+        tk.Label(frame,
+               text=f"{artwork.name} ({artwork.width}\" x {artwork.height}\")",
+               font=self.styles["label_font"],
+               bg="white").pack(anchor="w")
+
         details = []
         if artwork.medium:
             details.append(f"Medium: {artwork.medium}")
@@ -147,25 +227,27 @@ class EditorUI:
             details.append(f"Price: ${artwork.price:,.2f}")
         if artwork.nfs:
             details.append("Not For Sale")
-            
+
         if details:
             tk.Label(frame,
-                    text=", ".join(details),
-                    font=self.styles.get("small_font", ("Arial", 10)),
-                    bg="white").pack(anchor="w")
+                   text=", ".join(details),
+                   font=self.styles.get("small_font", ("Arial", 10)),
+                   bg="white").pack(anchor="w")
 
-        # Add to our tracking list
         self.artwork_list.append(frame)
 
+    def add_artwork_to_wall(self, artwork):
+        if not hasattr(self, 'virtual_wall'):
+            self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
+        self.virtual_wall.add_artwork(artwork)
+
     def create_collapsible_menu(self, parent, title, expanded=True):
-        """Create a collapsible menu frame with toggle button"""
         menu_frame = tk.Frame(parent, bg="#e0e0e0", bd=1, relief="raised")
         menu_frame.pack(fill="x", pady=2)
-        
-        # Header with toggle button
+
         header = tk.Frame(menu_frame, bg="#e0e0e0")
         header.pack(fill="x")
-        
+
         toggle_btn = tk.Button(header,
                              text="▼" if expanded else "▶",
                              command=lambda: self.toggle_menu(menu_frame, toggle_btn, content_frame),
@@ -174,23 +256,21 @@ class EditorUI:
                              bd=0,
                              font=("Arial", 10))
         toggle_btn.pack(side="left")
-        
+
         tk.Label(header,
-                text=title,
-                font=self.styles["label_font"],
-                bg="#e0e0e0").pack(side="left", padx=5)
-        
-        # Content frame
+               text=title,
+               font=self.styles["label_font"],
+               bg="#e0e0e0").pack(side="left", padx=5)
+
         content_frame = tk.Frame(menu_frame, bg="white")
         if expanded:
             content_frame.pack(fill="x")
         else:
             content_frame.pack_forget()
-        
+
         return content_frame
 
     def toggle_menu(self, menu_frame, toggle_btn, content_frame):
-        """Toggle the collapsible menu visibility"""
         if content_frame.winfo_ismapped():
             content_frame.pack_forget()
             toggle_btn.config(text="▶")
@@ -199,19 +279,58 @@ class EditorUI:
             toggle_btn.config(text="▼")
 
     def back_to_wall_selection(self):
-        """Navigate back to the SelectWallSpaceUI"""
         SelectWallSpaceUI(self.root, self.return_to_home)
 
     def open_artwork_manual_ui(self):
         from gallery_wall_planner.gui.ArtworkManuallyUI import ArtworkManuallyUI
-        # Clear current UI
         for widget in self.root.winfo_children():
             widget.destroy()
-        # Open manual artwork UI with a callback to refresh the editor
-        ArtworkManuallyUI(self.root, 
+        ArtworkManuallyUI(self.root,
                          lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
                          self.selected_wall)
 
+    def open_artwork_xlsx_ui(self):
+        from gallery_wall_planner.gui.ArtworkxlsxUI import ArtworkxlsxUI
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        ArtworkxlsxUI(self.root,
+                    lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
+                    self.selected_wall)
+
     def refresh_artwork_list(self):
-        """Refresh the artwork list display"""
+        """Refresh both the sidebar list and virtual wall"""
         self.create_artwork_list_frame()
+        
+        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
+            if not self.virtual_wall:
+                self.initialize_virtual_wall()
+            else:
+                # Clear and repopulate virtual wall
+                for widget in self.wall_space.winfo_children():
+                    widget.destroy()
+                self.initialize_virtual_wall()
+        else:
+            # Clear virtual wall if no artworks
+            if hasattr(self, 'virtual_wall'):
+                for widget in self.wall_space.winfo_children():
+                    widget.destroy()
+                self.virtual_wall = None
+            tk.Label(self.wall_space,
+                   text="No artworks added yet",
+                   font=self.styles["title_font"],
+                   bg="white").pack(expand=True)
+            
+    def add_to_virtual_wall(self, artwork):
+        """Add artwork to the virtual wall when clicked"""
+        if not hasattr(self, 'virtual_wall'):
+            # Initialize virtual wall if not exists
+            for widget in self.wall_space.winfo_children():
+                widget.destroy()
+            self.virtual_wall = VirtualWall(
+                self.wall_space,
+                self.selected_wall,
+                [artwork]
+            )
+        else:
+            # Add to existing virtual wall
+            self.virtual_wall.add_artwork_to_wall(artwork)
