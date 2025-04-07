@@ -9,47 +9,32 @@ This project was inspired by Yingxin's experience working at Roberta's Art Galle
 
 ---
 
+# Gallery Wall Planner
+
+The Gallery Wall Planner is a Python-based application that helps users visualize and plan artwork arrangements on walls. It provides a virtual canvas to position artworks, create snap lines for alignment, and save layouts for future reference.
+
 ## Features
-The Gallery Wall Planner Tool will include the following features:
 
-1. **Custom Wall Measurements**:
-   - Allow users to input wall dimensions (width, height).
-   - Customize wall features such as doors, light switches, and fire alarms.
+- **Virtual Wall Visualization**: Create a scaled representation of your wall space
+- **Artwork Management**: 
+  - Add artworks manually or import from Excel files
+  - View artwork details (name, dimensions, medium, price)
+- **Interactive Placement**:
+  - Drag-and-drop artworks on the virtual wall
+  - Snap-to-grid functionality for precise alignment
+- **Snap Lines**:
+  - Create horizontal and vertical guide lines
+  - Customize line positions and alignment options
+  - Visual feedback when artworks snap to lines
+- **Layout Saving**: Export your wall layout with artwork positions
+- **Collision Detection**: Visual indication when artworks overlap
 
-2. **Art Piece Input**:
-   - Input art piece details, including:
-     - Width and height.
-     - Wire tautness.
-     - Image or title.
-     - Additional notes.
+## Installation
 
-3. **Visualization**:
-   - Drag-and-drop interface to place art pieces on the wall.
-   - View measurements such as:
-     - Distance from the floor.
-     - Distance to the end of the wall.
-     - Distance to adjacent art pieces.
+1. **Prerequisites**:
+   - Python 3.7 or later
+   - tkinter (usually included with Python)
 
-4. **Nail Placement Calculation**:
-   - Calculate and display instructions for where to place nails on the wall to hang art pieces accurately.
-
----
-
-## Technology Choices
-The team is open to exploring technologies that best suit the project's needs. Current considerations include:
-
-- **Game Engine for 3D Traversability**:
-  - A 3D environment could provide a more immersive experience.
-  - However, the team may opt for a simpler 2D interface to keep the tool lightweight and easy to use.
-
-- **Web App vs. Local Application**:
-  - The decision has been made to develop a **desktop application** using **Python** for ease of use and accessibility.
-
----
-
-## Project Goals
-- Simplify the gallery installation process.
-- Reduce the need for manual calculations and adjustments.
-- Provide a visual tool for artists and gallery staff to plan art piece placements.
-- Improve workflow efficiency and reduce installation time.
-
+2. **Install dependencies**:
+   ```bash
+   pip install openpyxl  # For Excel file support
