@@ -1,5 +1,5 @@
 ### Based on Shanes's OrganizeArt code 
-# Detailed changed to work with editorUI.py
+# Details changed to work with editorUI.py
 # ###
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, filedialog
