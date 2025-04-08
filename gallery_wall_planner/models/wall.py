@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 import json
-from types import SimpleNamespace
+from typing import List, Dict, Tuple, Union, Optional, Any
+
+# Use relative imports since we're within the gallery_wall_planner.models package
+from .artwork import Artwork
+from .permanentObject import PermanentObject
+from .wall_line import WallLine
 
 class Wall:
-    def __init__(self, name, width, height, color="White"):
+    def __init__(self, name: str, width: float, height: float, color: str = "White"):
         """
         Represents a wall with artwork and permanent objects
         
@@ -20,7 +27,7 @@ class Wall:
         self.wall_lines = []       # List of decorative lines/markings
         self._permanent_objects = []  # List of PermanentObject instances
     
-    def add_permanent_object(self, obj, x=None, y=None):
+    def add_permanent_object(self, obj: PermanentObject, x: Optional[float] = None, y: Optional[float] = None) -> bool:
         """
         Add a permanent object to the wall with optional position
         
@@ -32,7 +39,6 @@ class Wall:
         Returns:
             bool: True if added successfully
         """
-        from gallery_wall_planner.models.permanentObject import PermanentObject
         if not isinstance(obj, PermanentObject):
             raise ValueError("Can only add PermanentObject instances")
             
@@ -52,7 +58,7 @@ class Wall:
         self._permanent_objects.append(obj)
         return True
     
-    def remove_permanent_object(self, obj):
+    def remove_permanent_object(self, obj: Union[PermanentObject, str]) -> bool:
         """
         Remove a permanent object from the wall
         
@@ -75,7 +81,7 @@ class Wall:
                 return True
             return False
     
-    def get_permanent_objects(self):
+    def get_permanent_objects(self) -> List[Tuple[PermanentObject, Dict[str, float]]]:
         """
         Get all permanent objects with their positions
         
@@ -84,7 +90,7 @@ class Wall:
         """
         return [(obj, obj.position) for obj in self._permanent_objects]
     
-    def get_permanent_object_by_name(self, name):
+    def get_permanent_object_by_name(self, name: str) -> Optional[PermanentObject]:
         """
         Find a permanent object by name
         
@@ -100,25 +106,25 @@ class Wall:
         return None
     
     # Existing artwork methods (unchanged)
-    def add_artwork(self, artwork):
+    def add_artwork(self, artwork: Artwork) -> None:
         """Add artwork to the wall"""
         self.artwork.append(artwork)
     
-    def remove_artwork(self, artwork):
+    def remove_artwork(self, artwork: Artwork) -> bool:
         """Remove artwork from the wall"""
         if artwork in self.artwork:
             self.artwork.remove(artwork)
             return True
         return False
     
-    def get_artwork_by_name(self, name):
+    def get_artwork_by_name(self, name: str) -> Optional[Artwork]:
         """Find artwork by name"""
         for art in self.artwork:
             if art.name == name:
                 return art
         return None
     
-    def export_wall(self):
+    def export_wall(self) -> Dict[str, Any]:
         """
         Export wall data to JSON format
         
@@ -144,13 +150,13 @@ class Wall:
             ]
         }
     
-    def save_to_file(self, filename):
+    def save_to_file(self, filename: str) -> None:
         """Save wall data to JSON file"""
         with open(filename, 'w') as f:
             json.dump(self.export_wall(), f, indent=2)
     
     @classmethod
-    def load_from_file(cls, filename):
+    def load_from_file(cls, filename: str) -> Wall:
         """Load wall data from JSON file"""
         with open(filename) as f:
             data = json.load(f)
@@ -158,7 +164,6 @@ class Wall:
         wall = cls(data['name'], data['width'], data['height'], data['color'])
         wall.wall_lines = data.get('wall_lines', [])
         
-        from gallery_wall_planner.models.permanentObject import PermanentObject
         # Recreate permanent objects
         for obj_data in data.get('permanent_objects', []):
             obj = PermanentObject(
@@ -174,7 +179,7 @@ class Wall:
         
         return wall
     
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation for debugging"""
         return (f"Wall(Name: {self.name}, Size: {self.width}\" x {self.height}\", "
                 f"Color: {self.color}, Artwork: {len(self.artwork)} items, "

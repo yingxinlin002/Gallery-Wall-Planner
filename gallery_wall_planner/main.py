@@ -9,6 +9,9 @@ from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.permanentObject import PermanentObject
 
+# Initialize a gallery
+gallery = Gallery("Example Gallery")
+
 # Initialize example wall once at startup
 example_wall = Wall("Example Wall", 200, 125, "grey")
 
@@ -16,7 +19,8 @@ example_wall = Wall("Example Wall", 200, 125, "grey")
 door = PermanentObject("Door", 36, 72)
 example_wall.add_permanent_object(door, x=82, y=0) 
 
-Gallery.add_wall(example_wall)
+# Add the wall to the gallery
+gallery.add_wall(example_wall)
 
 def create_home_menu():
     """Create the home menu with buttons."""
@@ -56,7 +60,7 @@ root.mainloop()
 
 
 # Initialize example wall once at startup
-Gallery.add_wall(Wall("Example Wall", 200, 125, "grey").add_permanent_object("Example Permanent Object", 50, 50, "red"))
+# Gallery.add_wall(Wall("Example Wall", 200, 125, "grey").add_permanent_object("Example Permanent Object", 50, 50, "red"))
 
 def create_home_menu():
     """Create the home menu with buttons."""

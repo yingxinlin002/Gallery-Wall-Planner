@@ -1,46 +1,42 @@
 import openpyxl
 from openpyxl.styles import Font, PatternFill
+from typing import List, Optional, Union, Dict, Any
+from models.wall import Wall
+from models.artwork import Artwork
 
 class Gallery:
     # Class-level list to store all walls (replaces shared_state.walls)
-    _all_walls = []
+    _all_walls: List['Wall'] = []
     
-    def __init__(self, name="Gallery"):
+    def __init__(self, name: str = "Gallery"):
         self.name = name  # Exhibit title
         self.walls = []  # List of Wall objects for this specific gallery
 
     # Class methods to manage all walls
-    @classmethod
-    def add_wall(cls, wall):
-        cls._all_walls.append(wall)
+    def add_wall(self, wall: 'Wall') -> None:
+        self._all_walls.append(wall)
         
-    @classmethod
-    def get_walls(cls):
-        return cls._all_walls
+    def get_walls(self) -> List['Wall']:
+        return self._all_walls
         
-    @classmethod
-    def remove_wall(cls, wall):
-        cls._all_walls.remove(wall)
+    def remove_wall(self, wall: 'Wall') -> None:
+        self._all_walls.remove(wall)
 
-    @classmethod
-    def get_wall_by_name(cls, name):
+    def get_wall_by_name(self, name: str) -> Optional['Wall']:
         """Find a wall by its name"""
-        for wall in cls._all_walls:
+        for wall in self._all_walls:
             if wall.name == name:
                 return wall
         return None
-
-    @classmethod
-    def add_artwork_to_wall(cls, wall_name, artwork):
-        wall = cls.get_wall_by_name(wall_name)
+    
+    def add_artwork_to_wall(self, wall_name: str, artwork: Artwork) -> bool:
+        wall = self.get_wall_by_name(wall_name)
         if wall:
             wall.add_artwork(artwork)
             return True
         return False
     
-
-    @classmethod
-    def remove_artwork_from_wall(cls, wall_name, artwork):
+    def remove_artwork_from_wall(self, wall_name: str, artwork: Artwork) -> bool:
         """
         Remove an artwork from a specific wall
         Args:
@@ -49,7 +45,7 @@ class Gallery:
         Returns:
             bool: True if successful, False if wall not found or artwork not in wall
         """
-        wall = cls.get_wall_by_name(wall_name)
+        wall = self.get_wall_by_name(wall_name)
         if wall:
             return wall.remove_artwork(artwork)
         return False

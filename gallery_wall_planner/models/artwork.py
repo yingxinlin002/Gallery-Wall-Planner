@@ -2,7 +2,7 @@ import json
 from types import SimpleNamespace
 
 class Artwork:
-    def __init__(self, name = "", medium = "", height = 0, width = 0, depth = 0, hanging_point = 0, price = 0, nfs = False, image_path = "", notes = ""):
+    def __init__(self, name: str = "", medium: str = "", height: float = 0, width: float = 0, depth: float = 0, hanging_point: float = 0, price: float = 0, nfs: bool = False, image_path: str = "", notes: str = ""):
         self.name = name
         self.medium = medium
         self.height = height
