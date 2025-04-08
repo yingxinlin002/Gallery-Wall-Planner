@@ -1,5 +1,7 @@
+from typing import Optional, Tuple
+
 class PermanentObject:
-    def __init__(self, name, width, height, image_path=None):
+    def __init__(self, name: str, width: float, height: float, image_path: Optional[str] = None):
         """
         Represents a permanent object on a wall (e.g., door, window, switch)
         
