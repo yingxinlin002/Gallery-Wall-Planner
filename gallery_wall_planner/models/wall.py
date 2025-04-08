@@ -262,6 +262,7 @@ class Wall:
         wall = cls(data['name'], data['width'], data['height'], data['color'])
         wall.wall_lines = data.get('wall_lines', [])
         
+        from gallery_wall_planner.models.permanentObject import PermanentObject
         # Recreate permanent objects
         for obj_data in data.get('permanent_objects', []):
             obj = PermanentObject(
