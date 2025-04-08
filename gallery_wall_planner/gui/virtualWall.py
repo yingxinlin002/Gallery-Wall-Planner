@@ -300,8 +300,8 @@ class VirtualWall:
         wall_right = wall_left + self.selected_wall.width * self.scale
         wall_top = wall_bottom + self.selected_wall.height * self.scale
         
-        # Only draw the default horizontal line at 60 inches (converted to canvas coordinates)
-        default_y = self.canvas_height - (wall_bottom + 60 * self.scale)
+        # Only draw the default horizontal line at 62 inches (converted to canvas coordinates)
+        default_y = self.canvas_height - (wall_bottom + 62 * self.scale)
         self.canvas.create_line(
             wall_left, default_y,
             wall_right, default_y,
@@ -309,11 +309,11 @@ class VirtualWall:
         )
     
     def setup_default_snap_lines(self):
-        """Create default snap line at 60 inches"""
+        """Create default snap line at 62 inches"""
         default_line = SingleLine(
             orientation="horizontal",
             alignment="center",
-            distance=60.0,  # Changed from 62 to 60 inches
+            distance=62.0, 
             snap_to=True,
             moveable=True
         )
