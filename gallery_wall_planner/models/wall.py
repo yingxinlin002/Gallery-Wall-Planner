@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 # Use relative imports since we're within the gallery_wall_planner.models package
 from .artwork import Artwork
 from .permanentObject import PermanentObject
-from .wall_line import WallLine
+from .wall_line import SingleLine
 
 class Wall:
     def __init__(self, name: str, width: float, height: float, color: str = "White"):
@@ -19,13 +19,111 @@ class Wall:
             height (float): Height in inches
             color (str, optional): Wall color. Defaults to "White".
         """
+        # Initialize private attributes
+        self._name = None
+        self._width = None
+        self._height = None
+        self._color = None
+        self._artwork = []          # List of Artwork objects
+        self._wall_lines = []       # List of decorative lines/markings
+        self._permanent_objects = []  # List of PermanentObject instances
+        
+        # Set properties with validation
         self.name = name
         self.width = width
         self.height = height
         self.color = color
-        self.artwork = []          # List of Artwork objects
-        self.wall_lines = []       # List of decorative lines/markings
-        self._permanent_objects = []  # List of PermanentObject instances
+    
+    @property
+    def name(self) -> str:
+        """Get the wall name"""
+        return self._name
+    
+    @name.setter
+    def name(self, value: str):
+        """Set the wall name with validation"""
+        if not isinstance(value, str):
+            raise ValueError("Name must be a string")
+        if not value.strip():
+            raise ValueError("Name cannot be empty")
+        self._name = value
+    
+    @property
+    def width(self) -> float:
+        """Get the wall width"""
+        return self._width
+    
+    @width.setter
+    def width(self, value: float):
+        """Set the wall width with validation"""
+        if not isinstance(value, (int, float)):
+            raise ValueError("Width must be a number")
+        if value <= 0:
+            raise ValueError("Width must be positive")
+        self._width = float(value)
+    
+    @property
+    def height(self) -> float:
+        """Get the wall height"""
+        return self._height
+    
+    @height.setter
+    def height(self, value: float):
+        """Set the wall height with validation"""
+        if not isinstance(value, (int, float)):
+            raise ValueError("Height must be a number")
+        if value <= 0:
+            raise ValueError("Height must be positive")
+        self._height = float(value)
+    
+    @property
+    def color(self) -> str:
+        """Get the wall color"""
+        return self._color
+    
+    @color.setter
+    def color(self, value: str):
+        """Set the wall color with validation"""
+        if not isinstance(value, str):
+            raise ValueError("Color must be a string")
+        self._color = value
+    
+    @property
+    def artwork(self) -> List[Artwork]:
+        """Get the list of artwork objects"""
+        return self._artwork
+    
+    @artwork.setter
+    def artwork(self, value: List[Artwork]):
+        """Set the artwork list with validation"""
+        if not isinstance(value, list):
+            raise ValueError("Artwork must be a list")
+        # Validate that all items are Artwork objects
+        for item in value:
+            if not isinstance(item, Artwork):
+                raise ValueError("All items in artwork list must be Artwork objects")
+        self._artwork = value
+    
+    @property
+    def wall_lines(self) -> List[SingleLine]:
+        """Get the list of wall lines"""
+        return self._wall_lines
+    
+    @wall_lines.setter
+    def wall_lines(self, value: List[SingleLine]):
+        """Set the wall lines list with validation"""
+        if not isinstance(value, list):
+            raise ValueError("Wall lines must be a list")
+        # Validate that all items are SingleLine objects
+        for item in value:
+            if not isinstance(item, SingleLine):
+                raise ValueError("All items in wall_lines list must be SingleLine objects")
+        self._wall_lines = value
+    
+    @property
+    def permanent_objects(self) -> List[PermanentObject]:
+        """Get the list of permanent objects"""
+        return self._permanent_objects
     
     def add_permanent_object(self, obj: PermanentObject, x: Optional[float] = None, y: Optional[float] = None) -> bool:
         """
