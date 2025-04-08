@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
-from gallery_wall_planner.models.wall_line import SingleLine
+from gallery_wall_planner.models.wall_line import SingleLine, Orientation, HorizontalAlignment, VerticalAlignment
 from gallery_wall_planner.gui.ui_styles import apply_primary_button_style
 
 def open_snap_line_popup(root, on_save_callback, existing_line=None, wall_width=100, wall_height=100):
@@ -9,36 +9,38 @@ def open_snap_line_popup(root, on_save_callback, existing_line=None, wall_width=
     popup.geometry("300x320")
 
     # Orientation Radio Buttons
-    orientation_var = tk.StringVar(value=existing_line.orientation if existing_line else "horizontal")
+    orientation_var = tk.StringVar(value=existing_line.orientation.name if existing_line else Orientation.HORIZONTAL.name)
     ttk.Label(popup, text="Orientation:").pack(anchor="w", padx=10, pady=(10, 0))
-    ttk.Radiobutton(popup, text="Horizontal", variable=orientation_var, value="horizontal").pack(anchor="w", padx=20)
-    ttk.Radiobutton(popup, text="Vertical", variable=orientation_var, value="vertical").pack(anchor="w", padx=20)
+    ttk.Radiobutton(popup, text="Horizontal", variable=orientation_var, value=Orientation.HORIZONTAL.name).pack(anchor="w", padx=20)
+    ttk.Radiobutton(popup, text="Vertical", variable=orientation_var, value=Orientation.VERTICAL.name).pack(anchor="w", padx=20)
 
     # Alignment Radio Buttons
-    alignment_var = tk.StringVar(value=existing_line.alignment if existing_line else "center")
+    alignment_var = tk.StringVar(value=existing_line.alignment.name if existing_line else HorizontalAlignment.CENTER.name)
     alignment_frame = ttk.Frame(popup)
     alignment_frame.pack(anchor="w", padx=10, pady=(10, 0))
 
     ttk.Label(alignment_frame, text="Alignment:").pack(anchor="w")
 
     align_options = {
-        "horizontal": ["top", "center", "bottom"],
-        "vertical": ["left", "center", "right"]
+        Orientation.HORIZONTAL: [HorizontalAlignment.TOP, HorizontalAlignment.CENTER, HorizontalAlignment.BOTTOM],
+        Orientation.VERTICAL: [VerticalAlignment.LEFT, VerticalAlignment.CENTER, VerticalAlignment.RIGHT]
     }
 
     align_buttons = []
 
     def update_alignment_buttons():
+        # Clear existing buttons
         for btn in align_buttons:
             btn.destroy()
         align_buttons.clear()
 
-        current = orientation_var.get()
-        for val in align_options[current]:
-            b = ttk.Radiobutton(alignment_frame, text=val.capitalize(), variable=alignment_var, value=val)
+        current_orientation = Orientation[orientation_var.get()]
+        for alignment in align_options[current_orientation]:
+            b = ttk.Radiobutton(alignment_frame, text=alignment.name.capitalize(), variable=alignment_var, value=alignment.name)
             b.pack(anchor="w", padx=20)
             align_buttons.append(b)
 
+    # Trigger the alignment buttons update when orientation changes
     orientation_var.trace_add("write", lambda *_: update_alignment_buttons())
     update_alignment_buttons()
 
@@ -56,22 +58,30 @@ def open_snap_line_popup(root, on_save_callback, existing_line=None, wall_width=
             messagebox.showerror("Invalid Input", "Distance must be a number.")
             return
         
-        # After parsing the float we need to use info from the wall to make sure these can not be placed out of bounds:
+        # After parsing the float, check if the distance is valid within wall constraints
         if distance < 0:
             messagebox.showerror("Error", "Distance cannot be negative.")
             return
 
-        if orientation_var.get() == "horizontal" and distance > wall_height:
+        if Orientation[orientation_var.get()] == Orientation.HORIZONTAL and distance > wall_height:
             messagebox.showerror("Error", f"Distance exceeds wall height ({wall_height} inches).")
             return
 
-        if orientation_var.get() == "vertical" and distance > wall_width:
+        if Orientation[orientation_var.get()] == Orientation.VERTICAL and distance > wall_width:
             messagebox.showerror("Error", f"Distance exceeds wall width ({wall_width} inches).")
             return
 
+        # Create the updated line using the enums
+        orientation_enum = Orientation[orientation_var.get()]
+        alignment_enum = None
+        if orientation_enum == Orientation.HORIZONTAL:
+            alignment_enum = HorizontalAlignment[alignment_var.get()]
+        elif orientation_enum == Orientation.VERTICAL:
+            alignment_enum = VerticalAlignment[alignment_var.get()]
+
         updated_line = SingleLine(
-            orientation=orientation_var.get(),
-            alignment=alignment_var.get(),
+            orientation=orientation_enum,
+            alignment=alignment_enum,
             distance=distance,
             snap_to=True,
             moveable=True

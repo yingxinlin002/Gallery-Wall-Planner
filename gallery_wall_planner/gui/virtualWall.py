@@ -5,6 +5,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, filedialog
 from gallery_wall_planner.models.wall_line import SingleLine
 from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignment, VerticalAlignment
 
 class VirtualWall:
     def __init__(self, parent_frame, selected_wall):
@@ -131,36 +132,73 @@ class VirtualWall:
     def setup_default_snap_lines(self):
         """Create default snap line at 60 inches"""
         default_line = SingleLine(
-            orientation="horizontal",
-            alignment="center",
+            orientation=Orientation.HORIZONTAL,  # Use the enum value here
+            alignment=HorizontalAlignment.CENTER,  # Use the enum value here
             distance=60.0,  # Changed from 62 to 60 inches
             snap_to=True,
             moveable=True
         )
         self.snap_lines.append(default_line)
         self.draw_snap_lines()
-    
+
     def draw_snap_lines(self):
         """Draw all snap lines on canvas"""
         self.canvas.delete("snap_line")
         wall_left = self.margin
         wall_bottom = self.margin
-        
+
         for line in self.snap_lines:
             if line.orientation == "horizontal":
-                y = self.canvas_height - (wall_bottom + line.distance * self.scale)
-                self.canvas.create_line(
-                    wall_left, y, 
-                    wall_left + self.selected_wall.width * self.scale, y,
-                    fill="blue", dash=(4, 2), width=2, tags="snap_line"
-                )
+                if line.alignment == HorizontalAlignment.TOP:
+                    # Draw the top snap line
+                    y = self.canvas_height - (wall_bottom + line.distance * self.scale)
+                    self.canvas.create_line(
+                        wall_left, y,
+                        wall_left + self.selected_wall.width * self.scale, y,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
+                elif line.alignment == HorizontalAlignment.CENTER:
+                    # Draw the center snap line
+                    y = self.canvas_height - (wall_bottom + (line.distance * self.scale))
+                    self.canvas.create_line(
+                        wall_left, y,
+                        wall_left + self.selected_wall.width * self.scale, y,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
+                elif line.alignment == HorizontalAlignment.BOTTOM:
+                    # Draw the bottom snap line
+                    y = self.canvas_height - (wall_bottom + self.selected_wall.height * self.scale - line.distance * self.scale)
+                    self.canvas.create_line(
+                        wall_left, y,
+                        wall_left + self.selected_wall.width * self.scale, y,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
             else:  # vertical
-                x = wall_left + line.distance * self.scale
-                self.canvas.create_line(
-                    x, self.canvas_height - (wall_bottom + self.selected_wall.height * self.scale),
-                    x, self.canvas_height - wall_bottom,
-                    fill="blue", dash=(4, 2), width=2, tags="snap_line"
-                )
+                if line.alignment == VerticalAlignment.LEFT:
+                    # Draw the left snap line
+                    x = wall_left + line.distance * self.scale
+                    self.canvas.create_line(
+                        x, self.canvas_height - (wall_bottom + self.selected_wall.height * self.scale),
+                        x, self.canvas_height - wall_bottom,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
+                elif line.alignment == VerticalAlignment.CENTER:
+                    # Draw the center snap line
+                    x = wall_left + line.distance * self.scale
+                    self.canvas.create_line(
+                        x, self.canvas_height - (wall_bottom + self.selected_wall.height * self.scale / 2),
+                        x, self.canvas_height - wall_bottom,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
+                elif line.alignment == VerticalAlignment.RIGHT:
+                    # Draw the right snap line
+                    x = wall_left + line.distance * self.scale
+                    self.canvas.create_line(
+                        x, self.canvas_height - (wall_bottom + self.selected_wall.height * self.scale),
+                        x, self.canvas_height - wall_bottom,
+                        fill="blue", dash=(4, 2), width=4, tags="snap_line"
+                    )
+                    self.canvas.tag_raise("snap_line")  # Bring snap lines to the front
     
     def add_new_snap_line(self):
         """Add a new snap line to the wall"""
@@ -182,7 +220,7 @@ class VirtualWall:
             wall_width=self.selected_wall.width,
             wall_height=self.selected_wall.height
         )
-    
+
     def show_duplicate_line_popup(self, new_line):
         """Show popup when duplicate line is detected"""
         popup = Toplevel(self.parent)
@@ -241,16 +279,16 @@ class VirtualWall:
         """Create controls for a single snap line"""
         frame = ttk.Frame(parent)
         frame.pack(fill="x", pady=5, padx=10)
-        
-        label_text = f"{line.orientation.capitalize()} - {line.alignment.capitalize()} - {line.distance:.2f}\""
+
+        label_text = f"{line.orientation.name.capitalize()} - {line.alignment.name.capitalize()} - {line.distance:.2f}\""
         ttk.Label(frame, text=label_text).pack(side="left")
-        
+
         ttk.Button(
             frame,
             text="Edit",
             command=lambda i=index: self.edit_snap_line(i)
         ).pack(side="right", padx=5)
-        
+
         ttk.Button(
             frame,
             text="Delete",
@@ -336,7 +374,7 @@ class VirtualWall:
             'y': event.y,
             'initial_coords': self.canvas.coords(item_id)
         }
-    
+
     def on_drag(self, event, item_id):
         """Handle dragging event with boundary checking, real-time snapping, and visual feedback"""
         dx = event.x - self.drag_data['x']
@@ -383,8 +421,8 @@ class VirtualWall:
             for line in self.snap_lines:
                 if not line.snap_to:
                     continue
-                    
-                if line.orientation == "horizontal":
+                
+                if line.orientation == Orientation.HORIZONTAL:  # Use the enum comparison for orientation
                     line_y = self.canvas_height - (self.margin + line.distance * self.scale)
                     
                     # Check top edge (8 pixel threshold)
@@ -399,7 +437,7 @@ class VirtualWall:
                     elif abs(new_y1 - line_y) < 8:
                         new_y1 = line_y
                         snapped = True
-                        
+                    
                 else:  # vertical
                     line_x = self.margin + line.distance * self.scale
                     
@@ -424,7 +462,7 @@ class VirtualWall:
             # Find and highlight the snap line we're snapping to
             self.canvas.itemconfig("snap_line", width=1)  # Reset all snap lines first
             for line in self.snap_lines:
-                if line.orientation == "horizontal":
+                if line.orientation == Orientation.HORIZONTAL:  # Use the enum comparison
                     line_y = self.canvas_height - (self.margin + line.distance * self.scale)
                     if abs(new_y1 - line_y) < 8 or abs(new_y1 + height - line_y) < 8 or abs(new_y1 + height/2 - line_y) < 8:
                         # Find the canvas line item for this snap line
@@ -512,43 +550,45 @@ class VirtualWall:
         y_px = y * self.scale
         width_px = width * self.scale
         height_px = height * self.scale
-        
+
         for line in self.snap_lines:
             if not line.snap_to:
                 continue
-                
-            if line.orientation == "horizontal":
+
+            if line.orientation == Orientation.HORIZONTAL:  # Enum comparison
                 target_y_px = line.distance * self.scale
-                
-                if line.alignment == "top":
+
+                if line.alignment == HorizontalAlignment.TOP:  # Enum comparison
                     candidate_y_px = target_y_px - height_px
                     if abs(y_px + height_px - target_y_px) < threshold_pixels:
                         y = (candidate_y_px) / self.scale
-                elif line.alignment == "center":
+                elif line.alignment == HorizontalAlignment.CENTER:  # Enum comparison
                     candidate_y_px = target_y_px - height_px / 2
                     if abs(y_px + height_px / 2 - target_y_px) < threshold_pixels:
                         y = (candidate_y_px) / self.scale
-                elif line.alignment == "bottom":
+                elif line.alignment == HorizontalAlignment.BOTTOM:  # Enum comparison
                     candidate_y_px = target_y_px
                     if abs(y_px - target_y_px) < threshold_pixels:
                         y = (candidate_y_px) / self.scale
+
             else:  # vertical
                 target_x_px = line.distance * self.scale
-                
-                if line.alignment == "left":
+
+                if line.alignment == VerticalAlignment.LEFT:  # Enum comparison
                     candidate_x_px = target_x_px
                     if abs(x_px - target_x_px) < threshold_pixels:
                         x = (candidate_x_px) / self.scale
-                elif line.alignment == "center":
+                elif line.alignment == VerticalAlignment.CENTER:  # Enum comparison
                     candidate_x_px = target_x_px - width_px / 2
                     if abs(x_px + width_px / 2 - target_x_px) < threshold_pixels:
                         x = (candidate_x_px) / self.scale
-                elif line.alignment == "right":
+                elif line.alignment == VerticalAlignment.RIGHT:  # Enum comparison
                     candidate_x_px = target_x_px - width_px
                     if abs(x_px + width_px - target_x_px) < threshold_pixels:
                         x = (candidate_x_px) / self.scale
-        
+
         return x, y
+
     
     def move_item_to_position(self, item):
         """Move artwork to its current position"""
