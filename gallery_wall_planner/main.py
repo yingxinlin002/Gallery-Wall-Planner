@@ -15,7 +15,7 @@ example_wall = Wall("Example Wall", 200, 125, "grey")
 standard_door = PermanentObject("Main Door", 36, 80)
 example_wall.add_permanent_object(standard_door, x=82, y=0)
 
-Gallery.add_wall(example_wall)
+# Gallery.add_wall(example_wall)
 
 class BackgroundImage(tk.Canvas):
     def __init__(self, parent, image_path, *args, **kwargs):

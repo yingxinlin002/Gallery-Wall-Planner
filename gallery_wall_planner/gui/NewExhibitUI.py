@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
 from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
-from gallery_wall_planner.models.gallery import Gallery  #  ADDED to carry wall info forward
+from gallery_wall_planner.gui.global_state import global_gallery  #  ADDED to carry wall info forward
 
 class NewGalleryUI:
     def __init__(self, root, return_to_home):
@@ -62,7 +62,7 @@ class NewGalleryUI:
 
     def load_from_existing(self):
         """Handle loading from existing wall"""
-        existing_walls = Gallery.get_walls()
+        existing_walls = global_gallery.get_walls()
         if not existing_walls:
             messagebox.showerror("Error", "No existing walls found.")
         else:
@@ -304,7 +304,7 @@ class NewGalleryUI:
             color=self.wall_color
         )
 
-        Gallery.add_wall(new_wall)
+        global_gallery.add_wall(new_wall)
         
         # Navigate to PermanentObjectUI
         from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI

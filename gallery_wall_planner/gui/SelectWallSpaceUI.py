@@ -1,13 +1,13 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.gallery import Gallery
+from gallery_wall_planner.gui.global_state import global_gallery
 
 class SelectWallSpaceUI:
     def __init__(self, root, return_to_home):
         self.root = root
         self.return_to_home = return_to_home
-        self.walls = Gallery.get_walls()
+        self.walls = global_gallery.get_walls()
         self.delete_buttons = {}
         self.create_ui()
 
@@ -132,10 +132,10 @@ class SelectWallSpaceUI:
         
         if confirm:
             # Remove from gallery
-            Gallery.remove_wall(wall)
+            global_gallery.remove_wall(wall)
             
             # Update UI
-            self.walls = Gallery.get_walls()
+            self.walls = global_gallery.get_walls()
             self.wall_listbox.delete(0, tk.END)
             for wall in self.walls:
                 self.wall_listbox.insert(tk.END, wall.name)
