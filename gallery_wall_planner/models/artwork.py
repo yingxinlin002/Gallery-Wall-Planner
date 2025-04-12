@@ -163,9 +163,73 @@ class Artwork:
     def __str__(self):
         #return all info about the artwork
         return f"Name: {self.name}\nMedium: {self.medium}\nHeight: {self.height}\nWidth: {self.width}\nDepth: {self.depth}\nHanging Point: {self.hanging_point}\nPrice: {self.price}\nNFS: {self.nfs}\nImage Path: {self.image_path}\nNotes: {self.notes}"
+
+
+
+    def export_to_excel(self, filename="artwork_export.xlsx"):
+        """
+        Inputs: self, file name 
+        Process: Exports all artwork data in order to write to excel sheet, including images if possible
+        Outputs: An excel sheet containing a single artwork, I can try to fix this later to do multiple artworks if needed
+        """
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Artworks"
+        # Making colors and headers
+        headers = ["Name", "Medium", "Height", "Width", "Depth", "Hanging Point", "Value", "NFS", "Image", "Notes"]
+        colors = ["FFC7CE", "FFF2CC", "FFC7CE", "FFC7CE", "FFF2CC", "FFC7CE", "FFF2CC", "FFF2CC", "FFF2CC", "FFF2CC"]
+        # Iterate to make headers
+        for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+        # Append artwork info
+        ws.append([self.name, self.medium, self.height, self.width, self.depth, self.hanging_point, self.price, self.nfs, self.image_path, self.notes])
+        # This should theoretically embed the image if it exists, otherwise adds the image path instead
+        if self.image_path and os.path.exists(self.image_path):
+            img = Image(self.image_path)
+            img.width, img.height = 100, 100  # Resize for visibility
+            ws.add_image(img, "I2")
+        
+        wb.save(filename)
+        print(f"Artwork exported to {filename}")
+    
+    @classmethod
+    def import_from_excel(cls, filename="artwork_export.xlsx", sheetname = "Artworks"):
+        """
+        Syntax: This needs to be used via the following syntax Artwork.import_from_excel(filename, sheetname)
+        Input: class, file name (optional), sheet name (optional) 
+        Process: Opens specified excel and specified sheet, gets all artwork data and creates artwork objects, then adds to a list
+        Outputs: A list containing artwork objects gotten from the excel sheet
+        """
+        wb = openpyxl.load_workbook(filename)
+        ws = wb[sheetname] # This can cause errors if the sheet name does not match the actual sheet
+        # List of artworks
+        artworks = []
+        # Get artwork data
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            name, medium, height, width, depth, hanging_point, price, nfs, image_path, notes = row
+            # Gets the image path to place into the image section of artwork 
+            if image_path and os.path.exists(image_path):
+                img_dir = "imported_images"
+                os.makedirs(img_dir, exist_ok=True)
+                img_save_path = os.path.join(img_dir, os.path.basename(image_path))
+                
+                # Save the image from Excel to a file
+                pil_img = PILImage.open(image_path)
+                pil_img.save(img_save_path)
+                image_path = img_save_path
+            
+            artwork = cls(name, medium, height, width, depth, hanging_point, price, nfs, image_path, notes)
+            artworks.append(artwork)
+        
+        print(f"Imported {len(artworks)} artworks from {filename}")
+        return artworks    
+
+
     
     def export_artwork(self, directory: str = "") -> str:
-        """Export artwork to a JSON file
+        """ Legacy method to Export artwork to a JSON file
         
         Args:
             directory (str, optional): Directory to save the file. Defaults to current directory.
@@ -191,7 +255,7 @@ class Artwork:
         return file_path
 
 def import_artwork(art_name, file_name):
-    #TEMP: Replace later with the menu input
+    # Legacy method, not going to remove yet as it might cause issues, but we should eventually remove this
     with open(file_name, "rb") as f:
         data = f.read()
     art_name = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
