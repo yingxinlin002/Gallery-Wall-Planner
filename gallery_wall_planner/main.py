@@ -10,6 +10,8 @@ from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.permanentObject import PermanentObject
 
+from gallery_wall_planner.config import Config
+
 # Initialize example wall once at startup
 example_wall = Wall("Example Wall", 200, 125, "grey")
 standard_door = PermanentObject("Main Door", 36, 80)
@@ -26,6 +28,8 @@ class BackgroundImage(tk.Canvas):
         self.content_frame = None
         self.bind("<Configure>", self._resize_image)
         self._resize_image()  # Initial setup
+
+
         
     def _resize_image(self, event=None):
         # Load and resize the image to fit the canvas size
@@ -103,6 +107,9 @@ def create_home_menu():
 def quit_application():
     """Quit the application."""
     root.destroy()
+
+config = Config()
+config.write_config()
 
 # Create the main application window
 root = tk.Tk()
