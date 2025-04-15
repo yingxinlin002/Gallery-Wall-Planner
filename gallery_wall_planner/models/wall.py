@@ -221,8 +221,60 @@ class Wall:
             if art.name == name:
                 return art
         return None
+
+    def export_to_excel(self, filename: str) -> None:
+        """
+        Inputs: A wall object and a filename
+        Process: Exports all wall and artwork data to excel
+        Outputs: An excel sheet with specific wall data and artwork data attached to the wall
+        """
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = self.name
     
-    def export_wall(self) -> Dict[str, Any]:
+        headers = ["Wall Name", "Width", "Height", "Color"]
+        ws.append(headers)
+        ws.append([self.name, self.width, self.height, self.color])
+    
+        ws.append([])
+        ws.append(["Artwork"])  # Section label
+    
+        if self.artwork:
+            from .artwork import export_to_excel as export_artworks_to_worksheet # Rename imported method to avoid potential naming conflicts
+            export_artworks_to_worksheet(ws, self.artwork, start_row=ws.max_row + 1) # Use artwork export method to export full artwork data to wall sheet
+    
+        wb.save(filename)
+
+    @classmethod
+    def import_from_excel(cls, filename: str) -> Wall:
+        """
+        Inputs: A filename to import from
+        Process: Import all wall data and artwork data attached to wall
+        Outputs: A wall object containing all relevant artwork, data and metadata
+        """
+        wb = openpyxl.load_workbook(filename)
+        ws = wb.active
+    
+        name = ws["B2"].value
+        width = float(ws["C2"].value)
+        height = float(ws["D2"].value)
+        color = ws["E2"].value if ws["E2"].value else "White"
+    
+        wall = cls(name, width, height, color)
+    
+        for row in ws.iter_rows(min_row=6):
+            if row[0].value in (None, "Name"):
+                continue
+            from .artwork import import_from_excel as import_artwork_from_row # Rename imported metjod to avoid potential naming conflicts 
+            artwork = import_artwork_from_row(row, ws.parent) # Use artwork import method to import full artwork data from wall sheet
+            if artwork:
+                wall.add_artwork(artwork)
+    
+        return wall
+    
+
+    
+    def export_wall(self) -> Dict[str, Any]: # I assume we no longer needs these, but have not deleted them as I didn't want to break anyone else's code, please let me know and we can then delete them
         """
         Export wall data to JSON format
         
