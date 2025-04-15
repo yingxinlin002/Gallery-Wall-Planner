@@ -4,7 +4,8 @@ import json
 import os
 from types import SimpleNamespace
 from enum import Enum, auto
-from typing import Union
+from typing import Union, Optional
+
 
 class Orientation(Enum):
     HORIZONTAL = "horizontal"
@@ -43,7 +44,7 @@ class SingleLine:
         snap_to: bool = True,
         moveable: bool = True,
         orientation: Union[LineOrientation, str] = LineOrientation.HORIZONTAL,
-        alignment: Union[LineAlignment, str] = LineAlignment.CENTER,
+        alignment: Optional[Union[HorizontalAlignment, VerticalAlignment, str]] = None,
         distance: float = 0.0               # Distance from wall edge (in inches)
     ):
         # Initialize private attributes
@@ -65,6 +66,7 @@ class SingleLine:
         self.snap_to = snap_to
         self.moveable = moveable
         self.orientation = orientation  # Use the Orientation enum
+        self.alignment = alignment      #was missing
         self.distance = distance
 
     @property
@@ -160,23 +162,27 @@ class SingleLine:
         else:
             raise ValueError("Orientation must be a LineOrientation enum or a valid string value")
 
+ 
+
     @property
-    def alignment(self) -> LineAlignment:
-        """Get the alignment of the line"""
+    def alignment(self) -> Union[HorizontalAlignment, VerticalAlignment]:
         return self._alignment
 
     @alignment.setter
-    def alignment(self, value: Union[LineAlignment, str]):
-        """Set the alignment of the line with validation"""
-        if isinstance(value, LineAlignment):
+    def alignment(self, value: Union[HorizontalAlignment, VerticalAlignment, str]):
+        if isinstance(value, (HorizontalAlignment, VerticalAlignment)):
             self._alignment = value
         elif isinstance(value, str):
             try:
-                self._alignment = LineAlignment(value)
+                self._alignment = HorizontalAlignment(value)
             except ValueError:
-                raise ValueError(f"Invalid alignment value: {value}. Must be one of {[a.value for a in LineAlignment]}")
+                try:
+                    self._alignment = VerticalAlignment(value)
+                except ValueError:
+                    raise ValueError(f"Invalid alignment string: {value}")
         else:
-            raise ValueError("Alignment must be a LineAlignment enum or a valid string value")
+            raise ValueError("Alignment must be HorizontalAlignment, VerticalAlignment, or a valid string.")
+
 
     @property
     def distance(self) -> float:
