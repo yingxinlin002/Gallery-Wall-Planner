@@ -44,7 +44,7 @@ class SingleLine:
         snap_to: bool = True,
         moveable: bool = True,
         orientation: Union[LineOrientation, str] = LineOrientation.HORIZONTAL,
-        alignment: Optional[Union[HorizontalAlignment, VerticalAlignment, str]] = None,
+        alignment: Union[LineAlignment, str] = LineAlignment.CENTER,
         distance: float = 0.0               # Distance from wall edge (in inches)
     ):
         # Initialize private attributes
@@ -66,7 +66,7 @@ class SingleLine:
         self.snap_to = snap_to
         self.moveable = moveable
         self.orientation = orientation  # Use the Orientation enum
-        self.alignment = alignment      #was missing
+        self.alignment = alignment
         self.distance = distance
 
     @property
@@ -165,23 +165,20 @@ class SingleLine:
  
 
     @property
-    def alignment(self) -> Union[HorizontalAlignment, VerticalAlignment]:
+    def alignment(self) -> LineAlignment:
         return self._alignment
 
     @alignment.setter
-    def alignment(self, value: Union[HorizontalAlignment, VerticalAlignment, str]):
-        if isinstance(value, (HorizontalAlignment, VerticalAlignment)):
+    def alignment(self, value: Union[LineAlignment, str]):
+        if isinstance(value, LineAlignment):
             self._alignment = value
         elif isinstance(value, str):
             try:
-                self._alignment = HorizontalAlignment(value)
+                self._alignment = LineAlignment(value)
             except ValueError:
-                try:
-                    self._alignment = VerticalAlignment(value)
-                except ValueError:
-                    raise ValueError(f"Invalid alignment string: {value}")
+                raise ValueError(f"Invalid alignment value: {value}. Must be one of {[a.value for a in LineAlignment]}")
         else:
-            raise ValueError("Alignment must be HorizontalAlignment, VerticalAlignment, or a valid string.")
+            raise ValueError("Alignment must be a LineAlignment enum or a valid string value")
 
 
     @property

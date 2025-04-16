@@ -1,8 +1,8 @@
 import openpyxl
 from openpyxl.styles import Font, PatternFill
 from typing import List, Optional, Union, Dict, Any
-from models.wall import Wall
-from models.artwork import Artwork
+from gallery_wall_planner.models.wall import Wall
+from gallery_wall_planner.models.artwork import Artwork
 
 class Gallery:
     # Class-level list to store all walls (replaces shared_state.walls)

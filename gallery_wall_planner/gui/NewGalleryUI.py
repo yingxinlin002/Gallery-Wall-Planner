@@ -3,19 +3,22 @@ from tkinter import messagebox, colorchooser
 import re
 from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
 from gallery_wall_planner.gui.global_state import global_gallery  #  ADDED to carry wall info forward
+from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.AppMain import ScreenType
 
-class NewGalleryUI:
-    def __init__(self, root, return_to_home):
-        self.root = root
-        self.return_to_home = return_to_home
+class NewGalleryUI(tk.Canvas):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain.frame_main, *args, **kwargs)
+        self.AppMain = AppMain
         self.wall_width = None
         self.wall_height = None
         self.wall_color = "white"  # Default wall color
+        self.content_frame = None
         self.create_new_exhibit_popup()
 
     def create_new_exhibit_popup(self):
         """Create initial popup window for new exhibit options"""
-        self.popup = tk.Toplevel(self.root)
+        self.popup = tk.Toplevel(self.AppMain.root)
         self.popup.title("New Exhibit")
         self.popup.geometry("300x150")
         self.center_popup(self.popup, 300, 150)
@@ -72,11 +75,11 @@ class NewGalleryUI:
 
     def show_wall_info_page(self):
         """Show the wall creation form with centered inputs"""
-        for widget in self.root.winfo_children():
+        for widget in self.AppMain.root.winfo_children():
             widget.destroy()
         
         # Main container
-        main_frame = tk.Frame(self.root)
+        main_frame = tk.Frame(self.AppMain.root)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Title

@@ -4,13 +4,15 @@ import tkinter as tk
 from tkinter import font
 from PIL import Image, ImageTk
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
+from gallery_wall_planner.gui.NewGalleryUI import NewGalleryUI
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.permanentObject import PermanentObject
 
 from gallery_wall_planner.config import Config
+
+from gallery_wall_planner.gui.AppMain import AppMain
 
 # Initialize example wall once at startup
 example_wall = Wall("Example Wall", 200, 125, "grey")
@@ -108,19 +110,51 @@ def quit_application():
     """Quit the application."""
     root.destroy()
 
-config = Config()
-config.write_config()
+# config = Config()
+# config.write_config()
 
-# Create the main application window
-root = tk.Tk()
-root.title("Gallery Wall Planner")
-root.geometry("1024x768")
+# # Create the main application window
+# root = tk.Tk()
+# root.title("Gallery Wall Planner")
+# root.geometry("1024x768")
 
-# Define a custom font for the buttons
-button_font = font.Font(family="Helvetica", size=14, weight="bold")
+# # Define a custom font for the buttons
+# button_font = font.Font(family="Helvetica", size=14, weight="bold")
 
-# Create the home menu
-create_home_menu()
+# # Create the home menu
+# create_home_menu()
 
-# Start the main event loop
-root.mainloop()
+# # Start the main event loop
+# root.mainloop()
+
+class SimpleApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Simple App")
+
+        self.label_var = tk.StringVar()
+        self.label_var.set("Initial Value")
+
+        self.label = tk.Label(root, textvariable=self.label_var)
+        self.label.pack(pady=10)
+
+        self.entry = tk.Entry(root)
+        self.entry.pack(pady=5)
+
+        self.button = tk.Button(root, text="Update Label", command=self.update_label)
+        self.button.pack(pady=5)
+
+    def update_label(self):
+        new_text = self.entry.get()
+        if new_text:
+            self.label_var.set(f"Updated to: {new_text}")
+        else:
+            self.label_var.set("Entry was empty!")
+
+if __name__ == "__main__":
+    print("Starting Gallery Wall Planner...")
+    root = tk.Tk()
+    print("Creating main application window...")
+    app = AppMain(root)
+    print("Starting main event loop...")
+    root.mainloop()
