@@ -1,6 +1,9 @@
 import tkinter as tk
 from enum import Enum, auto
 
+from gallery_wall_planner.models.gallery import Gallery
+
+
 
 class ScreenType(Enum):
     """Enum representing the different screens in the application"""
@@ -13,6 +16,7 @@ class ScreenType(Enum):
 
 class AppMain():
     def __init__(self, root: tk.Tk):
+        self.gallery = Gallery()
         print("Creating main application window...")
         self.root = root
         self.root.title("Gallery Wall Planner")
@@ -20,8 +24,8 @@ class AppMain():
         self.root.configure(bg="#F0F0F0")
         print("Creating main frame...")
         # Create a main frame and add it to root
-        self.frame_main = None
-        self.frame_contents = None      
+        from gallery_wall_planner.gui.Screen_Base import Screen_Base
+        self.frame_contents: Screen_Base = None      
         self.current_screen: ScreenType = ScreenType.HOME
         self.frame_main = tk.Frame(self.root, bg="#F0F0F0")
         self.frame_main.pack(fill=tk.BOTH, expand=True)
@@ -44,12 +48,15 @@ class AppMain():
 
         self.current_screen = screen_type
         
-        # Destroy current content frame if it exists
         if self.frame_contents:
+            print(f"Destroying {self.frame_contents.__class__.__name__}")
+            for widget in self.frame_contents.winfo_children():
+                print(f"Destroying {widget.__class__.__name__}")
+                widget.destroy()
             self.frame_contents.destroy()
             self.frame_contents = None
-            
-        # Switch to the appropriate screen based on the enum
+        
+        # Load the appropriate screen
         if screen_type == ScreenType.HOME:
             self._load_home_screen()
         elif screen_type == ScreenType.NEW_GALLERY:
@@ -66,9 +73,10 @@ class AppMain():
             print(f"Unknown screen type: {screen_type}")
             return
             
-        # Show the new content frame
-        self.frame_contents.pack(fill="both", expand=True)
-    
+        # Call load_content on the new screen if it's a UIBase instance
+        if hasattr(self.frame_contents, 'load_content'):
+            self.frame_contents.load_content()
+                
     def _load_home_screen(self):
         """Load the home screen"""
         from gallery_wall_planner.gui.Screen_Home import Screen_Home
@@ -77,8 +85,8 @@ class AppMain():
         
     def _load_new_gallery_screen(self):
         """Load the new gallery screen"""
-        from gallery_wall_planner.gui.NewGalleryUI import NewGalleryUI
-        self.frame_contents = NewGalleryUI(self)
+        from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
+        self.frame_contents = Screen_NewGalleryUI(self)
 
     def _load_select_wall_space_screen(self):
         """Load the select wall space screen"""

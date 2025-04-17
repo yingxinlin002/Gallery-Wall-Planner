@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import font
 from PIL import Image, ImageTk
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from gallery_wall_planner.gui.NewGalleryUI import NewGalleryUI
+from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
 from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
@@ -127,29 +127,6 @@ def quit_application():
 # # Start the main event loop
 # root.mainloop()
 
-class SimpleApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Simple App")
-
-        self.label_var = tk.StringVar()
-        self.label_var.set("Initial Value")
-
-        self.label = tk.Label(root, textvariable=self.label_var)
-        self.label.pack(pady=10)
-
-        self.entry = tk.Entry(root)
-        self.entry.pack(pady=5)
-
-        self.button = tk.Button(root, text="Update Label", command=self.update_label)
-        self.button.pack(pady=5)
-
-    def update_label(self):
-        new_text = self.entry.get()
-        if new_text:
-            self.label_var.set(f"Updated to: {new_text}")
-        else:
-            self.label_var.set("Entry was empty!")
 
 if __name__ == "__main__":
     print("Starting Gallery Wall Planner...")

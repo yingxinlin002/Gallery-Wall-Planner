@@ -1,13 +1,12 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
-from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.gui.global_state import global_gallery
+from tkinter import messagebox
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
 
-class SelectWallSpaceUI:
-    def __init__(self, root, return_to_home):
-        self.root = root
-        self.return_to_home = return_to_home
-        self.walls = global_gallery.get_walls()
+class Screen_SelectWallSpaceUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.walls = AppMain.gallery.get_walls()
         self.delete_buttons = {}
         self.create_ui()
 
@@ -132,10 +131,10 @@ class SelectWallSpaceUI:
         
         if confirm:
             # Remove from gallery
-            global_gallery.remove_wall(wall)
+            self.AppMain.gallery.remove_wall(wall)
             
             # Update UI
-            self.walls = global_gallery.get_walls()
+            self.walls = self.AppMain.gallery.get_walls()
             self.wall_listbox.delete(0, tk.END)
             for wall in self.walls:
                 self.wall_listbox.insert(tk.END, wall.name)
@@ -151,8 +150,8 @@ class SelectWallSpaceUI:
 
     def create_new_wall_space(self):
         # Navigate to NewGalleryUI to create a new wall space
-        from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
-        NewGalleryUI(self.root, self.return_to_home)
+        self.AppMain.switch_screen(ScreenType.NEW_GALLERY)
+        
 
     def export_layout(self):
         # Export the selected wall layout

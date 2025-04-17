@@ -3,18 +3,18 @@ from tkinter import font
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from PIL import Image, ImageTk
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
 
 
-class Screen_Home(tk.Canvas):
+class Screen_Home(Screen_Base):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
-        super().__init__(AppMain.frame_main, *args, **kwargs)
-        self.AppMain = AppMain
+        super().__init__(AppMain, *args, **kwargs)
         self.image_path = "gallery_wall_planner/gallery background.png"
         self.image = None
         self.background_image = None
         self.content_frame = None
         self.canvas = None
-        self._create_content()
+        # self._create_content()
     #     self.bind("<Configure>", self._resize_image)
     #     self._resize_image()  # Initial setup
 
@@ -36,10 +36,10 @@ class Screen_Home(tk.Canvas):
     #     except Exception as e:
     #         print(f"Error loading background image: {e}")
     
-    def _create_content(self):
+    def load_content(self):
 
         """Create the content that goes on top of the background"""
-        self.canvas = tk.Canvas(self.AppMain.frame_main, bg="white")
+        self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill="both", expand=True)
         self.canvas.configure(width=self.AppMain.frame_main.winfo_width(), height=self.AppMain.frame_main.winfo_height())
         try:
@@ -50,7 +50,7 @@ class Screen_Home(tk.Canvas):
             
         except Exception as e:
             print(f"Error loading background image: {e}")
-        self.content_frame = tk.Frame(self.AppMain.frame_main, bg="", bd=0)  # Transparent background
+        self.content_frame = tk.Frame(self, bg="", bd=0)  # Transparent background
         self.content_frame.place(relx=0.5, rely=0.5, anchor="center")
         # Add the title label with a stylish font
         title_font = font.Font(family="Helvetica", size=36, weight="bold")

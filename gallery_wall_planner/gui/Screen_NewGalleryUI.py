@@ -2,19 +2,18 @@ import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
 from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
-from gallery_wall_planner.gui.global_state import global_gallery  #  ADDED to carry wall info forward
-from gallery_wall_planner.gui.AppMain import AppMain
-from gallery_wall_planner.gui.AppMain import ScreenType
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.Popup_NewExhibit import Popup_NewExhibit
 
-class NewGalleryUI(tk.Canvas):
+class Screen_NewGalleryUI(Screen_Base):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
-        super().__init__(AppMain.frame_main, *args, **kwargs)
-        self.AppMain = AppMain
+        super().__init__(AppMain, *args, **kwargs)
         self.wall_width = None
         self.wall_height = None
         self.wall_color = "white"  # Default wall color
         self.content_frame = None
-        self.create_new_exhibit_popup()
+        # self.create_new_exhibit_popup()
 
     def create_new_exhibit_popup(self):
         """Create initial popup window for new exhibit options"""
@@ -60,26 +59,30 @@ class NewGalleryUI(tk.Canvas):
 
     def start_from_scratch(self):
         """Handle starting a new wall from scratch"""
-        self.popup.destroy()
-        self.show_wall_info_page()
+        print("Starting a new wall from scratch...")
 
     def load_from_existing(self):
         """Handle loading from existing wall"""
-        existing_walls = global_gallery.get_walls()
-        if not existing_walls:
-            messagebox.showerror("Error", "No existing walls found.")
-        else:
-            # Implement logic to select from existing walls
-            messagebox.showinfo("Info", "Feature coming soon!")
-        self.popup.destroy()
+        print("Loading from existing wall...")
+        # existing_walls = global_gallery.get_walls()
+        # if not existing_walls:
+        #     messagebox.showerror("Error", "No existing walls found.")
+        # else:
+        #     # Implement logic to select from existing walls
+        #     messagebox.showinfo("Info", "Feature coming soon!")
+        # self.popup.destroy()
 
-    def show_wall_info_page(self):
+    
+
+    def load_content(self):
         """Show the wall creation form with centered inputs"""
-        for widget in self.AppMain.root.winfo_children():
-            widget.destroy()
+        # for widget in self.AppMain.root.winfo_children():
+        #     widget.destroy()
+
+        print("Loading new gallery screen...")
         
         # Main container
-        main_frame = tk.Frame(self.AppMain.root)
+        main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
         # Title
@@ -190,7 +193,7 @@ class NewGalleryUI(tk.Canvas):
         tk.Button(
             button_frame,
             text="< Back to Home",
-            command=self.return_to_home,
+            command=lambda: self.AppMain.switch_screen(ScreenType.HOME),
             width=15,
             bg="#69718A",
             fg="white",
@@ -212,6 +215,9 @@ class NewGalleryUI(tk.Canvas):
         # Bind events
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
+
+        self.popup = Popup_NewExhibit(self.AppMain, self)
+        self.popup.load_content()
 
         # Initial preview
         self.update_preview()
@@ -307,10 +313,12 @@ class NewGalleryUI(tk.Canvas):
             color=self.wall_color
         )
 
-        global_gallery.add_wall(new_wall)
+        self.AppMain.gallery.add_wall(new_wall)
         
         # Navigate to PermanentObjectUI
         from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
         for widget in self.root.winfo_children():
             widget.destroy()
         PermanentObjectUI(self.root, self.return_to_home, new_wall)
+
+    
