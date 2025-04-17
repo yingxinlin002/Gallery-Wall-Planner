@@ -314,11 +314,12 @@ class Screen_NewGalleryUI(Screen_Base):
         )
 
         self.AppMain.gallery.add_wall(new_wall)
+        self.AppMain.switch_screen(ScreenType.PERMANENT_OBJECT)
         
         # Navigate to PermanentObjectUI
-        from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
-        for widget in self.root.winfo_children():
-            widget.destroy()
-        PermanentObjectUI(self.root, self.return_to_home, new_wall)
+        # from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
+        # for widget in self.root.winfo_children():
+        #     widget.destroy()
+        # PermanentObjectUI(self.root, self.return_to_home, new_wall)
 
     

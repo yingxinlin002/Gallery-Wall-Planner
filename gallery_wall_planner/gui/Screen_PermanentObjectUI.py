@@ -6,20 +6,18 @@ from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 from gallery_wall_planner.models.permanentObject import PermanentObject
 import re
 from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.AppMain import AppMain
 
-class PermanentObjectUI:
-    def __init__(self, root, return_to_previous, wall):  #  receive wall
-        self.root = root
-        self.return_to_previous = return_to_previous
-        self.wall = wall
+class Screen_PermanentObjectUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.wall = AppMain.gallery.current_wall
         self.styles = get_ui_styles()
-        self.create_ui()
 
-    def create_ui(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
+    def load_content(self):
 
-        container = tk.Frame(self.root)
+        container = tk.Frame(self)
         container.pack(fill="both", expand=True)
 
         # Fixed top section

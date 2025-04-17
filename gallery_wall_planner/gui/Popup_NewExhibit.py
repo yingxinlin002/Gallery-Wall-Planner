@@ -4,10 +4,10 @@ from gallery_wall_planner.gui.Popup_Base import Popup_Base
 from gallery_wall_planner.gui.AppMain import AppMain
 
 class Popup_NewExhibit(Popup_Base):
-    def __init__(self, AppMain : AppMain, parent_ui: 'NewGalleryUI', *args, **kwargs):
+    def __init__(self, AppMain : AppMain, parent_ui: 'Screen_NewGalleryUI', *args, **kwargs):
         super().__init__(AppMain, "New Exhibit", 300, 150, *args, **kwargs)
-        from gallery_wall_planner.gui.NewGalleryUI import NewGalleryUI
-        self.parent_ui: NewGalleryUI = parent_ui
+        from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
+        self.parent_ui: Screen_NewGalleryUI = parent_ui
 
 
     def load_content(self):

@@ -5,7 +5,7 @@ from tkinter import font
 from PIL import Image, ImageTk
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
-from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
+from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
 from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.permanentObject import PermanentObject
@@ -69,7 +69,7 @@ class BackgroundImage(tk.Canvas):
             "width": 25,
             "bg": "#5F3FCA",
             "fg": "white",
-            "font": button_font,
+            #"font": button_font,
             "relief": "raised",
             "padx": 10,
             "pady": 10,
@@ -81,12 +81,12 @@ class BackgroundImage(tk.Canvas):
         # Add the buttons with consistent styling
         tk.Button(self.content_frame, 
                   text="New Exhibit", 
-                  command=lambda: NewGalleryUI(root, create_home_menu), 
+                  command=lambda: Screen_NewGalleryUI(root, create_home_menu),
                   **button_style).pack(pady=10)
         
         tk.Button(self.content_frame, 
                   text="Load Exhibit", 
-                  command=lambda: SelectWallSpaceUI(root, create_home_menu), 
+                  command=lambda: Screen_SelectWallSpaceUI(root, create_home_menu),
                   **button_style).pack(pady=10)
         
         quit_button_style = button_style.copy()

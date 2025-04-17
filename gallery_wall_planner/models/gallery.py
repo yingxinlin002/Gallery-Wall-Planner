@@ -7,6 +7,7 @@ from gallery_wall_planner.models.artwork import Artwork
 class Gallery:
     # Class-level list to store all walls (replaces shared_state.walls)
     _all_walls: List['Wall'] = []
+    current_wall: Optional['Wall'] = None
     
     def __init__(self, name: str = "Gallery"):
         self.name = name  # Exhibit title
@@ -15,6 +16,7 @@ class Gallery:
     # Class methods to manage all walls
     def add_wall(self, wall: 'Wall') -> None:
         self._all_walls.append(wall)
+        self.current_wall = wall
         
     def get_walls(self) -> List['Wall']:
         return self._all_walls

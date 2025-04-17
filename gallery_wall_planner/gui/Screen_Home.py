@@ -9,7 +9,8 @@ from gallery_wall_planner.gui.Screen_Base import Screen_Base
 class Screen_Home(Screen_Base):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
-        self.image_path = "gallery_wall_planner/gallery background.png"
+        import os
+        self.image_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "gallery background.png"))
         self.image = None
         self.background_image = None
         self.content_frame = None

@@ -29,9 +29,8 @@ class AppMain():
         self.current_screen: ScreenType = ScreenType.HOME
         self.frame_main = tk.Frame(self.root, bg="#F0F0F0")
         self.frame_main.pack(fill=tk.BOTH, expand=True)
-        print(f"Frame dimensions: {self.frame_main.winfo_width()} x {self.frame_main.winfo_height()}")
-        print(f"Root dimensions: {self.root.winfo_width()} x {self.root.winfo_height()}")
         self.frame_main.bind("<Configure>", self._load_or_resize)
+
         self._load_or_resize()
 
     def _load_or_resize(self, event=None):
@@ -40,6 +39,7 @@ class AppMain():
             for widget in self.frame_main.winfo_children():
                 widget.destroy()
         self.root.update_idletasks()
+        self.frame_contents = None
         self.switch_screen(self.current_screen)
 
     def switch_screen(self, screen_type: ScreenType):
@@ -64,8 +64,7 @@ class AppMain():
         elif screen_type == ScreenType.SELECT_WALL_SPACE:
             self._load_select_wall_space_screen()
         elif screen_type == ScreenType.PERMANENT_OBJECT:
-            # TODO: Implement permanent object screen
-            pass
+            self._load_permanent_object_screen()
         elif screen_type == ScreenType.ARTWORK_SELECTION:
             # TODO: Implement artwork selection screen
             pass
@@ -90,19 +89,14 @@ class AppMain():
 
     def _load_select_wall_space_screen(self):
         """Load the select wall space screen"""
-        from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
-        self.frame_contents = SelectWallSpaceUI(self)
-        
-    # Convenience methods for switching screens
-    def switch_to_home(self):
-        self.switch_screen(ScreenType.HOME)
-        
-    def switch_to_new_gallery(self):
-        self.switch_screen(ScreenType.NEW_GALLERY)
-        
-    def switch_to_select_wall_space(self):
-        self.switch_screen(ScreenType.SELECT_WALL_SPACE)
-
+        from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
+        self.frame_contents = Screen_SelectWallSpaceUI(self)
+    
+    def _load_permanent_object_screen(self):
+        """Load the permanent object screen"""
+        from gallery_wall_planner.gui.Screen_PermanentObjectUI import Screen_PermanentObjectUI
+        self.frame_contents = Screen_PermanentObjectUI(self)
+    
 
     def quit_application(self):
         """Quit the application."""
