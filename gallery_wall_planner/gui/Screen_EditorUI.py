@@ -163,7 +163,7 @@ class Screen_EditorUI(Screen_Base):
             
             # Check if we've reached or passed the target
             if (direction == 1 and current_width >= target_width) or \
-               (direction == -1 and current_width <= target_width):
+            (direction == -1 and current_width <= target_width):
                 current_width = target_width
                 self.control_panel.config(width=current_width)
                 self.sidebar_animation_running = False
@@ -171,7 +171,7 @@ class Screen_EditorUI(Screen_Base):
                 return
             
             self.control_panel.config(width=current_width)
-            self.root.after(10, update_animation)
+            self.after(10, update_animation)  # Changed from self.root.after to self.after
         
         update_animation()
 
