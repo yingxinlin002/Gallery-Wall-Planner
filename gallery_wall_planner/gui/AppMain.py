@@ -4,6 +4,7 @@ from typing import Optional
 
 from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall import Wall
+from gallery_wall_planner.models.artwork import Artwork  # Import Artwork class
 
 
 class ScreenType(Enum):
@@ -28,6 +29,7 @@ class AppMain():
         self.root.geometry("1024x768")
         self.root.configure(bg="#F0F0F0")
         print("Creating main frame...")
+
         # Create a main frame and add it to root
         from gallery_wall_planner.gui.Screen_Base import Screen_Base
         self.frame_contents: Screen_Base = None      
@@ -37,7 +39,9 @@ class AppMain():
         self.frame_main.bind("<Configure>", self._load_or_resize)
 
         # TODO this can possibly be replaced with gallery.current_wall
+        # Track editor state
         self.editor_wall: Optional[Wall] = None
+        self.editor_artwork_selected: Optional[Artwork] = None
 
         self._load_or_resize()
 
@@ -50,11 +54,17 @@ class AppMain():
         # self.frame_contents = None
         self.switch_screen(self.current_screen)
 
-    def switch_screen(self, screen_type: ScreenType):
+    def switch_screen(self, screen_type: ScreenType, wall=None, artwork=None):
         """Switch to the specified screen type"""
         print(f"Switching to screen: {screen_type.name}")
 
         self.current_screen = screen_type
+        
+        # Update editor state if provided
+        if wall:
+            self.editor_wall = wall
+        if artwork:
+            self.editor_artwork_selected = artwork
         
         if self.frame_main:
             # Destroy all children of frame_main
@@ -81,12 +91,8 @@ class AppMain():
         elif screen_type == ScreenType.ARTWORK_XLSX:
             self._load_artwork_xlsx_screen()
         elif screen_type == ScreenType.ARTWORK_SELECTION:
-            # TODO: Implement artwork selection screen
             pass
-        else:
-            print(f"Unknown screen type: {screen_type}")
-            return
-            
+                
         # Call load_content on the new screen if it's a UIBase instance
         if hasattr(self.frame_contents, 'load_content'):
             self.frame_contents.load_content()
@@ -116,6 +122,19 @@ class AppMain():
         """Load the editor screen"""
         from gallery_wall_planner.gui.Screen_EditorUI import Screen_EditorUI
         self.frame_contents = Screen_EditorUI(self)
+
+        # Call load_content to initialize the screen
+        if hasattr(self.frame_contents, 'load_content'):
+            self.frame_contents.load_content()
+
+        # Ensure the editor screen knows about the current wall and selected artwork
+        if hasattr(self.frame_contents, 'initialize_virtual_wall'):
+            self.frame_contents.initialize_virtual_wall()
+        
+        # Highlight selected artwork if one exists
+        if (hasattr(self.frame_contents, 'highlight_artwork') and 
+            self.editor_artwork_selected):
+            self.frame_contents.highlight_artwork(self.editor_artwork_selected)
 
     def _load_lock_objects_to_wall_screen(self):
         """Load the lock objects to wall screen"""
