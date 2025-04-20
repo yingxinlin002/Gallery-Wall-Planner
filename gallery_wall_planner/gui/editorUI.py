@@ -113,8 +113,9 @@ class EditorUI:
         for widget in self.wall_space.winfo_children():
             widget.destroy()
         
-        # Create new virtual wall
-        self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
+        # Create new virtual wall with existing artworks
+        artworks = getattr(self.selected_wall, 'artwork', [])
+        self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall, artworks)
         
         # Add existing artworks if any
         if hasattr(self.selected_wall, 'artwork'):

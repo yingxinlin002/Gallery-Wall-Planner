@@ -1,6 +1,6 @@
 import openpyxl
 from openpyxl.styles import Font, PatternFill
-from config_create-read import read_config
+from config_create_read import read_config
 
 class Show:
     # Class level list of all galleries in the show

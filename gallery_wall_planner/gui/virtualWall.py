@@ -9,10 +9,10 @@ from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignme
 import math
 
 class VirtualWall:
-    def __init__(self, parent_frame, selected_wall):
+    def __init__(self, parent_frame, selected_wall, artworks=None):
         self.parent = parent_frame
         self.selected_wall = selected_wall
-        self.artworks = []
+        self.artworks = artworks if artworks else []
         self.draggable_items = []
         self.snap_lines = []
         self.popup_windows = {}
@@ -95,6 +95,10 @@ class VirtualWall:
             command=self.toggle_grid
         )
         self.toggle_grid_btn.pack(side="left", padx=5)
+
+        # Add any initial artworks
+        for artwork in self.artworks:
+            self.create_draggable_artwork(artwork)
         
         # Add snap line button
         self.add_line_btn = ttk.Button(
@@ -310,11 +314,11 @@ class VirtualWall:
         )
     
     def setup_default_snap_lines(self):
-        """Create default snap line at 62 inches"""
+        """Create default snap line at 60 inches"""
         default_line = SingleLine(
-            orientation=Orientation.HORIZONTAL,  # Use the enum value here
-            alignment=HorizontalAlignment.CENTER,  # Use the enum value here
-            distance=60.0,  # Changed from 62 to 60 inches
+            orientation=LineOrientation.HORIZONTAL,
+            alignment=LineAlignment.CENTER,
+            distance=60.0,  # 60 inches from bottom
             snap_to=True,
             moveable=True
         )
