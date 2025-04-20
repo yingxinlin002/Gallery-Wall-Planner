@@ -4,7 +4,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel, filedialog
 from gallery_wall_planner.models.wall_line import SingleLine
-from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup,LineOrientation, LineAlignment
 from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignment, VerticalAlignment
 import math
 
