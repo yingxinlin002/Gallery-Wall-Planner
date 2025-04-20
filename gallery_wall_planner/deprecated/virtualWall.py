@@ -10,6 +10,7 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_canvas_style
 )
 from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+from gallery_wall_planner.utils.measurement_lines import MeasurementLinesManager
 
 class VirtualWall:
     def __init__(self, parent_frame, selected_wall, artworks=None, on_drag_callback=None):
@@ -508,9 +509,8 @@ class VirtualWall:
             self.update_popup_fields = None
             self.wall_ref = wall_ref
 
-            # Initialize measurement lines and texts
-            self.measurement_lines = []
-            self.measurement_texts = []
+            # Initialize measurement lines manager
+            self.measurement_manager = MeasurementLinesManager(wall_ref.canvas, wall_ref)
 
             self.create_canvas_item()
 
@@ -547,11 +547,8 @@ class VirtualWall:
             x2 = (coords[2] - self.wall_ref.wall_left) / self.wall_ref.scale
             y2 = (self.wall_ref.canvas_height - coords[1] - self.wall_ref.wall_bottom) / self.wall_ref.scale
 
-            # Clear previous measurement lines
-            self.clear_measurement_lines()
-
             # Draw new measurement lines and distances
-            self.draw_measurement_lines(x1, y1, x2, y2)
+            self.measurement_manager.draw_measurement_lines(x1, y1, x2, y2)
 
             # Temporary boundary check during drag
             if x1 < 0 or x2 > self.wall_ref.wall_width or y1 < 0 or y2 > self.wall_ref.wall_height:
@@ -560,6 +557,8 @@ class VirtualWall:
                 self.wall_ref.canvas.itemconfig(self.id, outline="black")
 
         def on_drop(self, event):
+            # Clear measurement lines on drop
+            self.measurement_manager.clear_measurement_lines()
             coords = self.wall_ref.canvas.coords(self.id)
             new_x = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.scale  # Use self.wall_ref.scale
             new_y = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.scale  # Use self.wall_ref.scale
@@ -586,90 +585,3 @@ class VirtualWall:
             self.wall_ref.check_all_collisions()
             if self.update_popup_fields and self.index in self.wall_ref.popup_windows and self.wall_ref.popup_windows[self.index].winfo_exists():
                 self.update_popup_fields()
-
-        def clear_measurement_lines(self):
-            """Remove all measurement lines and text"""
-            for line in self.measurement_lines:
-                self.wall_ref.canvas.delete(line)
-            for text in self.measurement_texts:
-                self.wall_ref.canvas.delete(text)
-            self.measurement_lines = []
-            self.measurement_texts = []
-
-        def draw_measurement_lines(self, x1, y1, x2, y2):
-            """Draw measurement lines and distances for the artwork."""
-            # Clear existing measurement lines and texts
-            self.clear_measurement_lines()
-
-            # Convert to canvas coordinates
-            cx1 = self.wall_ref.wall_left + x1 * self.wall_ref.scale
-            cy1 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + y2 * self.wall_ref.scale)
-            cx2 = self.wall_ref.wall_left + x2 * self.wall_ref.scale
-            cy2 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + y1 * self.wall_ref.scale)
-
-            # Wall boundaries
-            wall_top = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + self.wall_ref.wall_height * self.wall_ref.scale)
-
-            # Left measurement line
-            line = self.wall_ref.canvas.create_line(
-                self.wall_ref.wall_left, cy1, cx1, cy1,
-                fill="gray", dash=(2, 2), width=1
-            )
-            self.measurement_lines.append(line)
-
-            # Left distance text
-            dist = x1
-            text = self.wall_ref.canvas.create_text(
-                (self.wall_ref.wall_left + cx1)/2, cy1 - 10,
-                text=f"{dist:.1f}\"",
-                fill="black"
-            )
-            self.measurement_texts.append(text)
-
-            # Right measurement line
-            line = self.wall_ref.canvas.create_line(
-                cx2, cy1, self.wall_ref.wall_right, cy1,
-                fill="gray", dash=(2, 2), width=1
-            )
-            self.measurement_lines.append(line)
-
-            # Right distance text
-            dist = self.wall_ref.wall_width - x2
-            text = self.wall_ref.canvas.create_text(
-                (cx2 + self.wall_ref.wall_right)/2, cy1 - 10,
-                text=f"{dist:.1f}\"",
-                fill="black"
-            )
-            self.measurement_texts.append(text)
-
-            # Top measurement line
-            line = self.wall_ref.canvas.create_line(
-                cx1, wall_top, cx1, cy1,
-                fill="gray", dash=(2, 2), width=1
-            )
-            self.measurement_lines.append(line)
-
-            # Top distance text
-            dist = self.wall_ref.wall_height - y2
-            text = self.wall_ref.canvas.create_text(
-                cx1 + 10, (wall_top + cy1)/2,
-                text=f"{dist:.1f}\"",
-                fill="black"
-            )
-            self.measurement_texts.append(text)
-
-            # Bottom measurement line
-            line = self.wall_ref.canvas.create_line(
-                cx1, cy2, cx1, self.wall_ref.canvas_height - self.wall_ref.wall_bottom,
-                fill="gray", dash=(2, 2), width=1
-            )
-            self.measurement_lines.append(line)
-
-            # Bottom distance text
-            dist = y1
-            text = self.wall_ref.canvas.create_text(
-                cx1 + 10, (cy2 + self.wall_ref.canvas_height - self.wall_ref.wall_bottom)/2,
-                text=f"{dist:.1f}\"",
-                fill="black"
-            )
-            self.measurement_texts.append(text)
