@@ -119,14 +119,29 @@ class Screen_ArtworkManuallyUI(Screen_Base):
             tk.Label(self.artwork_frame, text="No artworks added yet", fg="gray").pack(pady=20)
             
     def add_artwork_to_list(self, artwork: Artwork):
+        """Add an artwork to the sidebar list"""
         if len(self.AppMain.gallery.current_wall.artwork) == 0:
             for widget in self.artwork_frame.winfo_children():
                 widget.destroy()
+        
         frame = tk.Frame(self.artwork_frame, bg="white", bd=1, relief="groove", padx=10, pady=5)
         frame.pack(fill="x", pady=5, padx=5)
+        frame.artwork = artwork  # Store reference to artwork
+        
+        # Make the frame clickable
+        frame.bind("<Button-1>", lambda e, a=artwork: self.select_artwork(a))
+        
+        # Highlight if selected
+        if hasattr(self, 'selected_artwork') and self.selected_artwork == artwork:
+            frame.config(bg="#f0f0ff")  # Light purple highlight
+        
+        # Artwork details
+        tk.Label(frame, 
+                text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")", 
+                font=self.styles["label_font"], 
+                bg=frame["bg"]).pack(anchor="w")
 
-        tk.Label(frame, text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")", font=self.styles["label_font"], bg="white").pack(anchor="w")
-
+        # Additional details
         details = []
         if artwork.medium:
             details.append(f"Medium: {artwork.medium}")
@@ -136,9 +151,26 @@ class Screen_ArtworkManuallyUI(Screen_Base):
             details.append("NFS")
 
         if details:
-            tk.Label(frame, text=" | ".join(details), font=self.styles["small_font"], bg="white").pack(anchor="w")
+            tk.Label(frame, 
+                    text=" | ".join(details), 
+                    font=self.styles["small_font"], 
+                    bg=frame["bg"]).pack(anchor="w")
 
-        # self.artwork_items.append(frame)
+    def select_artwork(self, artwork):
+        """Handle artwork selection from the list"""
+        # Store selected artwork in AppMain
+        self.AppMain.editor_artwork_selected = artwork
+        
+        # Update highlights in sidebar
+        for widget in self.artwork_frame.winfo_children():
+            if isinstance(widget, tk.Frame):
+                if hasattr(widget, 'artwork') and widget.artwork == artwork:
+                    widget.config(bg="#f0f0ff")  # Light purple highlight
+                else:
+                    widget.config(bg="white")
+        
+        # Switch to editor screen with the selected artwork
+        self.AppMain.switch_screen(ScreenType.EDITOR)
 
     def clear_example(self, event, entry: tk.Entry, example_text):
         if entry.get() == example_text:

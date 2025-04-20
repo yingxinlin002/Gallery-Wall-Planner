@@ -127,18 +127,25 @@ class ArtworkManuallyUI:
         frame = tk.Frame(self.artwork_frame, bg="white", bd=1, relief="groove", padx=10, pady=5)
         frame.pack(fill="x", pady=5, padx=5)
 
-        tk.Label(frame, text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")", font=self.styles["label_font"], bg="white").pack(anchor="w")
+        # Get validated dimensions
+        width = artwork.width if hasattr(artwork, 'width') and artwork.width is not None else 0.0
+        height = artwork.height if hasattr(artwork, 'height') and artwork.height is not None else 0.0
+
+        tk.Label(frame, text=f"{artwork.name} ({width}\" × {height}\")", font=self.styles["label_font"], bg="white").pack(anchor="w")
 
         details = []
         if artwork.medium:
             details.append(f"Medium: {artwork.medium}")
-        if artwork.price > 0:
+        if hasattr(artwork, 'price') and artwork.price > 0:
             details.append(f"Price: ${artwork.price:,.2f}")
-        if artwork.nfs:
+        if hasattr(artwork, 'nfs') and artwork.nfs:
             details.append("NFS")
 
         if details:
-            tk.Label(frame, text=" | ".join(details), font=self.styles["small_font"], bg="white").pack(anchor="w")
+            tk.Label(frame, 
+                    text=" | ".join(details), 
+                    font=self.styles["small_font"], 
+                    bg="white").pack(anchor="w")
 
         self.artwork_items.append(frame)
 
@@ -183,7 +190,7 @@ class ArtworkManuallyUI:
 
         try:
             width = float(width)
-            height = float(height)
+            height = float(height)  # Convert to float
             hanging_point = float(hanging_point)
             depth = float(depth) if depth and depth != "e.g., 2.0" else 0.0
             price = float(price) if price and price != "e.g., 2500.00" else 0.0
@@ -193,7 +200,7 @@ class ArtworkManuallyUI:
                 name=name,
                 medium=medium,
                 width=width,
-                height=height,
+                height=height,  # Pass the validated height
                 depth=depth,
                 hanging_point=hanging_point,
                 price=price,

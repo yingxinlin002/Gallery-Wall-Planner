@@ -9,25 +9,22 @@ class Artwork(WallObject):
     """
     Represents an artwork that can be placed on a wall
     """
-    def __init__(self, name: str = "", medium: str = "", height: float = 0, width: float = 0, depth: float = 0, hanging_point: float = 0, price: float = 0, nfs: bool = False, image_path: str = "", notes: str = ""):
+    def __init__(self, name: str = "", medium: str = "", height: float = 0.0, width: float = 0.0, 
+                 depth: float = 0.0, hanging_point: float = 0.0, price: float = 0.0, 
+                 nfs: bool = False, image_path: str = "", notes: str = ""):
         # Initialize the parent class with common attributes
         super().__init__(name, width, height, image_path)
         
         # Initialize artwork-specific private attributes
-        self._medium = None
-        self._depth = None
-        self._hanging_point = None
-        self._price = None
-        self._nfs = None
-        self._notes = None
-        
-        # Set artwork-specific properties with validation
-        self.medium = medium
-        self.depth = depth
-        self.hanging_point = hanging_point
-        self.price = price
-        self.nfs = nfs
-        self.notes = notes
+        self._medium = medium
+        self._depth = depth
+        self._hanging_point = hanging_point
+        self._price = price
+        self._nfs = nfs
+        self._notes = notes
+
+        # Ensure height is always a float
+        self.height = height
         
     # name property is inherited from WallObject
     
@@ -46,11 +43,12 @@ class Artwork(WallObject):
     @property
     def height(self) -> float:
         """Get the artwork's height"""
-        return self._height
+        return self._height if hasattr(self, '_height') else 0.0
     
     @height.setter
     def height(self, value: float):
         """Set the artwork's height with validation"""
+        self._height = float(value) if value is not None else 0.0
     
     @property
     def depth(self) -> float:
@@ -219,4 +217,4 @@ def import_artwork(art_name, file_name):
     with open(file_name, "rb") as f:
         data = f.read()
     art_name = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
-            
+
