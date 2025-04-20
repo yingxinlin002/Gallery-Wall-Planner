@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, Toplevel, filedialog
-import os
-from gallery_wall_planner.gui.AppMain import ScreenType
+from tkinter import ttk, Toplevel, filedialog
 from gallery_wall_planner.gui.popup_editor import open_popup_editor
 from gallery_wall_planner.gui.ui_styles import (
     init_styles,
@@ -9,9 +7,8 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_header_label_style,
     apply_canvas_style
 )
-from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
 from gallery_wall_planner.models.project_exporter import export_project
-from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
+
 
 # -------------------------
 # Function: Enforce Boundaries
