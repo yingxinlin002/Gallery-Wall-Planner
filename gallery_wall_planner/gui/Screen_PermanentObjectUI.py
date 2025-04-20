@@ -1,11 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
-from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
-from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 from gallery_wall_planner.models.permanentObject import PermanentObject
 import re
-from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
 from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 

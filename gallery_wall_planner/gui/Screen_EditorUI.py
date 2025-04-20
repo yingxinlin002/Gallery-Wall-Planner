@@ -1,19 +1,16 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.ui_styles import (
     init_styles,
-    apply_primary_button_style,
     apply_header_label_style,
-    apply_canvas_style,
     get_ui_styles
 )
-from gallery_wall_planner.gui.virtualWall import VirtualWall
+from gallery_wall_planner.deprecated.virtualWall import VirtualWall
 from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
-from gallery_wall_planner.models.structures import CanvasDimensions, Padding, WallPosition
+from gallery_wall_planner.models.structures import CanvasDimensions, Padding
+
 
 class Screen_EditorUI(Screen_Base):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
