@@ -1,11 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, Toplevel
-from gallery_wall_planner.models.wall_line import LineAlignment
 # from gallery_wall_planner.models.wall_line import SingleLine, Orientation, HorizontalAlignment, VerticalAlignment # Naming convention was causing crash when fixing virtualWall.py. This can be deleted, but wanted to leave an explanation here for now.
 from gallery_wall_planner.models.wall_line import (
     SingleLine,
-    LineOrientation as Orientation,  # Alias for consistency
-    LineAlignment,
+    Orientation,
     HorizontalAlignment,
     VerticalAlignment
 )
@@ -23,16 +21,11 @@ def open_snap_line_popup(root, on_save_callback, existing_line=None, wall_width=
     ttk.Radiobutton(popup, text="Vertical", variable=orientation_var, value=Orientation.VERTICAL.name).pack(anchor="w", padx=20)
 
     # Alignment Radio Buttons
-    alignment_var = tk.StringVar(value=existing_line.alignment.name if existing_line else LineAlignment.CENTER.name)
+    alignment_var = tk.StringVar(value=existing_line.alignment.name if existing_line else HorizontalAlignment.CENTER.name)
     alignment_frame = ttk.Frame(popup)
     alignment_frame.pack(anchor="w", padx=10, pady=(10, 0))
 
     ttk.Label(alignment_frame, text="Alignment:").pack(anchor="w")
-
-    align_options = {
-        Orientation.HORIZONTAL: [LineAlignment.TOP, LineAlignment.CENTER, LineAlignment.BOTTOM],
-        Orientation.VERTICAL: [LineAlignment.LEFT, LineAlignment.CENTER, LineAlignment.RIGHT]
-    }
 
     align_buttons = []
 
@@ -43,7 +36,7 @@ def open_snap_line_popup(root, on_save_callback, existing_line=None, wall_width=
         align_buttons.clear()
 
         current_orientation = Orientation[orientation_var.get()]
-        for alignment in align_options[current_orientation]:
+        for alignment in Orientation.alignment_options(current_orientation):
             b = ttk.Radiobutton(alignment_frame, text=alignment.name.capitalize(), variable=alignment_var, value=alignment.name)
             b.pack(anchor="w", padx=20)
             align_buttons.append(b)

@@ -1,22 +1,23 @@
+
 import tkinter as tk
 from tkinter import messagebox, filedialog
+
+from typing import override
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
+
 from gallery_wall_planner.models.artwork import Artwork
 
-class ArtworkManuallyUI:
-    def __init__(self, root, return_to_editor, selected_wall):
-        self.root = root
-        self.return_to_editor = return_to_editor
-        self.selected_wall = selected_wall
+class Screen_ArtworkManuallyUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
         self.styles = get_ui_styles()
-        self.artwork_items = []
-        self.create_ui()
 
-    def create_ui(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
 
-        main_container = tk.PanedWindow(self.root, orient=tk.HORIZONTAL)
+    @override
+    def load_content(self):
+        main_container = tk.PanedWindow(self, orient=tk.HORIZONTAL)
         main_container.pack(fill=tk.BOTH, expand=True)
 
         left_pane = tk.Frame(main_container)
@@ -96,7 +97,7 @@ class ArtworkManuallyUI:
 
         tk.Button(button_frame, text="Create Artwork", command=self.create_artwork, width=self.styles["button_width"], bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"], padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(side="left", padx=10)
 
-        tk.Button(button_frame, text="Back to Editor", command=self.back_to_editor, width=self.styles["button_width"], bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"], padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(side="right", padx=10)
+        tk.Button(button_frame, text="Back to Editor", command=lambda: self.AppMain.switch_screen(ScreenType.EDITOR), width=self.styles["button_width"], bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"], padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(side="right", padx=10)
 
         tk.Label(right_pane, text="Created Artworks", font=self.styles["title_font"]).pack(pady=10)
 
@@ -111,19 +112,16 @@ class ArtworkManuallyUI:
         self.artwork_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        self.update_artwork_list()
-
-    def update_artwork_list(self):
-        for widget in self.artwork_frame.winfo_children():
-            widget.destroy()
-
-        if hasattr(self.selected_wall, 'artwork'):
-            for artwork in self.selected_wall.artwork:
+        if len(self.AppMain.gallery.current_wall.artwork) > 0:
+            for artwork in self.AppMain.gallery.current_wall.artwork:
                 self.add_artwork_to_list(artwork)
         else:
             tk.Label(self.artwork_frame, text="No artworks added yet", fg="gray").pack(pady=20)
-
+            
     def add_artwork_to_list(self, artwork: Artwork):
+        if len(self.AppMain.gallery.current_wall.artwork) == 0:
+            for widget in self.artwork_frame.winfo_children():
+                widget.destroy()
         frame = tk.Frame(self.artwork_frame, bg="white", bd=1, relief="groove", padx=10, pady=5)
         frame.pack(fill="x", pady=5, padx=5)
 
@@ -140,14 +138,14 @@ class ArtworkManuallyUI:
         if details:
             tk.Label(frame, text=" | ".join(details), font=self.styles["small_font"], bg="white").pack(anchor="w")
 
-        self.artwork_items.append(frame)
+        # self.artwork_items.append(frame)
 
-    def clear_example(self, event, entry, example_text):
+    def clear_example(self, event, entry: tk.Entry, example_text):
         if entry.get() == example_text:
             entry.delete(0, tk.END)
             entry.config(fg="black")
 
-    def restore_example(self, event, entry, example_text):
+    def restore_example(self, event, entry: tk.Entry, example_text):
         if not entry.get():
             entry.insert(0, example_text)
             entry.config(fg="grey")
@@ -201,8 +199,8 @@ class ArtworkManuallyUI:
                 image_path=image_path
             )
 
-            self.selected_wall.add_artwork(artwork)
             self.show_artwork_preview(artwork)
+            self.AppMain.gallery.current_wall.add_artwork(artwork)
             self.clear_form()
 
         except ValueError as e:
@@ -230,9 +228,3 @@ class ArtworkManuallyUI:
 
         self.image_path.set("")
         self.nfs_var.set(False)
-
-    def back_to_editor(self):
-        from gallery_wall_planner.gui.editorUI import Screen_EditorUI
-        for widget in self.root.winfo_children():
-            widget.destroy()
-        Screen_EditorUI(self.root, self.return_to_editor, self.selected_wall)

@@ -6,27 +6,27 @@ from gallery_wall_planner.models.artwork import Artwork
 
 class Gallery:
     # Class-level list to store all walls (replaces shared_state.walls)
-    _all_walls: List['Wall'] = []
-    current_wall: Optional['Wall'] = None
+    #_all_walls: List['Wall'] = [] TODO do we need this
     
     def __init__(self, name: str = "Gallery"):
         self.name = name  # Exhibit title
         self.walls = []  # List of Wall objects for this specific gallery
+        self.current_wall: Optional['Wall'] = None
 
     # Class methods to manage all walls
     def add_wall(self, wall: 'Wall') -> None:
-        self._all_walls.append(wall)
+        self.walls.append(wall)
         self.current_wall = wall
         
     def get_walls(self) -> List['Wall']:
-        return self._all_walls
+        return self.walls
         
     def remove_wall(self, wall: 'Wall') -> None:
-        self._all_walls.remove(wall)
+        self.walls.remove(wall)
 
     def get_wall_by_name(self, name: str) -> Optional['Wall']:
         """Find a wall by its name"""
-        for wall in self._all_walls:
+        for wall in self.walls:
             if wall.name == name:
                 return wall
         return None

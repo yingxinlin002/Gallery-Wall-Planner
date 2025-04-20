@@ -7,6 +7,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 from .artwork import Artwork
 from .permanentObject import PermanentObject
 from .wall_line import SingleLine
+from .structures import Position
 
 class Wall:
     def __init__(self, name: str, width: float, height: float, color: str = "White"):
@@ -26,7 +27,7 @@ class Wall:
         self._color = None
         self._artwork = []          # List of Artwork objects
         self._wall_lines = []       # List of decorative lines/markings
-        self._permanent_objects = []  # List of PermanentObject instances
+        self._permanent_objects: List[PermanentObject] = []  # List of PermanentObject instances
         
         # Set properties with validation
         self.name = name
@@ -152,16 +153,16 @@ class Wall:
         if y < 0 or (y + obj.height) > self.height:
             raise ValueError("Object would extend beyond wall height")
             
-        obj.position = {'x': x, 'y': y}
+        obj.position = Position(x, y)
         self._permanent_objects.append(obj)
         return True
     
-    def remove_permanent_object(self, obj: Union[PermanentObject, str]) -> bool:
+    def remove_permanent_object(self, obj: PermanentObject) -> bool:
         """
         Remove a permanent object from the wall
         
         Args:
-            obj (PermanentObject or str): Object instance or name to remove
+            obj (PermanentObject): Object instance to remove
             
         Returns:
             bool: True if removed, False if not found
@@ -179,14 +180,14 @@ class Wall:
                 return True
             return False
     
-    def get_permanent_objects(self) -> List[Tuple[PermanentObject, Dict[str, float]]]:
-        """
-        Get all permanent objects with their positions
+    # def get_permanent_objects(self) -> List[Tuple[PermanentObject, Dict[str, float]]]:
+    #     """
+    #     Get all permanent objects with their positions
         
-        Returns:
-            list: Tuples of (PermanentObject, position_dict)
-        """
-        return [(obj, obj.position) for obj in self._permanent_objects]
+    #     Returns:
+    #         list: Tuples of (PermanentObject, position_dict)
+    #     """
+    #     return [(obj, obj.position) for obj in self._permanent_objects]
     
     def get_permanent_object_by_name(self, name: str) -> Optional[PermanentObject]:
         """
@@ -315,6 +316,7 @@ class Wall:
         wall.wall_lines = data.get('wall_lines', [])
         
         from gallery_wall_planner.models.permanentObject import PermanentObject
+        from gallery_wall_planner.models.structures import Position
         # Recreate permanent objects
         for obj_data in data.get('permanent_objects', []):
             obj = PermanentObject(

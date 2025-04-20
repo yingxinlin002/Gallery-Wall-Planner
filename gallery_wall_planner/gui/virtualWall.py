@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, Toplevel
 import os
-from gallery_wall_planner.models.wall_line import SingleLine, LineOrientation, LineAlignment, HorizontalAlignment, VerticalAlignment
+from gallery_wall_planner.models.wall_line import SingleLine, Orientation, HorizontalAlignment, VerticalAlignment
 from gallery_wall_planner.gui.popup_editor import open_popup_editor
 from gallery_wall_planner.gui.ui_styles import (
     init_styles,
@@ -23,13 +23,13 @@ class VirtualWall:
         self.snap_lines = []
         for line in getattr(selected_wall, 'wall_lines', []):
             if isinstance(line.alignment, str):
-                if line.orientation == LineOrientation.HORIZONTAL:
+                if line.orientation == Orientation.HORIZONTAL:
                     line.alignment = HorizontalAlignment[line.alignment.upper()]
                 else:
                     line.alignment = VerticalAlignment[line.alignment.upper()]
             elif line.alignment is None:
                 line.alignment = (
-                    HorizontalAlignment.CENTER if line.orientation == LineOrientation.HORIZONTAL
+                    HorizontalAlignment.CENTER if line.orientation == Orientation.HORIZONTAL
                     else VerticalAlignment.CENTER
                 )
 
@@ -54,18 +54,19 @@ class VirtualWall:
 
     def get_alignment_string(self, line):
         print(f"[DEBUG] line.orientation={line.orientation}, line.alignment={line.alignment}, type={type(line.alignment)}")
-        if line.orientation == LineOrientation.HORIZONTAL:
+        if line.orientation == Orientation.HORIZONTAL:
             return line.alignment.value.capitalize() if isinstance(line.alignment, HorizontalAlignment) else "Unknown"
-        elif line.orientation == LineOrientation.VERTICAL:
+        elif line.orientation == Orientation.VERTICAL:
             return line.alignment.value.capitalize() if isinstance(line.alignment, VerticalAlignment) else "Unknown"
         return "Unknown"
 
     def check_collision_with_permanent_objects(self, x, y, width, height):
         """Check if artwork would collide with permanent objects"""
-        if not hasattr(self.selected_wall, 'get_permanent_objects'):
+        if not hasattr(self.selected_wall, 'permanent_objects'):
             return False
 
-        for obj, pos in self.selected_wall.get_permanent_objects():
+        for obj in self.selected_wall.permanent_objects:
+            pos = obj.position
             obj_x1 = pos['x']
             obj_y1 = pos['y']
             obj_x2 = obj_x1 + obj.width
@@ -118,7 +119,7 @@ class VirtualWall:
 
         if not self.snap_lines:
             default_snap_line = SingleLine(
-                orientation=LineOrientation.HORIZONTAL,
+                orientation=Orientation.HORIZONTAL,
                 alignment=HorizontalAlignment.CENTER,
                 distance=60.0,
                 snap_to=True,
@@ -128,9 +129,9 @@ class VirtualWall:
 
         self.draw_snap_lines()
 
-        if hasattr(self.selected_wall, 'get_permanent_objects'):
-            for obj, pos in self.selected_wall.get_permanent_objects():
-                self.create_fixed_item(obj, pos)
+        if hasattr(self.selected_wall, 'permanent_objects'):
+            for obj in self.selected_wall.permanent_objects:
+                self.create_fixed_item(obj, obj.position)
 
         if hasattr(self.selected_wall, 'artwork'):
             for artwork in self.selected_wall.artwork:
@@ -162,10 +163,10 @@ class VirtualWall:
 
 
     def create_fixed_item(self, obj, pos):
-        x1 = self.wall_left + pos['x'] * self.scale
-        y1 = self.canvas_height - (self.wall_bottom + (pos['y'] + obj.height) * self.scale)
-        x2 = self.wall_left + (pos['x'] + obj.width) * self.scale
-        y2 = self.canvas_height - (self.wall_bottom + pos['y'] * self.scale)
+        x1 = self.wall_left + pos.x * self.scale
+        y1 = self.canvas_height - (self.wall_bottom + (pos.y + obj.height) * self.scale)
+        x2 = self.wall_left + (pos.x + obj.width) * self.scale
+        y2 = self.canvas_height - (self.wall_bottom + pos.y * self.scale)
         self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
 
     def enforce_boundaries(self, x, y, width, height):
@@ -182,14 +183,14 @@ class VirtualWall:
     def draw_snap_lines(self):
         self.canvas.delete("snap_line")
         for line in self.snap_lines:
-            if line.orientation == LineOrientation.HORIZONTAL:
+            if line.orientation == Orientation.HORIZONTAL:
                 y = self.canvas_height - (self.wall_bottom + line.distance * self.scale)
                 self.canvas.create_line(
                     self.wall_left, y,
                     self.wall_right, y,
                     fill="blue", dash=(4, 2), width=2, tags="snap_line"
                 )
-            elif line.orientation == LineOrientation.VERTICAL:
+            elif line.orientation == Orientation.VERTICAL:
                 x = self.wall_left + line.distance * self.scale
                 self.canvas.create_line(
                     x, self.canvas_height - self.wall_top,
@@ -265,7 +266,7 @@ class VirtualWall:
             line_frame = ttk.Frame(frame)
             line_frame.pack(fill="x", pady=5, padx=10)
 
-            orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, LineOrientation) else "Unknown"
+            orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, Orientation) else "Unknown"
             alignment_str = self.get_alignment_string(line)
             label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
             ttk.Label(line_frame, text=label_text).pack(side="left")
@@ -292,12 +293,12 @@ class VirtualWall:
 
         # Fallback defaults if fields are missing
         if existing_line.orientation is None:
-            existing_line.orientation = LineOrientation.HORIZONTAL
+            existing_line.orientation = Orientation.HORIZONTAL
         if existing_line.alignment is None:
-            if existing_line.orientation == LineOrientation.HORIZONTAL:
-                existing_line.alignment = LineAlignment.CENTER
+            if existing_line.orientation == Orientation.HORIZONTAL:
+                existing_line.alignment = HorizontalAlignment.CENTER
             else:
-                existing_line.alignment = LineAlignment.CENTER
+                existing_line.alignment = VerticalAlignment.CENTER
 
         open_snap_line_popup(
             self.parent,
@@ -399,7 +400,7 @@ class VirtualWall:
 
             alignment_str = self.get_alignment_string(line)
 
-            if line.orientation == LineOrientation.HORIZONTAL:
+            if line.orientation == Orientation.HORIZONTAL:
                 target_y = line.distance
                 if isinstance(line.alignment, HorizontalAlignment):
                     if line.alignment == HorizontalAlignment.TOP:
@@ -416,7 +417,7 @@ class VirtualWall:
                         print(f"Snap check: Art y={art.y:.2f}, candidate_y={candidate_y:.2f}, threshold={threshold}")
                         art.y = candidate_y
 
-            elif line.orientation == LineOrientation.VERTICAL:
+            elif line.orientation == Orientation.VERTICAL:
                 target_x = line.distance
                 if isinstance(line.alignment, VerticalAlignment):
                     if line.alignment == VerticalAlignment.LEFT:
@@ -481,10 +482,10 @@ class VirtualWall:
             self.create_canvas_item()
 
         def create_canvas_item(self):
-            x1 = self.wall_ref.wall_left + self.x * self.wall_ref.scale
-            y1 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + (self.y + self.height) * self.wall_ref.scale)
-            x2 = self.wall_ref.wall_left + (self.x + self.width) * self.wall_ref.scale
-            y2 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + self.y * self.wall_ref.scale)
+            x1 = self.wall_ref.wall_left + self.x * self.wall_ref.screen_scale
+            y1 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + (self.y + self.height) * self.wall_ref.screen_scale)
+            x2 = self.wall_ref.wall_left + (self.x + self.width) * self.wall_ref.screen_scale
+            y2 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + self.y * self.wall_ref.screen_scale)
             self.id = self.wall_ref.canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=2)
             self.wall_ref.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
             self.wall_ref.canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
@@ -502,8 +503,8 @@ class VirtualWall:
 
         def on_drop(self, event):
             coords = self.wall_ref.canvas.coords(self.id)
-            new_x = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.scale
-            new_y = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.scale
+            new_x = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.screen_scale
+            new_y = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.screen_scale
             # Initial boundary enforcement
             new_x, new_y = self.wall_ref.enforce_boundaries(new_x, new_y, self.width, self.height)
             self.x = new_x

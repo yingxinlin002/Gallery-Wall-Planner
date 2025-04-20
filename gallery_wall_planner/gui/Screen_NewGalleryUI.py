@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
-from gallery_wall_planner.models.wall import Wall  #  ADDED to carry wall info forward
+from gallery_wall_planner.models.wall import Wall  
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.Popup_NewExhibit import Popup_NewExhibit
@@ -13,49 +13,56 @@ class Screen_NewGalleryUI(Screen_Base):
         self.wall_height = None
         self.wall_color = "white"  # Default wall color
         self.content_frame = None
+
+        self.popup = None
+
+        self.back_to_home_button = None
+        self.submit_and_next_button = None
+        self.color_picker_button = None
+
         # self.create_new_exhibit_popup()
 
-    def create_new_exhibit_popup(self):
-        """Create initial popup window for new exhibit options"""
-        self.popup = tk.Toplevel(self.AppMain.root)
-        self.popup.title("New Exhibit")
-        self.popup.geometry("300x150")
-        self.center_popup(self.popup, 300, 150)
+    # def create_new_exhibit_popup(self):
+    #     """Create initial popup window for new exhibit options"""
+    #     self.popup = tk.Toplevel(self.AppMain.root)
+    #     self.popup.title("New Exhibit")
+    #     self.popup.geometry("300x150")
+    #     self.center_popup(self.popup, 300, 150)
 
-        # Add buttons to the popup window
-        tk.Button(
-            self.popup,
-            text="Start from Scratch",
-            command=self.start_from_scratch,
-            width=20,
-            bg="#5F3FCA",
-            fg="white",
-            font=("Helvetica", 12, "bold"),
-            relief="raised",
-            padx=10,
-            pady=5
-        ).pack(pady=10)
+    #     # Add buttons to the popup window
+    #     tk.Button(
+    #         self.popup,
+    #         text="Start from Scratch",
+    #         command=self.start_from_scratch,
+    #         width=20,
+    #         bg="#5F3FCA",
+    #         fg="white",
+    #         font=("Helvetica", 12, "bold"),
+    #         relief="raised",
+    #         padx=10,
+    #         pady=5
+    #     ).pack(pady=10)
 
-        tk.Button(
-            self.popup,
-            text="Load from an Existing Wall",
-            command=self.load_from_existing,
-            width=20,
-            bg="#5F3FCA",
-            fg="white",
-            font=("Helvetica", 12, "bold"),
-            relief="raised",
-            padx=10,
-            pady=5
-        ).pack(pady=10)
+    #     tk.Button(
+    #         self.popup,
+    #         text="Load from an Existing Wall",
+    #         command=self.load_from_existing,
+    #         width=20,
+    #         bg="#5F3FCA",
+    #         fg="white",
+    #         font=("Helvetica", 12, "bold"),
+    #         relief="raised",
+    #         padx=10,
+    #         pady=5
+    #     ).pack(pady=10)
 
-    def center_popup(self, popup, width, height):
-        """Center the popup window on screen"""
-        screen_width = popup.winfo_screenwidth()
-        screen_height = popup.winfo_screenheight()
-        x = (screen_width // 2) - (width // 2)
-        y = (screen_height // 2) - (height // 2)
-        popup.geometry(f"{width}x{height}+{x}+{y}")
+    # def center_popup(self, popup, width, height):
+    #     """Center the popup window on screen"""
+    #     screen_width = popup.winfo_screenwidth()
+    #     screen_height = popup.winfo_screenheight()
+    #     x = (screen_width // 2) - (width // 2)
+    #     y = (screen_height // 2) - (height // 2)
+    #     popup.geometry(f"{width}x{height}+{x}+{y}")
 
     def start_from_scratch(self):
         """Handle starting a new wall from scratch"""
@@ -157,7 +164,7 @@ class Screen_NewGalleryUI(Screen_Base):
         self.color_box = tk.Label(color_frame, bg=self.wall_color, width=10, height=1)
         self.color_box.pack(side="left", padx=(0, 10))
 
-        tk.Button(
+        self.color_picker_button = tk.Button(
             color_frame,
             text="Pick",
             command=self.pick_color,
@@ -166,7 +173,8 @@ class Screen_NewGalleryUI(Screen_Base):
             fg="white",
             font=("Helvetica", 10),
             relief="raised"
-        ).pack(side="left")
+        )
+        self.color_picker_button.pack(side="left")
 
         # Create a container for canvas and buttons
         canvas_button_container = tk.Frame(main_frame)
@@ -190,7 +198,7 @@ class Screen_NewGalleryUI(Screen_Base):
         button_frame = tk.Frame(canvas_button_container)
         button_frame.pack(fill="x", pady=(10, 0))
 
-        tk.Button(
+        self.back_to_home_button = tk.Button(
             button_frame,
             text="< Back to Home",
             command=lambda: self.AppMain.switch_screen(ScreenType.HOME),
@@ -199,9 +207,10 @@ class Screen_NewGalleryUI(Screen_Base):
             fg="white",
             font=("Helvetica", 12, "bold"),
             relief="raised"
-        ).pack(side="left", padx=10)
+        )
+        self.back_to_home_button.pack(side="left", padx=10)
 
-        tk.Button(
+        self.submit_and_next_button = tk.Button(
             button_frame,
             text="Submit and Next >",
             command=self.submit_wall_info,
@@ -210,14 +219,16 @@ class Screen_NewGalleryUI(Screen_Base):
             fg="white",
             font=("Helvetica", 12, "bold"),
             relief="raised"
-        ).pack(side="right", padx=10)
+        )
+        self.submit_and_next_button.pack(side="right", padx=10)
 
         # Bind events
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
 
-        self.popup = Popup_NewExhibit(self.AppMain, self)
-        self.popup.load_content()
+        if len(self.AppMain.gallery.get_walls()) > 0:
+            self.popup = Popup_NewExhibit(self.AppMain, self)
+            self.popup.load_content()
 
         # Initial preview
         self.update_preview()

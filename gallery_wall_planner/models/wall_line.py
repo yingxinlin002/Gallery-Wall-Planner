@@ -1,15 +1,12 @@
+from __future__ import annotations
 from enum import Enum
 # I believe the two imports below, def export_snap_line(), and def import_snap_line() should live in wall.py
 import json
 import os
 from types import SimpleNamespace
 from enum import Enum, auto
-from typing import Union, Optional
+from typing import Union, Optional, List
 
-
-class Orientation(Enum):
-    HORIZONTAL = "horizontal"
-    VERTICAL = "vertical"
 
 class HorizontalAlignment(Enum):
     TOP = "top"
@@ -21,17 +18,20 @@ class VerticalAlignment(Enum):
     CENTER = "center"
     RIGHT = "right"
 
-class LineOrientation(Enum):
+class Orientation(Enum):
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
+    @classmethod
+    def alignment_options(cls, orientation: Orientation) -> Union[List[HorizontalAlignment], List[VerticalAlignment]]:
+        if orientation == Orientation.HORIZONTAL:
+            return [HorizontalAlignment.TOP, HorizontalAlignment.CENTER, HorizontalAlignment.BOTTOM]
+        elif orientation == Orientation.VERTICAL:
+            return [VerticalAlignment.LEFT, VerticalAlignment.CENTER, VerticalAlignment.RIGHT]
+        else:
+            return []
 
-class LineAlignment(Enum):
-    TOP = "top"
-    CENTER = "center"
-    BOTTOM = "bottom"
-    LEFT = "left"
-    RIGHT = "right"
+
 
 
 class SingleLine:
@@ -43,8 +43,8 @@ class SingleLine:
         angle: float = 0,
         snap_to: bool = True,
         moveable: bool = True,
-        orientation: Union[LineOrientation, str] = LineOrientation.HORIZONTAL,
-        alignment: Union[LineAlignment, str] = LineAlignment.CENTER,
+        orientation: Orientation = Orientation.HORIZONTAL,
+        alignment: Union[HorizontalAlignment,VerticalAlignment] = HorizontalAlignment.CENTER,
         distance: float = 0.0               # Distance from wall edge (in inches)
     ):
         # Initialize private attributes
@@ -145,40 +145,33 @@ class SingleLine:
         self._moveable = value
 
     @property
-    def orientation(self) -> LineOrientation:
+    def orientation(self) -> Orientation:
         """Get the orientation of the line"""
         return self._orientation
 
     @orientation.setter
-    def orientation(self, value: Union[LineOrientation, str]):
+    def orientation(self, value: Orientation):
         """Set the orientation of the line with validation"""
-        if isinstance(value, LineOrientation):
+        if isinstance(value, Orientation):
             self._orientation = value
-        elif isinstance(value, str):
-            try:
-                self._orientation = LineOrientation(value)
-            except ValueError:
-                raise ValueError(f"Invalid orientation value: {value}. Must be one of {[o.value for o in LineOrientation]}")
-        else:
-            raise ValueError("Orientation must be a LineOrientation enum or a valid string value")
-
  
 
     @property
-    def alignment(self) -> LineAlignment:
+    def alignment(self) -> Union[HorizontalAlignment,VerticalAlignment]:
         return self._alignment
 
     @alignment.setter
-    def alignment(self, value: Union[LineAlignment, str]):
-        if isinstance(value, LineAlignment):
+    def alignment(self, value: Union[HorizontalAlignment,VerticalAlignment]):
+        if isinstance(value, (HorizontalAlignment, VerticalAlignment)):
+            if self.orientation == Orientation.HORIZONTAL:
+                if not isinstance(value, HorizontalAlignment):
+                    raise ValueError("Alignment must be a HorizontalAlignment enum for horizontal lines")
+            elif self.orientation == Orientation.VERTICAL:
+                if not isinstance(value, VerticalAlignment):
+                    raise ValueError("Alignment must be a VerticalAlignment enum for vertical lines")
             self._alignment = value
-        elif isinstance(value, str):
-            try:
-                self._alignment = LineAlignment(value)
-            except ValueError:
-                raise ValueError(f"Invalid alignment value: {value}. Must be one of {[a.value for a in LineAlignment]}")
         else:
-            raise ValueError("Alignment must be a LineAlignment enum or a valid string value")
+            raise ValueError("Alignment must be a HorizontalAlignment or VerticalAlignment enum")
 
 
     @property
@@ -236,7 +229,7 @@ def import_wall_line(file_name):
 
     # Convert string values back to enum instances if needed
     if hasattr(obj, 'orientation'):
-        obj.orientation = LineOrientation(obj.orientation)
+        obj.orientation = Orientation(obj.orientation)
     if hasattr(obj, 'alignment'):
         obj.alignment = LineAlignment(obj.alignment)
 

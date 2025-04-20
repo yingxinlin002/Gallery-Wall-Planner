@@ -3,44 +3,33 @@ import re
 import os
 from types import SimpleNamespace
 from typing import Optional
+from gallery_wall_planner.models.wall_object import WallObject
 
-class Artwork:
+class Artwork(WallObject):
+    """
+    Represents an artwork that can be placed on a wall
+    """
     def __init__(self, name: str = "", medium: str = "", height: float = 0, width: float = 0, depth: float = 0, hanging_point: float = 0, price: float = 0, nfs: bool = False, image_path: str = "", notes: str = ""):
-        # Initialize private attributes
-        self._name = None
+        # Initialize the parent class with common attributes
+        super().__init__(name, width, height, image_path)
+        
+        # Initialize artwork-specific private attributes
         self._medium = None
-        self._height = None
-        self._width = None
         self._depth = None
         self._hanging_point = None
         self._price = None
         self._nfs = None
-        self._image_path = None
         self._notes = None
         
-        # Set properties with validation
-        self.name = name
+        # Set artwork-specific properties with validation
         self.medium = medium
-        self.height = height
-        self.width = width
         self.depth = depth
         self.hanging_point = hanging_point
         self.price = price
         self.nfs = nfs
-        self.image_path = image_path
         self.notes = notes
         
-    @property
-    def name(self) -> str:
-        """Get the artwork's name"""
-        return self._name
-    
-    @name.setter
-    def name(self, value: str):
-        """Set the artwork's name with validation"""
-        if not isinstance(value, str):
-            raise ValueError("Name must be a string")
-        self._name = value
+    # name property is inherited from WallObject
     
     @property
     def medium(self) -> str:
@@ -62,25 +51,6 @@ class Artwork:
     @height.setter
     def height(self, value: float):
         """Set the artwork's height with validation"""
-        if not isinstance(value, (int, float)):
-            raise ValueError("Height must be a number")
-        if value < 0:
-            raise ValueError("Height cannot be negative")
-        self._height = float(value)
-    
-    @property
-    def width(self) -> float:
-        """Get the artwork's width"""
-        return self._width
-    
-    @width.setter
-    def width(self, value: float):
-        """Set the artwork's width with validation"""
-        if not isinstance(value, (int, float)):
-            raise ValueError("Width must be a number")
-        if value < 0:
-            raise ValueError("Width cannot be negative")
-        self._width = float(value)
     
     @property
     def depth(self) -> float:
@@ -136,17 +106,7 @@ class Artwork:
             raise ValueError("NFS must be a boolean")
         self._nfs = value
     
-    @property
-    def image_path(self) -> str:
-        """Get the artwork's image path"""
-        return self._image_path
-    
-    @image_path.setter
-    def image_path(self, value: str):
-        """Set the artwork's image path with validation"""
-        if not isinstance(value, str):
-            raise ValueError("Image path must be a string")
-        self._image_path = value
+    # image_path property is inherited from WallObject
     
     @property
     def notes(self) -> str:
