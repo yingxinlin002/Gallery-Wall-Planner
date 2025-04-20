@@ -1,20 +1,23 @@
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+from pathlib import Path
+from PIL import Image, ImageTk
 import os
 import webbrowser
-from pathlib import Path
-from PIL import Image, ImageTk  # Requires Pillow package
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 
-class ArtworkxlsxUI:
-    def __init__(self, root, return_to_editor, selected_wall):
-        self.root = root
-        self.return_to_editor = return_to_editor
-        self.selected_wall = selected_wall
+
+class Screen_ArtworkxlsxUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.selected_wall = AppMain.editor_wall
         self.styles = self.get_ui_styles()
-        self.init_styles(root)
+        self.init_styles()
         
         # Store current window size before making changes
-        self.original_geometry = self.root.geometry()
+        # self.original_geometry = self.root.geometry()
         
         # Initialize widget references
         self.image_container = None
@@ -32,21 +35,7 @@ class ArtworkxlsxUI:
         self.original_image = None
         self.image_tk = None
         
-        self.create_ui()
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    def on_close(self):
-        """Clean up before closing window"""
-        self.cleanup()
-        self.root.destroy()
-
-    def cleanup(self):
-        """Clean up resources"""
-        if hasattr(self, 'image_tk'):
-            self.image_tk = None
-        if hasattr(self, 'original_image'):
-            self.original_image = None
-
+    # TODO: Move this to a shared module
     def get_ui_styles(self):
         """Return UI styles dictionary"""
         return {
@@ -64,9 +53,10 @@ class ArtworkxlsxUI:
             "fg_white": "white"
         }
 
-    def init_styles(self, root):
+    # TODO: Move this to a shared module
+    def init_styles(self):
         """Initialize ttk styles"""
-        style = ttk.Style(root)
+        style = ttk.Style(self.AppMain.root)
         style.theme_use("clam")
         
         # Configure button styles
@@ -86,16 +76,12 @@ class ArtworkxlsxUI:
                        foreground=self.styles["fg_white"],
                        font=self.styles["button_font"])
 
-    def create_ui(self):
-        # Clear any existing widgets
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
+    def load_content(self):
         # Prevent window from resizing during UI creation
-        self.root.withdraw()
+        # self.root.withdraw()
         
         # Main container
-        main_frame = ttk.Frame(self.root)
+        main_frame = ttk.Frame(self)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
         
         # Header frame
@@ -105,7 +91,7 @@ class ArtworkxlsxUI:
         # Back button
         back_button = ttk.Button(header_frame,
                                text="← Back to Editor",
-                               command=self.return_to_editor,
+                               command=lambda: self.AppMain.switch_screen(ScreenType.EDITOR),
                                style="Secondary.TButton")
         back_button.pack(side="left", padx=10)
         
@@ -162,12 +148,12 @@ class ArtworkxlsxUI:
                               style="Primary.TButton")
         import_btn.pack(pady=(15, 0))
         
-        # Restore original window size and position
-        self.root.deiconify()
-        self.root.geometry(self.original_geometry)
+        # # Restore original window size and position
+        # self.root.deiconify()
+        # self.root.geometry(self.original_geometry)
         
-        # Bind window resize event
-        self.root.bind("<Configure>", self.on_window_resize)
+        # # Bind window resize event
+        # self.root.bind("<Configure>", self.on_window_resize)
 
     def setup_image_display(self, parent):
         """Set up the image display area with canvas and scrollbars"""
@@ -332,9 +318,10 @@ class ArtworkxlsxUI:
             if not file_path:
                 raise ValueError("Please select an xlsx file first")
             
+            # TODO: Add code to parse xlsx file
             # Here you would add code to actually parse the xlsx file
             # For now, just show a success message
             messagebox.showinfo("Success", f"Artwork imported from:\n{file_path}")
-            self.return_to_editor()
+            self.AppMain.switch_screen(ScreenType.EDITOR)
         except Exception as e:
             messagebox.showerror("Error", f"Could not import artwork:\n{str(e)}")

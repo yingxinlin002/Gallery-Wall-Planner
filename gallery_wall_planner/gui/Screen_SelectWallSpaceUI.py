@@ -1,26 +1,28 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
-from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.gui.global_state import global_gallery
+from tkinter import messagebox
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.models.wall import Wall
+from typing import Optional
 
-class SelectWallSpaceUI:
-    def __init__(self, root, return_to_home):
-        self.root = root
-        self.return_to_home = return_to_home
-        self.walls = global_gallery.get_walls()
+class Screen_SelectWallSpaceUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.walls = AppMain.gallery.get_walls()
         self.delete_buttons = {}
-        self.create_ui()
+        self.btn_create_new_wall_space = None
+        self.btn_export_layout = None
+        self.btn_continue = None
+        self.btn_back = None
 
-    def create_ui(self):
+    def load_content(self):
         # Clear the current frame
-        for widget in self.root.winfo_children():
-            widget.destroy()
 
         # Add a title
-        tk.Label(self.root, text="Select Wall Space", font=("Arial", 24)).pack(pady=20, anchor="w")
+        tk.Label(self, text="Select Wall Space", font=("Arial", 24)).pack(pady=20, anchor="w")
 
         # Main content frame
-        content_frame = tk.Frame(self.root)
+        content_frame = tk.Frame(self)
         content_frame.pack(fill="both", expand=True)
 
         # Left Panel: List of wall spaces
@@ -42,8 +44,9 @@ class SelectWallSpaceUI:
         self.wall_listbox.bind("<<ListboxSelect>>", self.on_wall_selected)
 
         # Create New Wall Space Button
-        tk.Button(left_panel, text="Create New Wall Space", command=self.create_new_wall_space, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="bottom", pady=10)
-
+        self.btn_create_new_wall_space = tk.Button(left_panel, text="Create New Wall Space", command=self.create_new_wall_space, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
+        self.btn_create_new_wall_space.pack(side="bottom", pady=10)
+        
         # Right Panel: Wall space preview
         right_panel = tk.Frame(content_frame, width=500, bg="#ffffff")
         right_panel.pack(side="left", fill="both", expand=True, padx=10, pady=10)
@@ -57,17 +60,20 @@ class SelectWallSpaceUI:
         self.wall_details_label.pack(pady=10)
 
         # Bottom Buttons
-        bottom_frame = tk.Frame(self.root)
+        bottom_frame = tk.Frame(self)
         bottom_frame.pack(fill="x", pady=10)
 
         # Back to Home Button (Left Side)
-        tk.Button(bottom_frame, text="< Back to Home", command=self.return_to_home, width=15, bg="#69718A", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="left", padx=10)
+        self.btn_back = tk.Button(bottom_frame, text="< Back to Home", command=lambda: self.AppMain.switch_screen(ScreenType.HOME), width=15, bg="#69718A", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
+        self.btn_back.pack(side="left", padx=10)
 
         # Export Layout Button (Center)
-        tk.Button(bottom_frame, text="Export Layout", command=self.export_layout, width=15, bg="#4CAF50", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="left", padx=10)
+        self.btn_export_layout = tk.Button(bottom_frame, text="Export Layout", command=self.export_layout, width=15, bg="#4CAF50", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
+        self.btn_export_layout.pack(side="left", padx=10)
 
         # Continue Button (Right Side)
-        tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5).pack(side="right", padx=10)
+        self.btn_continue = tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
+        self.btn_continue.pack(side="right", padx=10)
 
     def on_wall_selected(self, event=None):
         """Handle wall selection - update preview and show delete button"""
@@ -99,9 +105,9 @@ class SelectWallSpaceUI:
             # Store reference to button
             self.delete_buttons[wall.name] = delete_btn
 
-    def create_tooltip(self, widget, text):
+    def create_tooltip(self, widget: tk.Widget, text: str):
         """Create a simple tooltip that appears on hover"""
-        tooltip = tk.Toplevel(self.root)
+        tooltip = tk.Toplevel(self.AppMain.root)
         tooltip.withdraw()
         tooltip.overrideredirect(True)
         
@@ -127,15 +133,15 @@ class SelectWallSpaceUI:
         confirm = messagebox.askyesno(
             "Delete Wall", 
             f"Are you sure you want to delete '{wall.name}'?",
-            parent=self.root
+            parent=self.AppMain.root
         )
         
         if confirm:
             # Remove from gallery
-            global_gallery.remove_wall(wall)
+            self.AppMain.gallery.remove_wall(wall)
             
             # Update UI
-            self.walls = global_gallery.get_walls()
+            self.walls = self.AppMain.gallery.get_walls()
             self.wall_listbox.delete(0, tk.END)
             for wall in self.walls:
                 self.wall_listbox.insert(tk.END, wall.name)
@@ -151,8 +157,8 @@ class SelectWallSpaceUI:
 
     def create_new_wall_space(self):
         # Navigate to NewGalleryUI to create a new wall space
-        from gallery_wall_planner.gui.NewExhibitUI import NewGalleryUI
-        NewGalleryUI(self.root, self.return_to_home)
+        self.AppMain.switch_screen(ScreenType.NEW_GALLERY)
+        
 
     def export_layout(self):
         # Export the selected wall layout
@@ -166,16 +172,13 @@ class SelectWallSpaceUI:
     def continue_to_next(self):
         selected_wall = self.get_selected_wall()
         if selected_wall:
-            # Clear current UI
-            for widget in self.root.winfo_children():
-                widget.destroy()
+            self.AppMain.editor_wall = selected_wall
             # Navigate to EditorUI
-            from gallery_wall_planner.gui.editorUI import EditorUI
-            EditorUI(self.root, self.return_to_home, selected_wall)
+            self.AppMain.switch_screen(ScreenType.EDITOR)
         else:
             messagebox.showwarning("Error", "Please select a wall space to continue.")
 
-    def get_selected_wall(self):
+    def get_selected_wall(self) -> Optional[Wall]:
         # Get the selected wall from the listbox
         selected_index = self.wall_listbox.curselection()
         if selected_index:
@@ -208,10 +211,11 @@ class SelectWallSpaceUI:
             self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=selected_wall.color, outline="black")
 
             # Draw permanent objects
-            for obj, pos in selected_wall.get_permanent_objects():
+            for obj in selected_wall.permanent_objects:
+                pos = obj.position
                 if pos:  # Only draw if object has a position
-                    obj_x0 = x0 + pos['x'] * ratio
-                    obj_y0 = y0 + (wall_height - pos['y'] - obj.height) * ratio  # Adjust for bottom-left origin
+                    obj_x0 = x0 + pos.x * ratio
+                    obj_y0 = y0 + (wall_height - pos.y - obj.height) * ratio  # Adjust for bottom-left origin
                     obj_x1 = obj_x0 + obj.width * ratio
                     obj_y1 = obj_y0 + obj.height * ratio
                     
@@ -238,7 +242,7 @@ class SelectWallSpaceUI:
             self.preview_canvas.create_text(x0 - 15, (y0 + y1)/2, text=f"{wall_height}\"", anchor="e", angle=90)
 
             # Update wall details label with object count
-            obj_count = len(selected_wall.get_permanent_objects())
+            obj_count = len(selected_wall.permanent_objects)
             self.wall_details_label.config(
                 text=f"Wall: {selected_wall.name}\n"
                     f"Dimensions: {wall_width}\" x {wall_height}\"\n"

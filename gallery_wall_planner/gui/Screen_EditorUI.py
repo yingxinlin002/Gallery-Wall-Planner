@@ -1,34 +1,37 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from gallery_wall_planner.models.wall import Wall
-from gallery_wall_planner.gui.ui_styles import get_ui_styles
-from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
-from gallery_wall_planner.gui.virtualWall import VirtualWall
+from gallery_wall_planner.gui.ui_styles import (
+    init_styles,
+    apply_header_label_style,
+    get_ui_styles
+)
+from gallery_wall_planner.deprecated.virtualWall import VirtualWall
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.WallCanvas import WallCanvas
+from gallery_wall_planner.models.structures import CanvasDimensions, Padding
 
-class EditorUI:
-    def __init__(self, root, return_to_home, selected_wall):
-        self.root = root
-        self.return_to_home = return_to_home
-        self.selected_wall = selected_wall
+
+class Screen_EditorUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.selected_wall = AppMain.editor_wall
         self.styles = get_ui_styles()
         self.artwork_list = []
         self.sidebar_visible = True
         self.sidebar_width = 300
         self.sidebar_animation_running = False
         self.virtual_wall = None
-        self.create_ui()
+        self.wall_canvas = None
 
 
-    def create_ui(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
-        main_frame = tk.Frame(self.root)
+    def load_content(self):
+        main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
         back_button = tk.Button(main_frame,
                               text="< Back to Wall Selection",
-                              command=self.back_to_wall_selection,
+                              command=lambda: self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE),
                               bg=self.styles["bg_secondary"],
                               fg=self.styles["fg_white"],
                               font=self.styles["button_font"],
@@ -104,8 +107,29 @@ class EditorUI:
         self.wall_space = tk.Frame(content_frame, bg="white")
         self.wall_space.pack(side="right", fill="both", expand=True)
 
-        # Initialize VirtualWall - always show the wall
-        self.initialize_virtual_wall()
+        init_styles(self.wall_space)
+        header_frame = ttk.Frame(self.wall_space)
+        header_frame.pack(side="top", fill="x", padx=10, pady=10)
+
+        title_label = ttk.Label(header_frame, text="Organize Art")
+        apply_header_label_style(title_label)
+        title_label.pack(side="left")
+
+        self.buttons_frame = ttk.Frame(header_frame)
+        self.buttons_frame.pack(side="left", padx=20)
+        self.item_buttons = {}
+
+        canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
+        self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
+        self.wall_canvas.load_content()
+        # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
+        # apply_canvas_style(self.canvas)
+        # self.canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
+
+        snap_button_frame = ttk.Frame(self.wall_space)
+        snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+
             
     def initialize_virtual_wall(self):
         """Initialize the virtual wall display"""
@@ -274,23 +298,13 @@ class EditorUI:
             toggle_btn.config(text="▼")
 
     def back_to_wall_selection(self):
-        SelectWallSpaceUI(self.root, self.return_to_home)
+        self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
 
     def open_artwork_manual_ui(self):
-        from gallery_wall_planner.gui.ArtworkManuallyUI import ArtworkManuallyUI
-        for widget in self.root.winfo_children():
-            widget.destroy()
-        ArtworkManuallyUI(self.root,
-                         lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
-                         self.selected_wall)
+        self.AppMain.switch_screen(ScreenType.ARTWORK_MANUAL)
 
     def open_artwork_xlsx_ui(self):
-        from gallery_wall_planner.gui.ArtworkxlsxUI import ArtworkxlsxUI
-        for widget in self.root.winfo_children():
-            widget.destroy()
-        ArtworkxlsxUI(self.root,
-                    lambda: EditorUI(self.root, self.return_to_home, self.selected_wall),
-                    self.selected_wall)
+        self.AppMain.switch_screen(ScreenType.ARTWORK_XLSX)
 
     def refresh_artwork_list(self):
         """Refresh both the sidebar list and virtual wall"""

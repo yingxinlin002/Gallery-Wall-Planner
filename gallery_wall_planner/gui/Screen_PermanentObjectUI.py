@@ -1,25 +1,28 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
-from gallery_wall_planner.gui.OrganizeArt import launch_organize_art_ui
-from gallery_wall_planner.gui.LockObjectsToWall import launch_lock_objects_ui
 from gallery_wall_planner.models.permanentObject import PermanentObject
 import re
-from gallery_wall_planner.gui.SelectWallSpaceUI import SelectWallSpaceUI
+from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 
-class PermanentObjectUI:
-    def __init__(self, root, return_to_previous, wall):  #  receive wall
-        self.root = root
-        self.return_to_previous = return_to_previous
-        self.wall = wall
+class Screen_PermanentObjectUI(Screen_Base):
+    def __init__(self, AppMain : AppMain, *args, **kwargs):
+        super().__init__(AppMain, *args, **kwargs)
+        self.name_entry = None
+        self.has_permanent_items = None
+        self.wall = AppMain.gallery.current_wall
         self.styles = get_ui_styles()
-        self.create_ui()
+        self.rdb_add_permanent_object_yes = None
+        self.rdb_add_permanent_object_no = None
+        self.submit_button = None
+        self.home_button = None
+        self.add_permanent_object_button = None
+        self.browse_button = None
 
-    def create_ui(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
+    def load_content(self):
 
-        container = tk.Frame(self.root)
+        container = tk.Frame(self)
         container.pack(fill="both", expand=True)
 
         # Fixed top section
@@ -34,10 +37,12 @@ class PermanentObjectUI:
         yes_no_frame.pack(pady=10)
 
         self.has_permanent_items = tk.BooleanVar(value=False)
-        tk.Radiobutton(yes_no_frame, text="Yes", variable=self.has_permanent_items, value=True,
-                      command=self.show_permanent_item_inputs, font=self.styles["label_font"]).pack(side=tk.LEFT, padx=5)
-        tk.Radiobutton(yes_no_frame, text="No", variable=self.has_permanent_items, value=False,
-                      command=self.hide_permanent_item_inputs, font=self.styles["label_font"]).pack(side=tk.LEFT, padx=5)
+        self.rdb_add_permanent_object_yes = tk.Radiobutton(yes_no_frame, text="Yes", variable=self.has_permanent_items, value=True,
+                      command=self.show_permanent_item_inputs, font=self.styles["label_font"])
+        self.rdb_add_permanent_object_yes.pack(side=tk.LEFT, padx=5)
+        self.rdb_add_permanent_object_no = tk.Radiobutton(yes_no_frame, text="No", variable=self.has_permanent_items, value=False,
+                      command=self.hide_permanent_item_inputs, font=self.styles["label_font"])
+        self.rdb_add_permanent_object_no.pack(side=tk.LEFT, padx=5)
 
         # Scrollable middle section
         middle_frame = tk.Frame(container)
@@ -64,9 +69,10 @@ class PermanentObjectUI:
         button_frame = tk.Frame(container)
         button_frame.pack(side="bottom", fill="x", pady=20)
 
-        tk.Button(button_frame, text="Back", command=self.return_to_previous, width=self.styles["button_width"],
+        self.home_button = tk.Button(button_frame, text="Home", command=lambda : self.AppMain.switch_screen(ScreenType.HOME), width=self.styles["button_width"],
                  bg=self.styles["bg_secondary"], fg=self.styles["fg_white"], font=self.styles["button_font"],
-                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(side=tk.LEFT, padx=10)
+                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"])
+        self.home_button.pack(side=tk.LEFT, padx=10)
 
         self.submit_button = tk.Button(button_frame, text="Submit", command=self.submit, width=self.styles["button_width"],
                                       bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"],
@@ -115,14 +121,16 @@ class PermanentObjectUI:
         # Image upload
         tk.Label(input_frame, text="Upload Image (optional):", font=self.styles["label_font"]).pack(pady=5)
         self.image_path = tk.StringVar()
-        tk.Button(input_frame, text="Browse", command=self.upload_image, width=self.styles["button_width"],
+        self.browse_button = tk.Button(input_frame, text="Browse", command=self.upload_image, width=self.styles["button_width"],
                  bg=self.styles["bg_info"], fg=self.styles["fg_white"], font=self.styles["button_font"],
-                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=5)
+                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"])
+        self.browse_button.pack(pady=5)
 
         # Add button
-        tk.Button(input_frame, text="Add Permanent Object", command=self.save_permanent_object,
+        self.add_permanent_object_button = tk.Button(input_frame, text="Add Permanent Object", command=self.save_permanent_object,
                  width=20, bg=self.styles["bg_success"], fg=self.styles["fg_white"], font=self.styles["button_font"],
-                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"]).pack(pady=10)
+                 relief="raised", padx=self.styles["button_padx"], pady=self.styles["button_pady"])
+        self.add_permanent_object_button.pack(pady=10)
 
         # Preview frame
         preview_frame = tk.Frame(input_preview_container, padx=20, pady=10)
@@ -190,7 +198,7 @@ class PermanentObjectUI:
         for widget in self.object_preview_frame.winfo_children():
             widget.destroy()
 
-        permanent_objects = self.wall.get_permanent_objects()
+        permanent_objects = self.wall.permanent_objects
         if not permanent_objects:
             tk.Label(self.object_preview_frame, 
                      text="No permanent objects added yet",
@@ -212,7 +220,7 @@ class PermanentObjectUI:
         objects_container = tk.Frame(canvas)
         canvas.create_window((0, 0), window=objects_container, anchor="nw")
 
-        for index, (obj, _) in enumerate(permanent_objects):
+        for index, obj in enumerate(permanent_objects):
             obj_frame = tk.Frame(objects_container)
             obj_frame.pack(fill="x", padx=5, pady=2)
 
@@ -234,11 +242,11 @@ class PermanentObjectUI:
 
     def delete_object(self, index):
         # Get the object to delete
-        obj, _ = self.wall.get_permanent_objects()[index]
+        obj = self.wall.permanent_objects[index]
         self.wall.remove_permanent_object(obj)
         self.refresh_object_preview()
 
-        if not self.wall.get_permanent_objects() and self.has_permanent_items.get():
+        if not self.wall.permanent_objects and self.has_permanent_items.get():
             self.submit_button.config(state="disabled")
 
     def clear_inputs(self):
@@ -255,15 +263,19 @@ class PermanentObjectUI:
 
 
     def submit(self):
-            if self.has_permanent_items.get():
-                if not self.wall.get_permanent_objects():
-                    messagebox.showwarning("Missing Data", "You must add at least one permanent object before proceeding.")
-                    return
-
-                for widget in self.root.winfo_children():
-                    widget.destroy()
-                launch_lock_objects_ui(self.root, self.wall)
-            else:
-                for widget in self.root.winfo_children():
-                    widget.destroy()
-                SelectWallSpaceUI(self.root, self.return_to_previous)
+        if len(self.wall.permanent_objects) > 0:
+            self.AppMain.switch_screen(ScreenType.LOCK_OBJECTS_TO_WALL)
+        else:
+            self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
+            # if self.has_permanent_items.get():
+            #     if not self.wall.get_permanent_objects():
+            #         messagebox.showwarning("Missing Data", "You must add at least one permanent object before proceeding.")
+            #         return
+            #
+            #     for widget in self.root.winfo_children():
+            #         widget.destroy()
+            #     launch_lock_objects_ui(self.root, self.wall)
+            # else:
+            #     for widget in self.root.winfo_children():
+            #         widget.destroy()
+            #     SelectWallSpaceUI(self.root, self.return_to_previous)
