@@ -10,6 +10,7 @@ from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
+from gallery_wall_planner.gui.popup_install_instruct import open_install_instruct_popup  # NEW IMPORT INSIDE WHERE "Calculate Installation Instruction" BUTTON LIVES
 
 
 class Screen_EditorUI(Screen_Base):
@@ -26,6 +27,9 @@ class Screen_EditorUI(Screen_Base):
         self.selected_artwork = None
         self.wall_space = None  # Initialize wall_space as None
 
+    def handle_installation_popup(self):
+        # This should pass the full DraggableArt objects, not just names
+        open_install_instruct_popup(self._root(), self.selected_wall, self.virtual_wall.items)
 
     def load_content(self):
         main_frame = tk.Frame(self)
@@ -97,14 +101,15 @@ class Screen_EditorUI(Screen_Base):
         self.create_artwork_list_frame()
 
         self.calc_button = tk.Button(self.control_panel,
-                                   text="Calculate Installation Instruction",
-                                   command=lambda: messagebox.showinfo("Info", "Calculate Installation Instruction button pushed"),
-                                   bg=self.styles["bg_primary"],
-                                   fg=self.styles["fg_white"],
-                                   font=self.styles["button_font"],
-                                   padx=self.styles["button_padx"],
-                                   pady=self.styles["button_pady"])
+                                    text="Calculate Installation Instruction",
+                                    command=self.handle_installation_popup,
+                                    bg=self.styles["bg_primary"],
+                                    fg=self.styles["fg_white"],
+                                    font=self.styles["button_font"],
+                                    padx=self.styles["button_padx"],
+                                    pady=self.styles["button_pady"])
         self.calc_button.pack(side="bottom", pady=10, fill="x")
+
 
         # Initialize wall_space
         self.wall_space = tk.Frame(content_frame, bg="white")
