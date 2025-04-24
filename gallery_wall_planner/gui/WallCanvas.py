@@ -43,6 +43,15 @@ class WallCanvas():
             di.create_canvas_item()
             self.draggable_items.append(di)
 
+    def add_fixed_item(self, wall_objects : List[WallObject]):
+        for obj in wall_objects:
+            pos = obj.position
+            x1 = self.wall_position.wall_left + pos.x * self.screen_scale
+            y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (pos.y + obj.height) * self.screen_scale)
+            x2 = self.wall_position.wall_left + (pos.x + obj.width) * self.screen_scale
+            y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + pos.y * self.screen_scale)
+            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
+
     def load_content(self):
         self.canvas = tk.Canvas(self.parent_frame, width=self.canvas_dimensions.width, height=self.canvas_dimensions.height)
         apply_canvas_style(self.canvas)
