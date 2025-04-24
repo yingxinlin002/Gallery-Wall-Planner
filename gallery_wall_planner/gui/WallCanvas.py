@@ -32,16 +32,19 @@ class WallCanvas():
         self.fixed_items : list[WallItem] = []
 
     def add_draggables(self, wall_objects : List[WallObject]):
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
         for i, wall_object in enumerate(wall_objects):
-            di: WallItem_Draggable = WallItem_Draggable(
-                index=i,
-                wall_object=wall_object,
+            self.add_draggable(wall_object,i)
+
+    def add_draggable(self, wall_object : WallObject, index: int):
+        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
+        di: WallItem_Draggable = WallItem_Draggable(
+            index=index,
+            wall_object=wall_object,
                 parent_ui=self,
                 name=wall_object.name
             )
-            di.create_canvas_item()
-            self.draggable_items.append(di)
+        di.create_canvas_item()
+        self.draggable_items.append(di)
 
     def add_fixed_item(self, wall_objects : List[WallObject]):
         for obj in wall_objects:

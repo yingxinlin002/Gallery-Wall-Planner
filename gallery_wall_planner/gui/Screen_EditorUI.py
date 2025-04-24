@@ -267,6 +267,9 @@ class Screen_EditorUI(Screen_Base):
         self.artwork_list.append(frame)
 
     def add_artwork_to_wall(self, artwork):
+
+
+
         if not hasattr(self, 'virtual_wall'):
             self.virtual_wall = VirtualWall(self.wall_space, self.selected_wall)
         self.virtual_wall.add_artwork(artwork)
