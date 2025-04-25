@@ -10,17 +10,23 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_canvas_style
 )
 from gallery_wall_planner.gui.snap_line_popup import open_snap_line_popup
+from gallery_wall_planner.utils.measurement_lines import MeasurementLinesManager
 
 class VirtualWall:
-    def __init__(self, parent_frame, selected_wall):
+    def __init__(self, parent_frame, selected_wall, artworks=None, on_drag_callback=None):
         self.parent = parent_frame
         self.selected_wall = selected_wall
-
+        self.artworks = artworks if artworks else []
+        self.items = []
+        self.on_drag_callback = on_drag_callback
+        
         self.wall_name = selected_wall.name
         self.wall_width = selected_wall.width
         self.wall_height = selected_wall.height
         self.wall_color = getattr(selected_wall, "color", "#f5f5f5")
         self.snap_lines = []
+        self.measurement_lines = []
+        self.measurement_texts = []
         for line in getattr(selected_wall, 'wall_lines', []):
             if isinstance(line.alignment, str):
                 if line.orientation == Orientation.HORIZONTAL:
@@ -314,11 +320,23 @@ class VirtualWall:
         popup.destroy()
             
     def add_artwork(self, artwork):
-        """Add an artwork object to the canvas via the standard Artwork model"""
+        """
+        Add an artwork object to the canvas with highlighting support.
+        Handles both the standard Artwork model and maintains backward compatibility.
+        """
+        # Add to artworks list if it exists (from first version)
+        if hasattr(self, 'artworks'):
+            self.artworks.append(artwork)
+        
+        # Create the draggable artwork item (combining both approaches)
         index = len(self.items)
         name = artwork.name or f"Art{index+1}"
+        
+        # Prevent double-add if already exists
         if name in self.layout_items:
-            return  # Prevent double-add if already added
+            return
+        
+        # Create art data structure
         art_data = {
             "Name": name,
             "Width": artwork.width,
@@ -326,14 +344,15 @@ class VirtualWall:
             "Image": False,
             "Hang": getattr(artwork, "hang_height", 0.0)
         }
+        
+        # Create draggable artwork
         draggable = self.DraggableArt(index, art_data, self)
         self.items.append(draggable)
 
-        # Ensure item_buttons exists
+        # Initialize UI elements if they don't exist
         if not hasattr(self, 'item_buttons'):
             self.item_buttons = {}
 
-        # Ensure buttons_frame exists
         if not hasattr(self, 'buttons_frame') or not self.buttons_frame.winfo_exists():
             for child in self.parent.winfo_children():
                 if isinstance(child, ttk.Frame) and 'buttons' in str(child).lower():
@@ -343,16 +362,24 @@ class VirtualWall:
                 self.buttons_frame = ttk.Frame(self.parent)
                 self.buttons_frame.pack(side="top", padx=20, pady=5)
 
-        # Add button for the artwork
+        # Add control button for the artwork
         btn = ttk.Button(self.buttons_frame, text=name, command=lambda idx=index: self.show_item_popup(idx))
         apply_primary_button_style(btn)
         btn.pack(side="left", padx=3)
         self.item_buttons[index] = btn
 
-        # Snap and render
+        # Check for highlighting if this is the selected artwork
+        if hasattr(self.parent.master, 'editor_artwork_selected'):
+            if artwork == self.parent.master.editor_artwork_selected:
+                self.canvas.itemconfig(draggable.id, outline="#800080", width=4)
+
+        # Position and validate the artwork
         self.snap_to_lines(draggable)
         self.move_item_to_canvas(index)
         self.check_all_collisions()
+        
+        # Update layout items
+        self.layout_items[name] = {"x": draggable.x, "y": draggable.y}
 
     def rectangles_overlap(self, item1, item2):
         ax1, ay1 = item1.x, item1.y
@@ -471,21 +498,27 @@ class VirtualWall:
             self.index = index
             self.art_data = art_data
             self.name = art_data.get("Name", f"Art{index+1}")
+
             pos = wall_ref.layout_items.get(self.name, {"x": 0.0, "y": 0.0})
-            self.x = pos["x"]
-            self.y = pos["y"]
-            self.width = art_data["Width"]
-            self.height = art_data["Height"]
+            self.x = float(pos.get("x", 0.0))  # Ensure float conversion
+            self.y = float(pos.get("y", 0.0))  # Ensure float conversion
+            
+            self.width = art_data.get("Width", 0.0)  # Default to 0.0 if missing
+            self.height = art_data.get("Height", 0.0)  # Default to 0.0 if missing
             self.id = None
             self.update_popup_fields = None
             self.wall_ref = wall_ref
+
+            # Initialize measurement lines manager
+            self.measurement_manager = MeasurementLinesManager(wall_ref.canvas, wall_ref)
+
             self.create_canvas_item()
 
         def create_canvas_item(self):
-            x1 = self.wall_ref.wall_left + self.x * self.wall_ref.screen_scale
-            y1 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + (self.y + self.height) * self.wall_ref.screen_scale)
-            x2 = self.wall_ref.wall_left + (self.x + self.width) * self.wall_ref.screen_scale
-            y2 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + self.y * self.wall_ref.screen_scale)
+            x1 = self.wall_ref.wall_left + self.x * self.wall_ref.scale
+            y1 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + (self.y + self.height) * self.wall_ref.scale)
+            x2 = self.wall_ref.wall_left + (self.x + self.width) * self.wall_ref.scale
+            y2 = self.wall_ref.canvas_height - (self.wall_ref.wall_bottom + self.y * self.wall_ref.scale)
             self.id = self.wall_ref.canvas.create_rectangle(x1, y1, x2, y2, fill="lightblue", outline="black", width=2)
             self.wall_ref.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
             self.wall_ref.canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
@@ -495,16 +528,40 @@ class VirtualWall:
             self._drag_data = {"x": event.x, "y": event.y}
 
         def on_drag(self, event):
+            """Handle dragging event with measurement lines."""
+            # Calculate movement delta
             dx = event.x - self._drag_data["x"]
             dy = event.y - self._drag_data["y"]
+
+            # Move the canvas item
             self.wall_ref.canvas.move(self.id, dx, dy)
+
+            # Update drag reference point
             self._drag_data["x"] = event.x
             self._drag_data["y"] = event.y
 
-        def on_drop(self, event):
+            # Get current coordinates and dimensions
             coords = self.wall_ref.canvas.coords(self.id)
-            new_x = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.screen_scale
-            new_y = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.screen_scale
+            x1 = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.scale
+            y1 = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.scale
+            x2 = (coords[2] - self.wall_ref.wall_left) / self.wall_ref.scale
+            y2 = (self.wall_ref.canvas_height - coords[1] - self.wall_ref.wall_bottom) / self.wall_ref.scale
+
+            # Draw new measurement lines and distances
+            self.measurement_manager.draw_measurement_lines(x1, y1, x2, y2)
+
+            # Temporary boundary check during drag
+            if x1 < 0 or x2 > self.wall_ref.wall_width or y1 < 0 or y2 > self.wall_ref.wall_height:
+                self.wall_ref.canvas.itemconfig(self.id, outline="orange")
+            else:
+                self.wall_ref.canvas.itemconfig(self.id, outline="black")
+
+        def on_drop(self, event):
+            # Clear measurement lines on drop
+            self.measurement_manager.clear_measurement_lines()
+            coords = self.wall_ref.canvas.coords(self.id)
+            new_x = (coords[0] - self.wall_ref.wall_left) / self.wall_ref.scale  # Use self.wall_ref.scale
+            new_y = (self.wall_ref.canvas_height - coords[3] - self.wall_ref.wall_bottom) / self.wall_ref.scale  # Use self.wall_ref.scale
             # Initial boundary enforcement
             new_x, new_y = self.wall_ref.enforce_boundaries(new_x, new_y, self.width, self.height)
             self.x = new_x
@@ -528,4 +585,3 @@ class VirtualWall:
             self.wall_ref.check_all_collisions()
             if self.update_popup_fields and self.index in self.wall_ref.popup_windows and self.wall_ref.popup_windows[self.index].winfo_exists():
                 self.update_popup_fields()
-
