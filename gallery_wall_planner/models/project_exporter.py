@@ -2,6 +2,7 @@
 
 import json
 import os
+import ast
 import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -53,121 +54,125 @@ def import_project(filepath):
     return project_data
 def export_project_to_excel(filepath, wall, artworks, permanent_objects):
     """
-    Export the current project (wall, artworks, permanent objects) into a single Excel file.
+    Load project from excel file
 
-    Args:
-        filepath (str): Path to save the Excel file.
-        wall (Wall): Wall object.
-        artworks (list of Artwork): List of Artwork instances.
-        permanent_objects (list of PermanentObject): List of PermanentObject instances.
+    Args: 
+          filepath (str): Path to excel file, wall (wall obj), artworks (artwork objects),
+                          permanent_objects (permanent objects)
+    Returns:
+            Nothing, just prints where the excel file was saved
     """
-    wall_data = {
-        "Name": [wall.name],
-        "Width": [wall.width],
-        "Height": [wall.height],
-        "Color": [wall.color],
-        "_internal": [str(vars(wall))]  # store all internal data invisibly
-    }
+    def to_visible_wall_data(wall):
+        # Prepares walls for export
+        return {
+            "Wall Name": wall.name,
+            "Width (in)": wall.width,
+            "Height (in)": wall.height,
+        }
 
-    artworks_data = []
-    for art in artworks:
-        row = {
+    def to_visible_artwork_data(art):
+        # Prepares artwork for export
+        return {
             "Name": art.name,
             "Width": art.width,
             "Height": art.height,
             "Hanging Point": art.hanging_point,
-            "Medium": getattr(art, 'medium', ''),
-            "Depth": getattr(art, 'depth', ''),
-            "Photo": art.image_path or '',
-            "NFS (Y/N)": 'Y' if getattr(art, 'nfs', False) else 'N',
-            "_internal": str(vars(art))
+            "Medium": art.medium,
+            "Depth": art.depth,
+            "Photo": art.image_path,
+            "NFS (Y/N)": "Y" if art.nfs else "N"
         }
-        artworks_data.append(row)
 
-    perm_data = []
-    for obj in permanent_objects:
-        row = {
-            "Name": obj.name,
-            "Width": obj.width,
-            "Height": obj.height,
-            "Photo": obj.image_path or '',
-            "_internal": str(vars(obj))
-        }
-        perm_data.append(row)
+    def to_internal_data(obj):
+        # PRepares the _internal data for export
+        safe = {}
+        for k, v in obj.__dict__.items():
+            if isinstance(v, Position):
+                safe[k] = {"x": v.x, "y": v.y}
+            else:
+                safe[k] = v
+        return str(safe)
+    # Store data in pandas dataframe
+    wall_data = pd.DataFrame([to_visible_wall_data(wall)])
+    wall_data["_internal"] = to_internal_data(wall)
 
-    with pd.ExcelWriter(filepath) as writer:
-        pd.DataFrame(wall_data).to_excel(writer, sheet_name="Wall", index=False)
-        pd.DataFrame(artworks_data).to_excel(writer, sheet_name="Artworks", index=False)
-        pd.DataFrame(perm_data).to_excel(writer, sheet_name="PermanentObjects", index=False)
+    artworks_data = pd.DataFrame([to_visible_artwork_data(a) for a in artworks])
+    artworks_data["_internal"] = [to_internal_data(a) for a in artworks]
+
+    perms_data = pd.DataFrame([p.__dict__ for p in permanent_objects])
+    perms_data["_internal"] = [to_internal_data(p) for p in permanent_objects]
+    # Write pandas dataframe to excel using openpyxl
+    with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
+        wall_data.to_excel(writer, sheet_name="Wall", index=False)
+        artworks_data.to_excel(writer, sheet_name="Artworks", index=False)
+        perms_data.to_excel(writer, sheet_name="Permanents", index=False)
 
     print(f"[INFO] Project exported to Excel at {filepath}")
 
-
-def import_project_from_excel(filepath): # Currently does not work, I plan to fix this Friday morning as I cannot figure out why it will not work properly, I would gladly accept help on this. 
+def import_project_from_excel(filepath):
     """
-    Import a project from an Excel file and create wall, artworks, and permanent objects.
-
     Args:
-        filepath (str): Path to the Excel file.
-
+         filepath (str): Path to excel file
     Returns:
-        tuple: (Wall object, list of Artwork objects, list of PermanentObject objects)
+            wall, artwork and permanent object data as class objects
     """
     data = pd.read_excel(filepath, sheet_name=None)
 
     # ----------- WALL -----------
+    # Parses all wall data from excel
     wall_sheet = data["Wall"]
-    
-    try:
-        raw_internal = wall_sheet["_internal"].dropna().iloc[0]
-        wall_info = ast.literal_eval(raw_internal)
-    except Exception as e:
-        raise ValueError(f"Failed to parse wall info from _internal column: {e}")
-    
-    name = wall_info.get("name") # For some reason this refuses to grab the value of the name, I suspect it has similar issues for other attributes. 
-    if not isinstance(name, str) or not name.strip():
-        raise ValueError(f"Invalid or missing wall name: {name}")
-    
+    wall_info = ast.literal_eval(wall_sheet["_internal"][0])
+    # print("[DEBUG] Parsed wall_info:", wall_info)
     wall = Wall(
-        name=name,
-        width=wall_info.get("width", 0),
-        height=wall_info.get("height", 0),
-        color=wall_info.get("color", "#ffffff"),
+        name=wall_info.get("_name"),
+        width=wall_info.get("_width"),
+        height=wall_info.get("_height"),
+        color=wall_info.get("_color")
     )
 
     # ----------- ARTWORKS -----------
+    # Parses all artwork data from excel
     artworks = []
     for _, row in data["Artworks"].iterrows():
         art_info = ast.literal_eval(row["_internal"])
-        artwork = Artwork(
-            name=art_info.get("name"),
-            width=art_info.get("width"),
-            height=art_info.get("height"),
-            hanging_point=art_info.get("hanging_point", 0),
-            medium=art_info.get("medium", ""),
-            depth=art_info.get("depth", 0),
-            nfs=art_info.get("nfs", False),
+        pos = art_info.get("_position", {"x": 0, "y": 0})
+        a = Artwork(
+            name=art_info.get("_name"),
+            width=art_info.get("_width"),
+            height=art_info.get("_height"),
+            image_path=art_info.get("_image_path"),
+            medium=art_info.get("_medium"),
+            depth=art_info.get("_depth"),
+            hanging_point=art_info.get("_hanging_point"),
+            price=art_info.get("_price", 0.0),
+            nfs=art_info.get("_nfs", False),
+            notes=art_info.get("_notes", "")
         )
-        artwork.image_path = art_info.get("image_path", None)
-        if "position" in art_info:
-            pos = art_info["position"]
-            artwork.position = Position(pos["x"], pos["y"])
-        artworks.append(artwork)
+        # Get position data
+        a.position = Position(pos["x"], pos["y"])
+        artworks.append(a)
 
     # ----------- PERMANENT OBJECTS -----------
-    permanent_objects = []
-    for _, row in data["PermanentObjects"].iterrows():
+    # Parse permanent object data from excel 
+    permanents = []
+    for _, row in data["Permanents"].iterrows():
         perm_info = ast.literal_eval(row["_internal"])
-        obj = PermanentObject(
-            name=perm_info.get("name"),
-            width=perm_info.get("width"),
-            height=perm_info.get("height"),
+        pos = perm_info.get("_position", {"x": 0, "y": 0})
+        p = PermanentObject(
+            name=perm_info.get("_name"),
+            width=perm_info.get("_width"),
+            height=perm_info.get("_height"),
+            image_path=perm_info.get("_image_path")
         )
-        obj.image_path = perm_info.get("image_path", None)
-        if "position" in perm_info:
-            pos = perm_info["position"]
-            obj.position = Position(pos["x"], pos["y"])
-        permanent_objects.append(obj)
+        p.position = Position(pos["x"], pos["y"])
+        permanents.append(p)
 
-    print(f"[INFO] Project imported successfully from {filepath}")
-    return wall, artworks, permanent_objects
+    print(f"[INFO] Project imported from Excel: {filepath}")
+    return wall, artworks, permanents
+# All available methods    
+__all__ = [
+    "export_project",
+    "import_project",
+    "export_project_to_excel",
+    "import_project_from_excel"
+]
