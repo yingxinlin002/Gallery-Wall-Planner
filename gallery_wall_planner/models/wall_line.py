@@ -188,6 +188,10 @@ class SingleLine:
             raise ValueError("Distance cannot be negative")
         self._distance = float(value)
 
+    def approximate_equal(self, other: SingleLine) -> bool:
+        """Check if two SingleLine objects are approximately equal"""
+        return self.orientation == other.orientation and self.alignment == other.alignment and abs(self.distance - other.distance) < 0.001
+
     def export_snap_line(self, directory: str = "") -> str:
         """Export snap line to a JSON file
 

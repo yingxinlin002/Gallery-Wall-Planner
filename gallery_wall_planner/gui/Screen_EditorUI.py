@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from gallery_wall_planner.gui.ui_styles import (
     init_styles,
+    apply_primary_button_style,
     apply_header_label_style,
+    apply_canvas_style,
     get_ui_styles
 )
 from gallery_wall_planner.deprecated.virtualWall import VirtualWall
@@ -10,6 +12,7 @@ from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
+from gallery_wall_planner.models.artwork import Artwork
 
 
 class Screen_EditorUI(Screen_Base):
@@ -125,11 +128,7 @@ class Screen_EditorUI(Screen_Base):
         canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
-
-        # Initialize virtual wall with the current wall from AppMain
-        if hasattr(self.AppMain, 'editor_wall') and self.AppMain.editor_wall:
-            self.initialize_virtual_wall()
-
+        self.wall_canvas.add_fixed_item(self.selected_wall.permanent_objects)
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
         # self.canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
@@ -137,9 +136,17 @@ class Screen_EditorUI(Screen_Base):
         snap_button_frame = ttk.Frame(self.wall_space)
         snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
 
+        add_line_btn = ttk.Button(snap_button_frame, text="Add Snap Line", command=self.add_new_snap_line)
+        apply_primary_button_style(add_line_btn)
+        add_line_btn.pack(side="left", padx=5)
+
+        edit_line_btn = ttk.Button(snap_button_frame, text="Move/Delete Line", command=self.open_manage_lines_popup)
+        apply_primary_button_style(edit_line_btn)
+        edit_line_btn.pack(side="left", padx=5)
 
             
     def initialize_virtual_wall(self):
+        """Initialize the virtual wall display"""
         # Clear existing wall if any
         for widget in self.wall_space.winfo_children():
             widget.destroy()
@@ -157,19 +164,19 @@ class Screen_EditorUI(Screen_Base):
                 self.virtual_wall.add_artwork(artwork)
 
         # Highlight selected artwork if one exists
-        if (hasattr(self.AppMain, 'editor_artwork_selected') and 
+        if (hasattr(self.AppMain, 'editor_artwork_selected') and
             self.AppMain.editor_artwork_selected):
             self.highlight_artwork(self.AppMain.editor_artwork_selected)
-            
+
     def highlight_artwork(self, artwork):
         """Highlight the artwork on the virtual wall"""
         if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
             return
-            
+
         # Reset all highlights first
         for item in self.virtual_wall.items:
             self.virtual_wall.canvas.itemconfig(item.id, outline="black", width=2)
-        
+
         # Find and highlight the selected artwork
         for item in self.virtual_wall.items:
             if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
@@ -180,13 +187,13 @@ class Screen_EditorUI(Screen_Base):
         """Show measurement lines and distances while dragging"""
         # Clear previous measurement lines
         self.virtual_wall.canvas.delete("measurement")
-        
+
         # Get wall boundaries
         wall_left = self.virtual_wall.margin
         wall_bottom = self.virtual_wall.margin
         wall_right = wall_left + self.selected_wall.width * self.virtual_wall.scale
         wall_top = self.virtual_wall.canvas_height - (wall_bottom + self.selected_wall.height * self.virtual_wall.scale)
-        
+
         # Draw horizontal measurement lines
         self.virtual_wall.canvas.create_line(
             wall_left, y1, x1, y1,
@@ -196,7 +203,7 @@ class Screen_EditorUI(Screen_Base):
             x2, y1, wall_right, y1,
             fill="gray", dash=(2, 2), tags="measurement", width=1
         )
-        
+
         # Draw vertical measurement lines
         self.virtual_wall.canvas.create_line(
             x1, wall_top, x1, y1,
@@ -206,13 +213,13 @@ class Screen_EditorUI(Screen_Base):
             x1, y2, x1, self.virtual_wall.canvas_height - wall_bottom,
             fill="gray", dash=(2, 2), tags="measurement", width=1
         )
-        
+
         # Calculate distances in inches
         left_dist = (x1 - wall_left) / self.virtual_wall.scale
         right_dist = (wall_right - x2) / self.virtual_wall.scale
         top_dist = (self.virtual_wall.canvas_height - y1 - wall_bottom) / self.virtual_wall.scale
         bottom_dist = (y2 - wall_top) / self.virtual_wall.scale
-        
+
         # Display distances
         self.virtual_wall.canvas.create_text(
             (wall_left + x1)/2, y1-10,
@@ -319,8 +326,8 @@ class Screen_EditorUI(Screen_Base):
                      text="No artworks added yet",
                      fg="gray").pack(pady=20)
 
-    def add_artwork_item(self, parent, artwork):
-        """Create a clickable artwork item in the sidebar with highlighting."""
+    def add_artwork_item(self, parent, artwork: Artwork):
+        """Create a clickable artwork item in the sidebar"""
         frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
         frame.pack(fill="x", pady=2, padx=2)
         frame.artwork = artwork  # Store reference to artwork
@@ -430,7 +437,7 @@ class Screen_EditorUI(Screen_Base):
                 for widget in self.wall_space.winfo_children():
                     widget.destroy()
                 self.initialize_virtual_wall()
-                
+
             # Re-highlight selected artwork if any
             if self.selected_artwork:
                 self.highlight_artwork(self.selected_artwork)
@@ -441,7 +448,7 @@ class Screen_EditorUI(Screen_Base):
                     widget.destroy()
                 self.virtual_wall = None
                 self.selected_artwork = None
-                
+
             tk.Label(self.wall_space,
                    text="No artworks added yet",
                    font=self.styles["title_font"],
@@ -449,15 +456,84 @@ class Screen_EditorUI(Screen_Base):
             
     def add_to_virtual_wall(self, artwork):
         """Add artwork to the virtual wall when clicked"""
-        if not hasattr(self, 'virtual_wall'):
-            # Initialize virtual wall if not exists
-            for widget in self.wall_space.winfo_children():
-                widget.destroy()
-            self.virtual_wall = VirtualWall(
-                self.wall_space,
-                self.selected_wall,
-                [artwork]
-            )
-        else:
-            # Add to existing virtual wall
-            self.virtual_wall.add_artwork_to_wall(artwork)
+        print("[DEBUG] add_to_virtual_wall called")
+        # if not hasattr(self, 'virtual_wall'):
+        #     # Initialize virtual wall if not exists
+        #     for widget in self.wall_space.winfo_children():
+        #         widget.destroy()
+        #     self.virtual_wall = VirtualWall(
+        #         self.wall_space,
+        #         self.selected_wall,
+        #         [artwork]
+        #     )
+        # else:
+        #     # Add to existing virtual wall
+        #     self.virtual_wall.add_artwork_to_wall(artwork)
+
+    def add_new_snap_line(self):
+        print("[DEBUG] add_new_snap_line called")
+
+        # def handle_save(new_line):
+        #     print(f"[DEBUG] Saving Snap Line line.orientation={new_line.orientation}, line.alignment={new_line.alignment}, type={type(new_line.alignment)}")
+        #     for existing in self.snap_lines:
+        #         if (existing.orientation == new_line.orientation and abs(existing.distance - new_line.distance) < 0.05):
+        #             self.show_duplicate_line_popup(new_line)
+        #             return
+        #     self.snap_lines.append(new_line)
+        #     self.selected_wall.wall_lines = self.snap_lines
+        #     self.draw_snap_lines()
+
+        # open_snap_line_popup(
+        #     self.parent,
+        #     handle_save,
+        #     wall_width=self.wall_width,
+        #     wall_height=self.wall_height
+        # )
+
+
+    def open_manage_lines_popup(self):
+        print("[DEBUG] open_manage_lines_popup called")
+
+        # popup = Toplevel(self.parent)
+        # popup.title("Manage Snap Lines")
+        # popup.geometry("400x300")
+
+        # if not self.snap_lines:
+        #     ttk.Label(popup, text="No snap lines to manage.").pack(padx=10, pady=10)
+        #     return
+
+        # canvas = tk.Canvas(popup)
+        # scrollbar = ttk.Scrollbar(popup, orient="vertical", command=canvas.yview)
+        # canvas.configure(yscrollcommand=scrollbar.set)
+
+        # scrollbar.pack(side="right", fill="y")
+        # canvas.pack(side="left", fill="both", expand=True)
+
+        # frame = ttk.Frame(canvas)
+        # canvas.create_window((0, 0), window=frame, anchor="nw")
+
+        # def on_configure(event):
+        #     canvas.configure(scrollregion=canvas.bbox("all"))
+
+        # frame.bind("<Configure>", on_configure)
+
+        # for idx, line in enumerate(self.snap_lines):
+        #     line_frame = ttk.Frame(frame)
+        #     line_frame.pack(fill="x", pady=5, padx=10)
+
+        #     orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, Orientation) else "Unknown"
+        #     alignment_str = self.get_alignment_string(line)
+        #     label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
+        #     ttk.Label(line_frame, text=label_text).pack(side="left")
+
+        #     ttk.Button(
+        #         line_frame,
+        #         text="Edit",
+        #         command=lambda i=idx: self.edit_snap_line(i, popup)
+        #     ).pack(side="right", padx=5)
+
+        #     ttk.Button(
+        #         line_frame,
+        #         text="Delete",
+        #         command=lambda i=idx: self.delete_snap_line(i, popup)
+        #     ).pack(side="right", padx=5)
