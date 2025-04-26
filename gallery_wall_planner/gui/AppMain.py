@@ -96,7 +96,7 @@ class AppMain():
         # Call load_content on the new screen if it's a UIBase instance
         if hasattr(self.frame_contents, 'load_content'):
             self.frame_contents.load_content()
-                
+
     def _load_home_screen(self):
         """Load the home screen"""
         from gallery_wall_planner.gui.Screen_Home import Screen_Home
@@ -123,18 +123,18 @@ class AppMain():
         from gallery_wall_planner.gui.Screen_EditorUI import Screen_EditorUI
         self.frame_contents = Screen_EditorUI(self)
 
-        # Call load_content to initialize the screen
-        if hasattr(self.frame_contents, 'load_content'):
-            self.frame_contents.load_content()
-
-        # Ensure the editor screen knows about the current wall and selected artwork
-        if hasattr(self.frame_contents, 'initialize_virtual_wall'):
-            self.frame_contents.initialize_virtual_wall()
-        
-        # Highlight selected artwork if one exists
-        if (hasattr(self.frame_contents, 'highlight_artwork') and 
-            self.editor_artwork_selected):
-            self.frame_contents.highlight_artwork(self.editor_artwork_selected)
+        # # Call load_content to initialize the screen
+        # if hasattr(self.frame_contents, 'load_content'):
+        #     self.frame_contents.load_content()
+        #
+        # # Ensure the editor screen knows about the current wall and selected artwork
+        # if hasattr(self.frame_contents, 'initialize_virtual_wall'):
+        #     self.frame_contents.initialize_virtual_wall()
+        #
+        # # Highlight selected artwork if one exists
+        # if (hasattr(self.frame_contents, 'highlight_artwork') and
+        #     self.editor_artwork_selected):
+        #     self.frame_contents.highlight_artwork(self.editor_artwork_selected)
 
     def _load_lock_objects_to_wall_screen(self):
         """Load the lock objects to wall screen"""
