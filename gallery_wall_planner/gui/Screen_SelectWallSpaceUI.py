@@ -211,7 +211,7 @@ class Screen_SelectWallSpaceUI(Screen_Base):
             self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=selected_wall.color, outline="black")
 
             # Draw permanent objects
-            for _,obj in selected_wall.permanent_objects_dict:
+            for _,obj in selected_wall.permanent_objects_dict.items():
                 pos = obj.position
                 if pos:  # Only draw if object has a position
                     obj_x0 = x0 + pos.x * ratio

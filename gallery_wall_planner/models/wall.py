@@ -6,6 +6,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 # Use relative imports since we're within the gallery_wall_planner.models package
 from .artwork import Artwork
 from .permanentObject import PermanentObject
+from .wall_object import WallObject
 from .wall_line import SingleLine
 from .structures import Position, get_id
 
@@ -186,6 +187,16 @@ class Wall:
                 return True
             return False
 
+    def update_wall_item(self, old_id: str, obj: WallObject) -> bool:
+        if old_id in self._permanent_objects_dict:
+            self._permanent_objects_dict.pop(old_id)
+            self._permanent_objects_dict[obj.id] = obj
+            return True
+        if old_id in self._artwork_dict:
+            self._artwork_dict.pop(old_id)
+            self._artwork_dict[obj.id] = obj
+            return True
+        return False
     @property
     def permanent_objects_dict(self) -> Dict[str, PermanentObject]:
         return self._permanent_objects_dict

@@ -42,6 +42,7 @@ class BTN_WallItem(tk.Frame):
         Popup_EditWallItem(self.draggable_item.parent_ui.AppMain, self)
 
     def update_wall_object(self, wall_object: WallObject):
+        self.draggable_item.parent_ui.AppMain.gallery.current_wall.update_wall_item(self.draggable_item.wall_object.id, wall_object)
         self.draggable_item.update(wall_object)
         self.label.configure(text=wall_object.name)
         
