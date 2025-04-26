@@ -5,6 +5,7 @@ from typing import List
 
 # from gallery_wall_planner.gui.DraggableItem import DraggableItem
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.WallItem import WallItem
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.structures import CanvasDimensions, WallPosition
 from gallery_wall_planner.models.wall_object import WallObject
@@ -35,25 +36,32 @@ class WallCanvas():
         for i, wall_object in enumerate(wall_objects):
             self.add_draggable(wall_object,i)
 
-    def add_draggable(self, wall_object : WallObject, index: int):
+    def add_draggable(self, wall_object : WallObject, index: int = None):
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
+        if index is None:
+            index = len(self.draggable_items)
         di: WallItem_Draggable = WallItem_Draggable(
             index=index,
             wall_object=wall_object,
-                parent_ui=self,
-                name=wall_object.name
+            parent_ui=self
             )
         di.create_canvas_item()
         self.draggable_items.append(di)
 
-    def add_fixed_item(self, wall_objects : List[WallObject]):
+    def add_fixed_items(self, wall_objects : List[WallObject]):
         for obj in wall_objects:
-            pos = obj.position
-            x1 = self.wall_position.wall_left + pos.x * self.screen_scale
-            y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (pos.y + obj.height) * self.screen_scale)
-            x2 = self.wall_position.wall_left + (pos.x + obj.width) * self.screen_scale
-            y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + pos.y * self.screen_scale)
-            self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
+            fixed_item = WallItem(len(self.fixed_items),obj,self)
+            fixed_item.create_canvas_item("#999999")
+            self.fixed_items.append(fixed_item)
+            # pos = obj.position
+            # x1 = self.wall_position.wall_left + pos.x * self.screen_scale
+            # y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (pos.y + obj.height) * self.screen_scale)
+            # x2 = self.wall_position.wall_left + (pos.x + obj.width) * self.screen_scale
+            # y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + pos.y * self.screen_scale)
+            # self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
+
+
+
 
     def load_content(self):
         self.canvas = tk.Canvas(self.parent_frame, width=self.canvas_dimensions.width, height=self.canvas_dimensions.height)
