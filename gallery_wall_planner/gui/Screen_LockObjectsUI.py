@@ -11,13 +11,15 @@ from gallery_wall_planner.gui.popup_editor import open_popup_editor
 from gallery_wall_planner.models.structures import WallPosition, CanvasDimensions, Padding
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.gui.CollapsibleMenu import CollapsibleMenu
+from gallery_wall_planner.gui.BTN_WallItem import BTN_WallItem
+
 
 
 class Screen_LockObjectsUI(Screen_Base):
     
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
-        self.obstacle_names = [f"Obstacle{i+1}" for i in range(len(self.AppMain.gallery.current_wall.permanent_objects))]
+        self.obstacle_names = [f"Obstacle{i+1}" for i in range(len(self.AppMain.gallery.current_wall.permanent_objects_dict))]
         self.layout_items = {}
         self.popup_windows = {}
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
@@ -96,8 +98,8 @@ class Screen_LockObjectsUI(Screen_Base):
 
         # Create draggable items for each permanent object
         buttons_per_row = 4
-        self.wall_canvas.add_draggables(self.wall.permanent_objects)
-        for i, obj in enumerate(self.wall.permanent_objects):
+        self.wall_canvas.add_draggables(self.wall.permanent_objects_dict)
+        for _, obj in self.wall_canvas.draggable_items.items():
             #pos = obj.position
             # Initialize position in layout_items
             #self.layout_items[self.obstacle_names[i]] = pos if pos else {"x": 0.0, "y": 0.0}
@@ -113,14 +115,18 @@ class Screen_LockObjectsUI(Screen_Base):
             # self.wall_canvas.draggable_items.append(di)
 
             # Create button for this item
-            row = i // buttons_per_row
-            col = i % buttons_per_row
-            btn = ttk.Button(self.collapsible_menu.menu_frame,
-                             text=obj.name,
-                             command=lambda idx=i: self.show_item_popup(idx))
-            apply_primary_button_style(btn)
-            btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
-            item_buttons[i] = btn
+            # row = i // buttons_per_row
+            # col = i % buttons_per_row
+            # btn = ttk.Button(self.collapsible_menu.menu_frame,
+            #                  text=obj.name,
+            #                  command=lambda idx=i: self.show_item_popup(idx))
+            # apply_primary_button_style(btn)
+            # btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
+            # item_buttons[i] = btn
+            btn = BTN_WallItem(self.collapsible_menu.menu_frame, obj)
+            btn.pack(side="top", fill="x", padx=5, pady=5)
+            btn.load_content()
+            
 
         # Bottom buttons
         button_frame = ttk.Frame(self)

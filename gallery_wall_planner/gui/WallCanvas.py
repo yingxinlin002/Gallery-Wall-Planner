@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-from typing import List
+from typing import List, Dict
 
 # from gallery_wall_planner.gui.DraggableItem import DraggableItem
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
@@ -28,31 +28,28 @@ class WallCanvas():
         self.screen_scale = None
         self.wall_position = None
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        self.draggable_items : list[WallItem_Draggable] = []
+        self.draggable_items : Dict[str,WallItem_Draggable] = {}
         from gallery_wall_planner.gui.WallItem import WallItem
-        self.fixed_items : list[WallItem] = []
+        self.fixed_items : Dict[str,WallItem] = {}
 
-    def add_draggables(self, wall_objects : List[WallObject]):
-        for i, wall_object in enumerate(wall_objects):
-            self.add_draggable(wall_object,i)
+    def add_draggables(self, wall_objects : Dict[str,WallObject]):
+        for _, wall_object in wall_objects.items():
+            self.add_draggable(wall_object)
 
-    def add_draggable(self, wall_object : WallObject, index: int = None):
+    def add_draggable(self, wall_object : WallObject):
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        if index is None:
-            index = len(self.draggable_items)
         di: WallItem_Draggable = WallItem_Draggable(
-            index=index,
             wall_object=wall_object,
             parent_ui=self
             )
         di.create_canvas_item()
-        self.draggable_items.append(di)
+        self.draggable_items[wall_object.id] = di
 
-    def add_fixed_items(self, wall_objects : List[WallObject]):
-        for obj in wall_objects:
-            fixed_item = WallItem(len(self.fixed_items),obj,self)
+    def add_fixed_items(self, wall_objects : Dict[str,WallObject]):
+        for _,obj in wall_objects.items():
+            fixed_item = WallItem(obj,self)
             fixed_item.create_canvas_item("#999999")
-            self.fixed_items.append(fixed_item)
+            self.fixed_items[obj.id] = fixed_item
             # pos = obj.position
             # x1 = self.wall_position.wall_left + pos.x * self.screen_scale
             # y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (pos.y + obj.height) * self.screen_scale)
@@ -60,6 +57,15 @@ class WallCanvas():
             # y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + pos.y * self.screen_scale)
             # self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
 
+    def update_wall_object(self, old_id : str, wall_object : WallObject):
+        if old_id in self.draggable_items:
+            temp_draggable = self.draggable_items.pop(old_id)
+            temp_draggable.update(wall_object)
+            self.draggable_items[wall_object.id] = temp_draggable
+        elif old_id in self.fixed_items:
+            temp_fixed = self.fixed_items.pop(old_id)
+            temp_fixed.update(wall_object)
+            self.fixed_items[wall_object.id] = temp_fixed
 
 
 
@@ -109,16 +115,17 @@ class WallCanvas():
 
     def check_all_collisions(self):
         n = len(self.draggable_items)
+        keys = list(self.draggable_items.keys())
         colliding = set()
         for i in range(n):
             for j in range(i+1, n):
-                if self.draggable_items[i].rectangles_overlap(self.draggable_items[j]):
-                    colliding.add(i)
-                    colliding.add(j)
+                if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
+                    colliding.add(keys[i])
+                    colliding.add(keys[j])
             for fixed in self.fixed_items:
-                if self.draggable_items[i].rectangles_overlap(fixed):
-                    colliding.add(i)
+                if self.draggable_items[keys[i]].rectangles_overlap(fixed):
+                    colliding.add(keys[i])
 
-        for i, item in enumerate(self.draggable_items):
-            self.canvas.itemconfig(item.id, outline="red" if i in colliding else "black")
+        for key in keys:
+            self.canvas.itemconfig(self.draggable_items[key].id, outline="red" if key in colliding else "black")
         return len(colliding) > 0

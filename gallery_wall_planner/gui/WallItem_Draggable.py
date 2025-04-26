@@ -1,14 +1,13 @@
 from __future__ import annotations
 from gallery_wall_planner.gui import WallCanvas
 from gallery_wall_planner.models.wall_object import WallObject
-from gallery_wall_planner.gui.Screen_LockObjectsUI import Screen_LockObjectsUI
 from gallery_wall_planner.models.structures import Position
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.gui.WallItem import WallItem
 
 class WallItem_Draggable(WallItem):
-    def __init__(self, index, wall_object: WallObject, parent_ui: WallCanvas):
-        super().__init__(index, wall_object, parent_ui)
+    def __init__(self, wall_object: WallObject, parent_ui: WallCanvas):
+        super().__init__(wall_object, parent_ui)
         self.reference_lines = []  # Stores line IDs
         self.distance_labels = []  # Stores label IDs
         self._drag_data : Position = Position(0, 0)
@@ -84,11 +83,11 @@ class WallItem_Draggable(WallItem):
         #self.parent_ui.layout_items[self.name] = {"x": new_x, "y": new_y}
 
         self.clear_reference_lines()
-        self.parent_ui.move_item_to_canvas(self.index)
-        self.parent_ui.check_all_collisions()
-
-        if self.update_popup_fields and self.index in popup_windows and popup_windows[self.index].winfo_exists():
-            self.update_popup_fields()
+        # self.parent_ui.move_item_to_canvas(self.index)
+        # self.parent_ui.check_all_collisions()
+        #
+        # if self.update_popup_fields and self.index in popup_windows and popup_windows[self.index].winfo_exists():
+        #     self.update_popup_fields()
 
     def update_reference_lines(self):
         """Update existing reference lines instead of creating new ones"""
@@ -99,37 +98,34 @@ class WallItem_Draggable(WallItem):
         #       f"Coord {coords[0]}, ")
 
         # Left distance (from left wall edge)
-        left_dist = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
-        # self.parent_ui.canvas.coords(self.reference_lines[0],
-        #             self.parent_ui.wall_position.wall_left, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom,
-        #             coords[0], self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
         self.parent_ui.canvas.coords(self.reference_lines[0],
-                    self.parent_ui.wall_position.wall_left,coords[3],
-                    coords[0], coords[3])
+                    coords[0], self.parent_ui.wall_position.wall_top,
+                    coords[0], self.parent_ui.wall_position.wall_bottom)
 
         # Right distance (from right wall edge)
-        right_dist = (self.parent_ui.wall_position.wall_right - coords[2]) / self.parent_ui.screen_scale
         self.parent_ui.canvas.coords(self.reference_lines[1],
-                    coords[2], self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom,
-                    self.parent_ui.wall_position.wall_right, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
+                    coords[2], self.parent_ui.wall_position.wall_top,
+                    coords[2], self.parent_ui.wall_position.wall_bottom)
 
         # Top distance (from top wall edge)
-        top_dist = (self.parent_ui.AppMain.gallery.current_wall.height - ((self.parent_ui.canvas_dimensions.height - coords[1] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale))  # Changed calculation
         self.parent_ui.canvas.coords(self.reference_lines[2],
-                    self.parent_ui.wall_position.wall_left, coords[1],
-                    self.parent_ui.wall_position.wall_left, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
+                    self.parent_ui.wall_position.wall_left,coords[1],
+                    self.parent_ui.wall_position.wall_right, coords[1])
 
         # Bottom distance (from bottom wall edge)
-        bottom_dist = ((self.parent_ui.canvas_dimensions.height - coords[3] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale)  # Changed calculation
         self.parent_ui.canvas.coords(self.reference_lines[3],
-                    self.parent_ui.wall_position.wall_left, coords[3],
-                    self.parent_ui.wall_position.wall_left, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
+                    self.parent_ui.wall_position.wall_left,coords[3],
+                    self.parent_ui.wall_position.wall_right, coords[3])
 
         # Update all lines and labels
         for line in self.reference_lines:
             self.parent_ui.canvas.itemconfig(line, state='normal')
 
         # Update distance labels
+        left_dist = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
+        right_dist = (self.parent_ui.wall_position.wall_right - coords[2]) / self.parent_ui.screen_scale
+        top_dist = (self.parent_ui.AppMain.gallery.current_wall.height - ((self.parent_ui.canvas_dimensions.height - coords[1] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale))  # Changed calculation
+        bottom_dist = ((self.parent_ui.canvas_dimensions.height - coords[3] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale)  # Changed calculation
         self.parent_ui.canvas.coords(self.distance_labels[0],
                     (self.parent_ui.wall_position.wall_left + coords[0])/2,
                     self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom + 15)

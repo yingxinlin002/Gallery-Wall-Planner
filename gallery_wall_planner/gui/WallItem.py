@@ -6,12 +6,10 @@ import os
 from gallery_wall_planner.models.structures import Position
 class WallItem:
 
-    def __init__(self, index, wall_object: WallObject, parent_ui):
-        self.index = index
+    def __init__(self, wall_object: WallObject, parent_ui):
         self.wall_object = wall_object
         from gallery_wall_planner.gui.WallCanvas import WallCanvas
         self.parent_ui: WallCanvas = parent_ui
-        # self.name = parent_ui.obstacle_names[index]
         self.id = None
         self.update_popup_fields = None
         self.image_obj : ImageTk = None
@@ -37,6 +35,12 @@ class WallItem:
             label_position = self.get_label_location(x1, x2, y1, y2)
             self.label_id = self.parent_ui.canvas.create_text(label_position.x,label_position.y, text=self.wall_object.name, fill="black",
                                                              font=("Arial", 10))
+
+    def update(self, wall_object: WallObject):
+        self.wall_object = wall_object
+        self.parent_ui.canvas.delete(self.id)
+        self.parent_ui.canvas.delete(self.label_id)
+        self.create_canvas_item()
 
     def get_label_location(self, x1: int, x2:int, y1:int, y2:int) -> Position:
         return Position((x1 + x2) / 2, (y1 + y2) / 2)
