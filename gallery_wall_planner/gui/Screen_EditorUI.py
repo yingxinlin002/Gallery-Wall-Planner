@@ -140,7 +140,7 @@ class Screen_EditorUI(Screen_Base):
         canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
-        self.wall_canvas.add_fixed_items(self.selected_wall.permanent_objects)
+        self.wall_canvas.add_fixed_items(self.selected_wall.permanent_objects_dict)
 
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)

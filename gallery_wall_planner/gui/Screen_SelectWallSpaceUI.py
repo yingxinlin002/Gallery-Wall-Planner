@@ -211,7 +211,7 @@ class Screen_SelectWallSpaceUI(Screen_Base):
             self.preview_canvas.create_rectangle(x0, y0, x1, y1, fill=selected_wall.color, outline="black")
 
             # Draw permanent objects
-            for obj in selected_wall.permanent_objects:
+            for _,obj in selected_wall.permanent_objects_dict:
                 pos = obj.position
                 if pos:  # Only draw if object has a position
                     obj_x0 = x0 + pos.x * ratio
@@ -242,7 +242,7 @@ class Screen_SelectWallSpaceUI(Screen_Base):
             self.preview_canvas.create_text(x0 - 15, (y0 + y1)/2, text=f"{wall_height}\"", anchor="e", angle=90)
 
             # Update wall details label with object count
-            obj_count = len(selected_wall.permanent_objects)
+            obj_count = len(selected_wall.permanent_objects_dict)
             self.wall_details_label.config(
                 text=f"Wall: {selected_wall.name}\n"
                     f"Dimensions: {wall_width}\" x {wall_height}\"\n"
