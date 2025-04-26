@@ -28,6 +28,7 @@ class WallObject:
         self.width = width
         self.height = height
         self.image_path = image_path
+        self._id : str = ""
     
     @property
     def name(self) -> str:
@@ -90,6 +91,11 @@ class WallObject:
     def position(self, value: Position):
         """Set the object's position"""
         self._position = value
+
+    @property
+    def id(self) -> str:
+        """Get the object's unique identifier"""
+        return self._id
     
     def get_bounds(self):
         """

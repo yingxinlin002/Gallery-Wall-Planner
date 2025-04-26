@@ -7,7 +7,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 from .artwork import Artwork
 from .permanentObject import PermanentObject
 from .wall_line import SingleLine
-from .structures import Position
+from .structures import Position, get_id
 
 class Wall:
     def __init__(self, name: str, width: float, height: float, color: str = "White"):
@@ -28,6 +28,10 @@ class Wall:
         self._artwork = []          # List of Artwork objects
         self._wall_lines = []       # List of decorative lines/markings
         self._permanent_objects: List[PermanentObject] = []  # List of PermanentObject instances
+        self._id = get_id("wall"+name+f"width{self.width},height{self.height},color{self.color}")
+
+        self._permanent_objects_dict: Dict[str, PermanentObject] = {}
+        self._artwork_dict: Dict[str, Artwork] = {}
         
         # Set properties with validation
         self.name = name
@@ -155,6 +159,7 @@ class Wall:
             
         obj.position = Position(x, y)
         self._permanent_objects.append(obj)
+        self._permanent_objects_dict[obj.id] = obj
         return True
     
     def remove_permanent_object(self, obj: PermanentObject) -> bool:
@@ -167,6 +172,7 @@ class Wall:
         Returns:
             bool: True if removed, False if not found
         """
+        self._permanent_objects_dict.pop(obj.id, None)
         if isinstance(obj, str):
             # Find by name
             for permanent_obj in self._permanent_objects:
@@ -179,6 +185,14 @@ class Wall:
                 self._permanent_objects.remove(obj)
                 return True
             return False
+
+    @property
+    def permanent_objects_dict(self) -> Dict[str, PermanentObject]:
+        return self._permanent_objects_dict
+    
+    @property
+    def artwork_dict(self) -> Dict[str, Artwork]:
+        return self._artwork_dict
     
     # def get_permanent_objects(self) -> List[Tuple[PermanentObject, Dict[str, float]]]:
     #     """
@@ -207,10 +221,12 @@ class Wall:
     # Existing artwork methods (unchanged)
     def add_artwork(self, artwork: Artwork) -> None:
         """Add artwork to the wall"""
+        self._artwork_dict[artwork.id] = artwork
         self.artwork.append(artwork)
     
     def remove_artwork(self, artwork: Artwork) -> bool:
         """Remove artwork from the wall"""
+        self._artwork_dict.pop(artwork.id, None)
         if artwork in self.artwork:
             self.artwork.remove(artwork)
             return True

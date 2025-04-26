@@ -4,6 +4,7 @@ import os
 from types import SimpleNamespace
 from typing import Optional
 from gallery_wall_planner.models.wall_object import WallObject
+from gallery_wall_planner.models.structures import get_id
 
 class Artwork(WallObject):
     """
@@ -22,6 +23,7 @@ class Artwork(WallObject):
         self._price = price
         self._nfs = nfs
         self._notes = notes
+        self._id = get_id("artwork"+name+f"width{self.width},height{self.height},hanging_point{self.hanging_point}")
 
         # Ensure height is always a float
         self.height = height
