@@ -115,16 +115,17 @@ class WallCanvas():
 
     def check_all_collisions(self):
         n = len(self.draggable_items)
+        keys = list(self.draggable_items.keys())
         colliding = set()
         for i in range(n):
             for j in range(i+1, n):
-                if self.draggable_items[i].rectangles_overlap(self.draggable_items[j]):
-                    colliding.add(i)
-                    colliding.add(j)
+                if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
+                    colliding.add(keys[i])
+                    colliding.add(keys[j])
             for fixed in self.fixed_items:
-                if self.draggable_items[i].rectangles_overlap(fixed):
-                    colliding.add(i)
+                if self.draggable_items[keys[i]].rectangles_overlap(fixed):
+                    colliding.add(keys[i])
 
-        for i, item in enumerate(self.draggable_items):
-            self.canvas.itemconfig(item.id, outline="red" if i in colliding else "black")
+        for key in keys:
+            self.canvas.itemconfig(self.draggable_items[key].id, outline="red" if key in colliding else "black")
         return len(colliding) > 0
