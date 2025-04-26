@@ -74,5 +74,5 @@ class Popup_EditWallItem(Popup_Base):
                 image_path=self.draggable_item.wall_object.image_path
             )
         wall_object.position = self.draggable_item.wall_object.position
-        self.parent_button.update(wall_object)
+        self.parent_button.update_wall_object(wall_object)
         self.destroy()

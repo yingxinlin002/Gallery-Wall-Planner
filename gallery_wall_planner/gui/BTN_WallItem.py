@@ -41,7 +41,7 @@ class BTN_WallItem(tk.Frame):
         print(f"Edit clicked on {self.draggable_item.wall_object.name}")
         Popup_EditWallItem(self.draggable_item.parent_ui.AppMain, self)
 
-    def update(self, wall_object: WallObject):
+    def update_wall_object(self, wall_object: WallObject):
         self.draggable_item.update(wall_object)
         self.label.configure(text=wall_object.name)
         
