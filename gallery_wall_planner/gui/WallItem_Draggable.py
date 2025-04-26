@@ -7,12 +7,11 @@ from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.gui.WallItem import WallItem
 
 class WallItem_Draggable(WallItem):
-    def __init__(self, index, wall_object: WallObject, parent_ui: WallCanvas, name: str):
-        super().__init__(index, wall_object, parent_ui, name)
+    def __init__(self, index, wall_object: WallObject, parent_ui: WallCanvas):
+        super().__init__(index, wall_object, parent_ui)
         self.reference_lines = []  # Stores line IDs
         self.distance_labels = []  # Stores label IDs
         self._drag_data : Position = Position(0, 0)
-        self.update_popup_fields = None
 
     def create_canvas_item(self):
         # Convert from bottom-left origin to canvas coordinates
@@ -20,6 +19,10 @@ class WallItem_Draggable(WallItem):
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
         self.parent_ui.canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonRelease-1>", self.on_drop)
+        if self.label_id is not None:
+            self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonPress-1>", self.on_start)
+            self.parent_ui.canvas.tag_bind(self.label_id, "<B1-Motion>", self.on_drag)
+            self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonRelease-1>", self.on_drop)
 
     def on_start(self, event):
         self._drag_data.x = event.x
@@ -64,6 +67,8 @@ class WallItem_Draggable(WallItem):
 
         # Apply constrained movement
         self.parent_ui.canvas.move(self.id, dx, dy)
+        label_position = self.get_label_location(coords[0]+dx, coords[2] + dx, coords[1] + dy, coords[3] + dy)
+        self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
         self._drag_data.x += dx
         self._drag_data.y += dy
         self.update_reference_lines()
@@ -88,12 +93,19 @@ class WallItem_Draggable(WallItem):
     def update_reference_lines(self):
         """Update existing reference lines instead of creating new ones"""
         coords = self.parent_ui.canvas.coords(self.id)
+        # print(f"Wall left {self.parent_ui.wall_position.wall_left}, "
+        #       f"Height {self.parent_ui.canvas_dimensions.height}, "
+        #       f"Bottom {self.parent_ui.wall_position.wall_bottom}, "
+        #       f"Coord {coords[0]}, ")
 
         # Left distance (from left wall edge)
         left_dist = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
+        # self.parent_ui.canvas.coords(self.reference_lines[0],
+        #             self.parent_ui.wall_position.wall_left, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom,
+        #             coords[0], self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
         self.parent_ui.canvas.coords(self.reference_lines[0],
-                    self.parent_ui.wall_position.wall_left, self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom,
-                    coords[0], self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)
+                    self.parent_ui.wall_position.wall_left,coords[3],
+                    coords[0], coords[3])
 
         # Right distance (from right wall edge)
         right_dist = (self.parent_ui.wall_position.wall_right - coords[2]) / self.parent_ui.screen_scale

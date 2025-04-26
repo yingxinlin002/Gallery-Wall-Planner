@@ -10,6 +10,7 @@ from gallery_wall_planner.gui.ui_styles import (
 from gallery_wall_planner.gui.popup_editor import open_popup_editor
 from gallery_wall_planner.models.structures import WallPosition, CanvasDimensions, Padding
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
+from gallery_wall_planner.gui.CollapsibleMenu import CollapsibleMenu
 
 
 class Screen_LockObjectsUI(Screen_Base):
@@ -33,28 +34,35 @@ class Screen_LockObjectsUI(Screen_Base):
         self.back_to_home_button = None
         self.next_button = None
 
+        self.collapsible_menu = None
+
 
     def load_content(self):
         """This method should be overridden by child classes to load their specific content.
         It will be called when the screen is switched to this UI component.
         """
-        content_frame = ttk.Frame(self)
-        content_frame.pack(fill="both", expand=True)
-
-        header_frame = ttk.Frame(content_frame)
+        header_frame = ttk.Frame(self)
         header_frame.pack(side="top", fill="x", padx=10, pady=10)
 
         title_label = ttk.Label(header_frame, text="Place fixtures")
         apply_header_label_style(title_label)
         title_label.pack(side="left")
 
-        buttons_frame = ttk.Frame(header_frame)
-        buttons_frame.pack(side="left", padx=20)
-        item_buttons = {}
+        content_frame = ttk.Frame(self)
+        content_frame.pack(fill="both", expand=True)
+
+        # buttons_frame = ttk.Frame(header_frame)
+        # buttons_frame.pack(side="left", padx=20)
+        # item_buttons = {}
+
+        self.collapsible_menu = CollapsibleMenu(content_frame, "Permanent Objects")
+        self.collapsible_menu.load_content()
+        self.collapsible_menu.pack(side="left", fill="y")
+        
 
         # Make canvas non-expanding to free space below
         canvas_frame = ttk.Frame(content_frame)
-        canvas_frame.pack(side="top", fill="both", expand=True)
+        canvas_frame.pack(side="right", fill="both", expand=True)
 
         canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, canvas_frame, canvas_dimensions)
@@ -107,7 +115,7 @@ class Screen_LockObjectsUI(Screen_Base):
             # Create button for this item
             row = i // buttons_per_row
             col = i % buttons_per_row
-            btn = ttk.Button(buttons_frame,
+            btn = ttk.Button(self.collapsible_menu.menu_frame,
                              text=obj.name,
                              command=lambda idx=i: self.show_item_popup(idx))
             apply_primary_button_style(btn)
@@ -115,7 +123,7 @@ class Screen_LockObjectsUI(Screen_Base):
             item_buttons[i] = btn
 
         # Bottom buttons
-        button_frame = ttk.Frame(content_frame)
+        button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", fill="x", pady=10)
 
         self.back_to_home_button = ttk.Button(button_frame, text="< Back to Home", 

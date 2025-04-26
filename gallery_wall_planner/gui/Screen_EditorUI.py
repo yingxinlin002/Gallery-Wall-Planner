@@ -7,13 +7,20 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_canvas_style,
     get_ui_styles
 )
-from gallery_wall_planner.deprecated.virtualWall import VirtualWall
+# from gallery_wall_planner.deprecated.virtualWall import VirtualWall
 from gallery_wall_planner.gui.Screen_Base import Screen_Base
 from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
 from gallery_wall_planner.gui.popup_install_instruct import open_install_instruct_popup  # NEW IMPORT INSIDE WHERE "Calculate Installation Instruction" BUTTON LIVES
 from gallery_wall_planner.models.artwork import Artwork
+
+class ArtBtn(tk.Button):
+    def toggle_bg(self, on: bool = True):
+        if on:
+            self.configure(background="red")
+        else:
+            self.configure(background="green")
 
 class Screen_EditorUI(Screen_Base):
     def __init__(self, AppMain: AppMain, *args, **kwargs):
@@ -24,14 +31,15 @@ class Screen_EditorUI(Screen_Base):
         self.sidebar_visible = True
         self.sidebar_width = 300
         self.sidebar_animation_running = False
-        self.virtual_wall = None
-        self.wall_canvas = None
-        self.selected_artwork = None
+        # self.virtual_wall = None
+        self.wall_canvas : WallCanvas = None
+        self.selected_artwork : Artwork = None
         self.wall_space = None  # Initialize wall_space as None
 
     def handle_installation_popup(self):
-        # This should pass the full DraggableArt objects, not just names
-        open_install_instruct_popup(self._root(), self.selected_wall, self.virtual_wall.items)
+        print("Installation popup")
+    #     # This should pass the full DraggableArt objects, not just names
+    #     open_install_instruct_popup(self._root(), self.selected_wall, self.virtual_wall.items)
 
     def load_content(self):
         main_frame = tk.Frame(self)
@@ -55,8 +63,8 @@ class Screen_EditorUI(Screen_Base):
         self.sidebar_container.pack(side="left", fill="y")
 
         # Control panel with initial width
-        self.control_panel = tk.Frame(self.sidebar_container, 
-                                    width=self.sidebar_width, 
+        self.control_panel = tk.Frame(self.sidebar_container,
+                                    width=self.sidebar_width,
                                     bg="#f0f0f0")
         self.control_panel.pack(side="left", fill="y")
         self.control_panel.pack_propagate(False)  # Prevent children from changing width
@@ -77,15 +85,15 @@ class Screen_EditorUI(Screen_Base):
         self.add_artwork_frame = self.create_collapsible_menu(
             self.control_panel, "Add Artwork", expanded=True)
 
-        csv_button = tk.Button(self.add_artwork_frame,
-                             text="Add Artwork by xlsx file",
-                             command=self.open_artwork_xlsx_ui,
-                             bg=self.styles["bg_info"],
-                             fg=self.styles["fg_white"],
-                             font=self.styles["button_font"],
-                             padx=self.styles["button_padx"],
-                             pady=self.styles["button_pady"])
-        csv_button.pack(pady=5, fill="x")
+        # csv_button = tk.Button(self.add_artwork_frame,
+        #                      text="Add Artwork by xlsx file",
+        #                      command=self.open_artwork_xlsx_ui,
+        #                      bg=self.styles["bg_info"],
+        #                      fg=self.styles["fg_white"],
+        #                      font=self.styles["button_font"],
+        #                      padx=self.styles["button_padx"],
+        #                      pady=self.styles["button_pady"])
+        # csv_button.pack(pady=5, fill="x")
 
         manual_button = tk.Button(self.add_artwork_frame,
                                 text="Add Artwork Manually",
@@ -132,7 +140,8 @@ class Screen_EditorUI(Screen_Base):
         canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
-        self.wall_canvas.add_fixed_item(self.selected_wall.permanent_objects)
+        self.wall_canvas.add_fixed_items(self.selected_wall.permanent_objects)
+
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
         # self.canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
@@ -149,102 +158,102 @@ class Screen_EditorUI(Screen_Base):
         edit_line_btn.pack(side="left", padx=5)
 
             
-    def initialize_virtual_wall(self):
-        """Initialize the virtual wall display"""
-        # Clear existing wall if any
-        for widget in self.wall_space.winfo_children():
-            widget.destroy()
+    # def initialize_virtual_wall(self):
+    #     """Initialize the virtual wall display"""
+    #     # Clear existing wall if any
+    #     for widget in self.wall_space.winfo_children():
+    #         widget.destroy()
+    #
+    #     # Create new virtual wall
+    #     self.virtual_wall = VirtualWall(
+    #         self.wall_space,
+    #         self.AppMain.editor_wall,
+    #         on_drag_callback=self.show_measurement_lines
+    #     )
+    #
+    #     # Add existing artworks if any
+    #     if hasattr(self.AppMain.editor_wall, 'artwork'):
+    #         for artwork in self.AppMain.editor_wall.artwork:
+    #             self.virtual_wall.add_artwork(artwork)
+    #
+    #     # Highlight selected artwork if one exists
+    #     if (hasattr(self.AppMain, 'editor_artwork_selected') and
+    #         self.AppMain.editor_artwork_selected):
+    #         self.highlight_artwork(self.AppMain.editor_artwork_selected)
 
-        # Create new virtual wall
-        self.virtual_wall = VirtualWall(
-            self.wall_space,
-            self.AppMain.editor_wall,
-            on_drag_callback=self.show_measurement_lines
-        )
-
-        # Add existing artworks if any
-        if hasattr(self.AppMain.editor_wall, 'artwork'):
-            for artwork in self.AppMain.editor_wall.artwork:
-                self.virtual_wall.add_artwork(artwork)
-
-        # Highlight selected artwork if one exists
-        if (hasattr(self.AppMain, 'editor_artwork_selected') and
-            self.AppMain.editor_artwork_selected):
-            self.highlight_artwork(self.AppMain.editor_artwork_selected)
-
-    def highlight_artwork(self, artwork):
-        """Highlight the artwork on the virtual wall"""
-        if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-            return
-
-        # Reset all highlights first
-        for item in self.virtual_wall.items:
-            self.virtual_wall.canvas.itemconfig(item.id, outline="black", width=2)
-
-        # Find and highlight the selected artwork
-        for item in self.virtual_wall.items:
-            if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
-                self.virtual_wall.canvas.itemconfig(item.id, outline="#800080", width=4)  # Purple highlight
-                break
-
-    def show_measurement_lines(self, item_id, x1, y1, x2, y2):
-        """Show measurement lines and distances while dragging"""
-        # Clear previous measurement lines
-        self.virtual_wall.canvas.delete("measurement")
-
-        # Get wall boundaries
-        wall_left = self.virtual_wall.margin
-        wall_bottom = self.virtual_wall.margin
-        wall_right = wall_left + self.selected_wall.width * self.virtual_wall.scale
-        wall_top = self.virtual_wall.canvas_height - (wall_bottom + self.selected_wall.height * self.virtual_wall.scale)
-
-        # Draw horizontal measurement lines
-        self.virtual_wall.canvas.create_line(
-            wall_left, y1, x1, y1,
-            fill="gray", dash=(2, 2), tags="measurement", width=1
-        )
-        self.virtual_wall.canvas.create_line(
-            x2, y1, wall_right, y1,
-            fill="gray", dash=(2, 2), tags="measurement", width=1
-        )
-
-        # Draw vertical measurement lines
-        self.virtual_wall.canvas.create_line(
-            x1, wall_top, x1, y1,
-            fill="gray", dash=(2, 2), tags="measurement", width=1
-        )
-        self.virtual_wall.canvas.create_line(
-            x1, y2, x1, self.virtual_wall.canvas_height - wall_bottom,
-            fill="gray", dash=(2, 2), tags="measurement", width=1
-        )
-
-        # Calculate distances in inches
-        left_dist = (x1 - wall_left) / self.virtual_wall.scale
-        right_dist = (wall_right - x2) / self.virtual_wall.scale
-        top_dist = (self.virtual_wall.canvas_height - y1 - wall_bottom) / self.virtual_wall.scale
-        bottom_dist = (y2 - wall_top) / self.virtual_wall.scale
-
-        # Display distances
-        self.virtual_wall.canvas.create_text(
-            (wall_left + x1)/2, y1-10,
-            text=f"{left_dist:.1f}\"",
-            fill="black", tags="measurement"
-        )
-        self.virtual_wall.canvas.create_text(
-            (x2 + wall_right)/2, y1-10,
-            text=f"{right_dist:.1f}\"",
-            fill="black", tags="measurement"
-        )
-        self.virtual_wall.canvas.create_text(
-            x1+10, (wall_top + y1)/2,
-            text=f"{top_dist:.1f}\"",
-            fill="black", tags="measurement"
-        )
-        self.virtual_wall.canvas.create_text(
-            x1+10, (y2 + self.virtual_wall.canvas_height - wall_bottom)/2,
-            text=f"{bottom_dist:.1f}\"",
-            fill="black", tags="measurement"
-        )
+    # def highlight_artwork(self, artwork):
+    #     """Highlight the artwork on the virtual wall"""
+    #     if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
+    #         return
+    #
+    #     # Reset all highlights first
+    #     for item in self.virtual_wall.items:
+    #         self.virtual_wall.canvas.itemconfig(item.id, outline="black", width=2)
+    #
+    #     # Find and highlight the selected artwork
+    #     for item in self.virtual_wall.items:
+    #         if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
+    #             self.virtual_wall.canvas.itemconfig(item.id, outline="#800080", width=4)  # Purple highlight
+    #             break
+    #
+    # def show_measurement_lines(self, item_id, x1, y1, x2, y2):
+    #     """Show measurement lines and distances while dragging"""
+    #     # Clear previous measurement lines
+    #     self.virtual_wall.canvas.delete("measurement")
+    #
+    #     # Get wall boundaries
+    #     wall_left = self.virtual_wall.margin
+    #     wall_bottom = self.virtual_wall.margin
+    #     wall_right = wall_left + self.selected_wall.width * self.virtual_wall.scale
+    #     wall_top = self.virtual_wall.canvas_height - (wall_bottom + self.selected_wall.height * self.virtual_wall.scale)
+    #
+    #     # Draw horizontal measurement lines
+    #     self.virtual_wall.canvas.create_line(
+    #         wall_left, y1, x1, y1,
+    #         fill="gray", dash=(2, 2), tags="measurement", width=1
+    #     )
+    #     self.virtual_wall.canvas.create_line(
+    #         x2, y1, wall_right, y1,
+    #         fill="gray", dash=(2, 2), tags="measurement", width=1
+    #     )
+    #
+    #     # Draw vertical measurement lines
+    #     self.virtual_wall.canvas.create_line(
+    #         x1, wall_top, x1, y1,
+    #         fill="gray", dash=(2, 2), tags="measurement", width=1
+    #     )
+    #     self.virtual_wall.canvas.create_line(
+    #         x1, y2, x1, self.virtual_wall.canvas_height - wall_bottom,
+    #         fill="gray", dash=(2, 2), tags="measurement", width=1
+    #     )
+    #
+    #     # Calculate distances in inches
+    #     left_dist = (x1 - wall_left) / self.virtual_wall.scale
+    #     right_dist = (wall_right - x2) / self.virtual_wall.scale
+    #     top_dist = (self.virtual_wall.canvas_height - y1 - wall_bottom) / self.virtual_wall.scale
+    #     bottom_dist = (y2 - wall_top) / self.virtual_wall.scale
+    #
+    #     # Display distances
+    #     self.virtual_wall.canvas.create_text(
+    #         (wall_left + x1)/2, y1-10,
+    #         text=f"{left_dist:.1f}\"",
+    #         fill="black", tags="measurement"
+    #     )
+    #     self.virtual_wall.canvas.create_text(
+    #         (x2 + wall_right)/2, y1-10,
+    #         text=f"{right_dist:.1f}\"",
+    #         fill="black", tags="measurement"
+    #     )
+    #     self.virtual_wall.canvas.create_text(
+    #         x1+10, (wall_top + y1)/2,
+    #         text=f"{top_dist:.1f}\"",
+    #         fill="black", tags="measurement"
+    #     )
+    #     self.virtual_wall.canvas.create_text(
+    #         x1+10, (y2 + self.virtual_wall.canvas_height - wall_bottom)/2,
+    #         text=f"{bottom_dist:.1f}\"",
+    #         fill="black", tags="measurement"
+    #     )
 
     def animate_sidebar(self, target_width):
         """Smoothly animate the sidebar width change"""
@@ -332,56 +341,82 @@ class Screen_EditorUI(Screen_Base):
 
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
-        frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
-        frame.pack(fill="x", pady=2, padx=2)
-        frame.artwork = artwork  # Store reference to artwork
+        print(f"adding {artwork.name}")
+        art_btn = ArtBtn(parent, text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")")
+        art_btn.config(command=lambda: (self.select_artwork(artwork), art_btn.toggle_bg()))
+        art_btn.pack(fill="x", pady=2, padx=2)
+        # frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
+        # frame.pack(fill="x", pady=2, padx=2)
+        # frame.artwork = artwork  # Store reference to artwork
+        #
+        # # Highlight if this is the selected artwork
+        # if self.selected_artwork and self.selected_artwork == artwork:
+        #     frame.config(bg="#f0f0ff")  # Light purple background
+        #
+        # # Make the whole frame clickable
+        # # frame.bind("<Button-1>", lambda e, a=artwork: self.select_artwork(a))
+        # frame.bind("<Button-1>", lambda e: print(f"clicked {artwork.name}"))
+        #
+        # # Artwork name and dimensions
+        # tk.Label(frame,
+        #          text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")",
+        #          font=self.styles["label_font"],
+        #          bg=frame["bg"]).pack(anchor="w")
+        #
+        # self.artwork_list.append(frame)
 
-        # Highlight if this is the selected artwork
-        if self.selected_artwork and self.selected_artwork == artwork:
-            frame.config(bg="#f0f0ff")  # Light purple background
-
-        # Make the whole frame clickable
-        frame.bind("<Button-1>", lambda e, a=artwork: self.select_artwork(a))
-
-        # Artwork name and dimensions
-        tk.Label(frame,
-                 text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")",
-                 font=self.styles["label_font"],
-                 bg=frame["bg"]).pack(anchor="w")
-
-        self.artwork_list.append(frame)
-
-    def select_artwork(self, artwork):
+    def select_artwork(self, artwork: Artwork):
         """Handle artwork selection from the sidebar."""
-        self.selected_artwork = artwork
-
-        # Update highlights in the sidebar
-        for item in self.artwork_list:
-            if item.artwork == artwork:
-                item.config(bg="#f0f0ff")  # Light purple for selected
-            else:
-                item.config(bg="white")  # White for others
-
-        # Initialize virtual wall if it doesn't exist
-        if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-            self.initialize_virtual_wall()
-
-        # Add to virtual wall if not already present
-        if not self.is_artwork_on_wall(artwork):
-            self.virtual_wall.add_artwork(artwork)
-
-        # Highlight on virtual wall
-        self.highlight_artwork(artwork)
-
-    def is_artwork_on_wall(self, artwork):
-        """Check if artwork is already on the virtual wall."""
-        if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-            return False
-
-        for item in getattr(self.virtual_wall, 'items', []):
-            if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
-                return True
-        return False
+        print(f"DEBUG: select_artwork called with {artwork.name}")
+        # btn.config(bg='red')
+        self.wall_canvas.add_draggable(artwork)
+        
+        # # Store the selected artwork
+        # self.selected_artwork = artwork
+        #
+        # # Update highlights in the sidebar
+        # for item in self.artwork_list:
+        #     if hasattr(item, 'artwork') and item.artwork == artwork:
+        #         item.config(bg="#f0f0ff")  # Light purple for selected
+        #         # Also update any labels inside the frame
+        #         for child in item.winfo_children():
+        #             if isinstance(child, tk.Label):
+        #                 child.config(bg="#f0f0ff")
+        #     else:
+        #         item.config(bg="white")  # White for others
+        #         # Also update any labels inside the frame
+        #         for child in item.winfo_children():
+        #             if isinstance(child, tk.Label):
+        #                 child.config(bg="white")
+        # self.selected_artwork = artwork
+        #
+        # # Update highlights in the sidebar
+        # for item in self.artwork_list:
+        #     if item.artwork == artwork:
+        #         item.config(bg="#f0f0ff")  # Light purple for selected
+        #     else:
+        #         item.config(bg="white")  # White for others
+        #
+        # # Initialize virtual wall if it doesn't exist
+        # if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
+        #     self.initialize_virtual_wall()
+        #
+        # # Add to virtual wall if not already present
+        # if not self.is_artwork_on_wall(artwork):
+        #     self.virtual_wall.add_artwork(artwork)
+        #
+        # # Highlight on virtual wall
+        # self.highlight_artwork(artwork)
+        #
+    # def is_artwork_on_wall(self, artwork):
+    #     """Check if artwork is already on the virtual wall."""
+    #     if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
+    #         return False
+    #
+    #     for item in getattr(self.virtual_wall, 'items', []):
+    #         if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
+    #             return True
+    #     return False
 
     def create_collapsible_menu(self, parent, title, expanded=True):
         menu_frame = tk.Frame(parent, bg="#e0e0e0", bd=1, relief="raised")
@@ -429,34 +464,34 @@ class Screen_EditorUI(Screen_Base):
     def open_artwork_xlsx_ui(self):
         self.AppMain.switch_screen(ScreenType.ARTWORK_XLSX)
 
-    def refresh_artwork_list(self):
-        """Refresh both the sidebar list and virtual wall"""
-        self.create_artwork_list_frame()
-        
-        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
-            if not self.virtual_wall:
-                self.initialize_virtual_wall()
-            else:
-                # Clear and repopulate virtual wall
-                for widget in self.wall_space.winfo_children():
-                    widget.destroy()
-                self.initialize_virtual_wall()
-
-            # Re-highlight selected artwork if any
-            if self.selected_artwork:
-                self.highlight_artwork(self.selected_artwork)
-        else:
-            # Clear virtual wall if no artworks
-            if hasattr(self, 'virtual_wall'):
-                for widget in self.wall_space.winfo_children():
-                    widget.destroy()
-                self.virtual_wall = None
-                self.selected_artwork = None
-
-            tk.Label(self.wall_space,
-                   text="No artworks added yet",
-                   font=self.styles["title_font"],
-                   bg="white").pack(expand=True)
+    # def refresh_artwork_list(self):
+    #     """Refresh both the sidebar list and virtual wall"""
+    #     self.create_artwork_list_frame()
+    #
+    #     if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
+    #         if not self.virtual_wall:
+    #             self.initialize_virtual_wall()
+    #         else:
+    #             # Clear and repopulate virtual wall
+    #             for widget in self.wall_space.winfo_children():
+    #                 widget.destroy()
+    #             self.initialize_virtual_wall()
+    #
+    #         # Re-highlight selected artwork if any
+    #         if self.selected_artwork:
+    #             self.highlight_artwork(self.selected_artwork)
+    #     else:
+    #         # Clear virtual wall if no artworks
+    #         if hasattr(self, 'virtual_wall'):
+    #             for widget in self.wall_space.winfo_children():
+    #                 widget.destroy()
+    #             self.virtual_wall = None
+    #             self.selected_artwork = None
+    #
+    #         tk.Label(self.wall_space,
+    #                text="No artworks added yet",
+    #                font=self.styles["title_font"],
+    #                bg="white").pack(expand=True)
             
     def add_to_virtual_wall(self, artwork):
         """Add artwork to the virtual wall when clicked"""
