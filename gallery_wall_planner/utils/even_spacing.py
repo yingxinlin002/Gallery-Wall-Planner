@@ -43,6 +43,8 @@ def apply_even_spacing(wall_canvas, imported_artworks):
             for artwork in selected_artworks:
                 artwork.x = current_x
                 artwork.y = 62  # Default height at 62 inches
+                if artwork.id not in wall_canvas.draggable_items:
+                    wall_canvas.add_draggable(artwork)  # Ensure artwork is registered
                 wall_canvas.move_item_to_canvas(artwork)
                 current_x += artwork.width + spacing
 
