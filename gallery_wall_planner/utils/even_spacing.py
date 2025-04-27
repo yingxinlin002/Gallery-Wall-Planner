@@ -101,15 +101,25 @@ def apply_even_spacing(wall_canvas, imported_artworks):
     # Left and right points input
     input_frame = ttk.LabelFrame(popup, text="Spacing Input")
     input_frame.pack(fill="x", padx=10, pady=10)
-    ttk.Label(input_frame, text="Left Point:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    # Add the label for spacing boundaries
+    ttk.Label(input_frame, text="Enter the spacing boundaries (in inches):").grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="w")
+
+    # Left Point Input
+    ttk.Label(input_frame, text="Left Point:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
     left_point_entry = ttk.Entry(input_frame)
-    left_point_entry.grid(row=0, column=1, padx=5, pady=5)
+    left_point_entry.grid(row=1, column=1, padx=5, pady=5)
     left_point_entry.insert(0, "0")  # Default value
 
-    ttk.Label(input_frame, text="Right Point:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    # Right Point Input
+    ttk.Label(input_frame, text="Right Point:").grid(row=2, column=0, padx=5, pady=5, sticky="w")
     right_point_entry = ttk.Entry(input_frame)
-    right_point_entry.grid(row=1, column=1, padx=5, pady=5)
-    right_point_entry.insert(0, f"{wall_canvas.canvas_dimensions.width}")  # Default value
+    right_point_entry.grid(row=2, column=1, padx=5, pady=5)
+
+    # Convert canvas width to inches and set as default value
+    DPI = 96  # Define DPI (dots per inch), adjust as needed
+    canvas_width_in_inches = wall_canvas.canvas_dimensions.width / DPI
+    right_point_entry.insert(0, f"{canvas_width_in_inches:.2f}")  # Default value in inches
 
     # Artwork selection
     selection_frame = ttk.LabelFrame(popup, text="Artwork Selection")
