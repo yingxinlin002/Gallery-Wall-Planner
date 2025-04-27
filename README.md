@@ -1,7 +1,6 @@
 # Gallery Wall Planner Tool
 
-![Application Screenshot](GalleryPlannerSC.png) <!-- Add a screenshot if available -->
-
+![Application Screenshot](GalleryPlannerSC.png)
 ## Overview
 
 The Gallery Wall Planner Tool is a Python-based application designed to simplify gallery art installation planning. It enables users to:
