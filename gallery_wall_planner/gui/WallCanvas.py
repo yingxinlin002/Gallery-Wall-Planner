@@ -73,7 +73,11 @@ class WallCanvas():
         self.canvas = tk.Canvas(self.parent_frame, width=self.canvas_dimensions.width, height=self.canvas_dimensions.height)
         apply_canvas_style(self.canvas)
         self.canvas.pack(padx=self.canvas_dimensions.padding.left, pady=self.canvas_dimensions.padding.top)
-        self.screen_scale = min((self.canvas_dimensions.width - 2 * self.canvas_dimensions.padding.left) / self.wall.width, (self.canvas_dimensions.height - 2 * self.canvas_dimensions.padding.top) / self.wall.height)
+        c_width = self.canvas_dimensions.width - self.canvas_dimensions.padding.left - self.canvas_dimensions.padding.right - ( 2 * self.canvas_dimensions.margin)
+        c_height = self.canvas_dimensions.height - self.canvas_dimensions.padding.top - self.canvas_dimensions.padding.bottom - ( 2 * self.canvas_dimensions.margin)
+        self.screen_scale = min(
+            c_width / self.wall.width, 
+            c_height / self.wall.height)
         self.wall_position = WallPosition(
             self.canvas_dimensions.margin, 
             self.canvas_dimensions.margin, 
@@ -82,9 +86,11 @@ class WallCanvas():
         )
 
         # Draw wall background
-        self.canvas.create_rectangle(self.wall_position.wall_left, self.canvas_dimensions.height - self.wall_position.wall_bottom - self.wall.height*self.screen_scale,
-                          self.wall_position.wall_right, self.canvas_dimensions.height - self.wall_position.wall_bottom,
-                          fill=self.wall.color, outline="black", width=2)
+        self.canvas.create_rectangle(self.wall_position.wall_left, 
+                                    self.wall_position.wall_top,
+                                    self.wall_position.wall_right, 
+                                    self.wall_position.wall_bottom,
+                                    fill=self.wall.color, outline="black", width=2)
 
         # Add coordinate indicators
         self.canvas.create_text(self.wall_position.wall_left - 10, self.canvas_dimensions.height - self.wall_position.wall_bottom + 5, text="0", anchor="e")

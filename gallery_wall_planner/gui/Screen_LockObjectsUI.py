@@ -37,6 +37,7 @@ class Screen_LockObjectsUI(Screen_Base):
         self.next_button = None
 
         self.collapsible_menu = None
+        print(f"Root size: {self.AppMain.root.winfo_width()} x {self.AppMain.root.winfo_height()}")
 
 
     def load_content(self):
@@ -66,7 +67,10 @@ class Screen_LockObjectsUI(Screen_Base):
         canvas_frame = ttk.Frame(content_frame)
         canvas_frame.pack(side="right", fill="both", expand=True)
 
-        canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
+        canvas_dimensions = CanvasDimensions(
+            self.AppMain.root.winfo_width() - 400, 
+            self.AppMain.root.winfo_height() - 200, 
+            50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, canvas_frame, canvas_dimensions)
         self.wall_canvas.load_content()
         # self.canvas_width = 800

@@ -30,7 +30,7 @@ class CanvasDimensions:
 
 class WallPosition:
     
-    def __init__(self, wall_left, wall_bottom, wall_right, wall_top):
+    def __init__(self, wall_left, wall_top, wall_right, wall_bottom):
         self._wall_left = wall_left
         self._wall_bottom = wall_bottom
         self._wall_right = wall_right

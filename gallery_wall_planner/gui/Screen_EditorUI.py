@@ -137,7 +137,9 @@ class Screen_EditorUI(Screen_Base):
         self.buttons_frame.pack(side="left", padx=20)
         self.item_buttons = {}
 
-        canvas_dimensions = CanvasDimensions(800, 350, 50, Padding(10, 10, 10, 10))
+        canvas_dimensions = CanvasDimensions(self.AppMain.root.winfo_width() - 400, 
+                                            self.AppMain.root.winfo_height() - 200, 
+                                            50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
         self.wall_canvas.add_fixed_items(self.selected_wall.permanent_objects_dict)
