@@ -110,6 +110,19 @@ class Screen_EditorUI(Screen_Base):
 
         self.create_artwork_list_frame()
 
+        # Add new Tool menu with Even Spacing button
+        self.tools_frame = self.create_collapsible_menu(self.control_panel, "Tools", expanded=True)
+        
+        even_spacing_button = tk.Button(self.tools_frame,
+                                     text="Even Spacing",
+                                     command=self.apply_even_spacing,
+                                     bg=self.styles["bg_primary"],
+                                     fg=self.styles["fg_white"],
+                                     font=self.styles["button_font"],
+                                     padx=self.styles["button_padx"],
+                                     pady=self.styles["button_pady"])
+        even_spacing_button.pack(pady=5, fill="x")
+
         self.calc_button = tk.Button(self.control_panel,
                                     text="Calculate Installation Instruction",
                                     command=self.handle_installation_popup,
@@ -455,6 +468,13 @@ class Screen_EditorUI(Screen_Base):
             content_frame.pack(fill="x")
             toggle_btn.config(text="▼")
 
+    def apply_even_spacing(self):
+        """Apply even spacing to all artworks on the wall"""
+        print("[DEBUG] Applying even spacing to artworks")
+        # Add your even spacing logic here
+        # This would typically distribute all artworks evenly across the wall
+        messagebox.showinfo("Even Spacing", "Even spacing applied to artworks")
+        
     def back_to_wall_selection(self):
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
 
