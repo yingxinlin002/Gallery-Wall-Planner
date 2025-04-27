@@ -93,11 +93,11 @@ class WallCanvas():
                                     fill=self.wall.color, outline="black", width=2)
 
         # Add coordinate indicators
-        self.canvas.create_text(self.wall_position.wall_left - 10, self.canvas_dimensions.height - self.wall_position.wall_bottom + 5, text="0", anchor="e")
-        self.canvas.create_text(self.wall_position.wall_left - 10, self.canvas_dimensions.height - self.wall_position.wall_bottom - self.wall.height*self.screen_scale - 5,
+        self.canvas.create_text(self.wall_position.wall_left - 10, self.wall_position.wall_bottom - 5, text="0", anchor="e")
+        self.canvas.create_text(self.wall_position.wall_left - 10, self.wall_position.wall_top - 5,
                         text=f"{self.wall.height}\"", anchor="e")
-        self.canvas.create_text(self.wall_position.wall_left + 5, self.canvas_dimensions.height - self.wall_position.wall_bottom + 15, text="0", anchor="n")
-        self.canvas.create_text(self.wall_position.wall_right - 5, self.canvas_dimensions.height - self.wall_position.wall_bottom + 15, text=f"{self.wall.width}\"", anchor="n")
+        self.canvas.create_text(self.wall_position.wall_left + 5, self.wall_position.wall_bottom + 5, text="0", anchor="n")
+        self.canvas.create_text(self.wall_position.wall_right + 10, self.wall_position.wall_top - 5, text=f"{self.wall.width}\"", anchor="w")
 
     def enforce_boundaries(self, x, y, width, height):
         if x < 0:

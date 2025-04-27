@@ -13,6 +13,9 @@ class ItemLocation:
         self.x2 = x2
         self.y2 = y2
 
+    def __str__(self):
+        return f"ItemLocation(x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"
+
 class WallItem:
 
     def __init__(self, wall_object: WallObject, parent_ui):

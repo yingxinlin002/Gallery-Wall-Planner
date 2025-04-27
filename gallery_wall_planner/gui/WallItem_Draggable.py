@@ -34,10 +34,10 @@ class WallItem_Draggable(WallItem):
             self.parent_ui.canvas.create_line(0, 0, 0, 0, dash=(2,2), fill="blue", state='hidden')   # Bottom
         ]
         self.distance_labels = [
-            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden'),  # Left
-            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden'),  # Right
-            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", angle=90, state='hidden'),  # Top
-            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", angle=90, state='hidden')   # Bottom
+            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden',anchor="e"),  # Left
+            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden',anchor="w"),  # Right
+            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden',anchor="s"),  # Top
+            self.parent_ui.canvas.create_text(0, 0, text="", fill="blue", state='hidden',anchor="n")   # Bottom
         ]
 
     def on_drag(self, event):
@@ -73,6 +73,7 @@ class WallItem_Draggable(WallItem):
         # self.parent_ui.canvas.move(self.id, dx, dy)
         self.parent_ui.canvas.coords(self.id, new_x1, new_y1, new_x2, new_y2)
         current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
+        self.wall_object.position = Position((new_x1 + new_x2) / 2, (new_y1 + new_y2) / 2)
 
         label_position = self.get_label_location(current_location)
         self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
@@ -135,26 +136,26 @@ class WallItem_Draggable(WallItem):
         top_dist = (self.parent_ui.AppMain.gallery.current_wall.height - ((self.parent_ui.canvas_dimensions.height - coords[1] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale))  # Changed calculation
         bottom_dist = ((self.parent_ui.canvas_dimensions.height - coords[3] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale)  # Changed calculation
         self.parent_ui.canvas.coords(self.distance_labels[0],
-                    (self.parent_ui.wall_position.wall_left + coords[0])/2,
-                    self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom + 15)
+                    coords[0],
+                    (coords[1] + coords[3])/2)
         self.parent_ui.canvas.itemconfig(self.distance_labels[0],
                         text=f"{left_dist:.1f}\"", state='normal')
 
         self.parent_ui.canvas.coords(self.distance_labels[1],
-                    (coords[2] + self.parent_ui.wall_position.wall_right)/2,
-                    self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom + 15)
+                    coords[2],
+                    (coords[1] + coords[3])/2)
         self.parent_ui.canvas.itemconfig(self.distance_labels[1],
                         text=f"{right_dist:.1f}\"", state='normal')
 
         self.parent_ui.canvas.coords(self.distance_labels[2],
-                    self.parent_ui.wall_position.wall_left-15,
-                    (coords[1] + self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom - self.parent_ui.wall.height*self.parent_ui.screen_scale)/2)
+                    (coords[0] + coords[2])/2,
+                    coords[1])
         self.parent_ui.canvas.itemconfig(self.distance_labels[2],
                         text=f"{top_dist:.1f}\"", state='normal')
 
         self.parent_ui.canvas.coords(self.distance_labels[3],
-                    self.parent_ui.wall_position.wall_left-15,
-                    (coords[3] + self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom)/2)
+                    (coords[0] + coords[2])/2,
+                    coords[3])
         self.parent_ui.canvas.itemconfig(self.distance_labels[3],
                         text=f"{bottom_dist:.1f}\"", state='normal')
 
