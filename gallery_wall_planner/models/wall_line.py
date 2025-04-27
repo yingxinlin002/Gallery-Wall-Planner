@@ -6,7 +6,7 @@ import os
 from types import SimpleNamespace
 from enum import Enum, auto
 from typing import Union, Optional, List
-
+from models.structures import get_id
 
 class HorizontalAlignment(Enum):
     TOP = "top"
@@ -68,6 +68,13 @@ class SingleLine:
         self.orientation = orientation  # Use the Orientation enum
         self.alignment = alignment
         self.distance = distance
+
+        self._id = get_id("line"+f"x{self.x_cord},y{self.y_cord},length{self.length},angle{self.angle},snap_to{self.snap_to},moveable{self.moveable},orientation{self.orientation},alignment{self.alignment},distance{self.distance}")
+
+    @property
+    def id(self) -> str:
+        """Get the line id"""
+        return self._id
 
     @property
     def x_cord(self) -> float:
