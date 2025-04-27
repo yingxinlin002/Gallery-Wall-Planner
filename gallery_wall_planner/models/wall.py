@@ -33,6 +33,7 @@ class Wall:
 
         self._permanent_objects_dict: Dict[str, PermanentObject] = {}
         self._artwork_dict: Dict[str, Artwork] = {}
+        self._wall_lines_dict: Dict[str, SingleLine] = {}
         
         # Set properties with validation
         self.name = name
