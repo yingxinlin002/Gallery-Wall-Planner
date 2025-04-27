@@ -56,21 +56,24 @@ def apply_even_spacing(wall_canvas, imported_artworks):
         except ValueError:
             messagebox.showerror("Error", "Please enter valid numeric values for the points.")
 
-    def on_select_artwork():
-        """Handle artwork selection."""
+    def on_artwork_select(event):
+        """Handle live updates when artworks are selected."""
         selected = artwork_listbox.curselection()
-        if not selected:
-            messagebox.showerror("Error", "Please select at least one artwork.")
-            return
 
-        # Clear previous selections
-        selected_artworks.clear()
-        selection_order.clear()
-
-        # Update selected artworks and their order
+        # Toggle selection
         for idx in selected:
+            if idx in selection_order:
+                # Remove from selection
+                del selection_order[idx]
+            else:
+                # Add to selection
+                selection_order[idx] = len(selection_order) + 1
+
+        # Sort selection order by the order of selection
+        sorted_selection = sorted(selection_order.items(), key=lambda x: x[1])
+        selected_artworks.clear()
+        for idx, _ in sorted_selection:
             selected_artworks.append(imported_artworks[idx])
-            selection_order[idx] = len(selection_order) + 1
 
         # Update the listbox to show the selection order
         update_listbox_with_order()
@@ -79,7 +82,6 @@ def apply_even_spacing(wall_canvas, imported_artworks):
         total_width = sum(artwork.width for artwork in selected_artworks)
         selected_count_label.config(text=f"Selected Artworks: {len(selected_artworks)}")
         total_width_label.config(text=f"Total Width: {total_width:.2f} inches")
-        messagebox.showinfo("Success", "Artworks selected. You can now confirm.")
 
     def update_listbox_with_order():
         """Update the listbox to display the selection order."""
@@ -124,6 +126,9 @@ def apply_even_spacing(wall_canvas, imported_artworks):
     for artwork in imported_artworks:
         artwork_listbox.insert(tk.END, f"{artwork.name} ({artwork.width}\" x {artwork.height}\")")
 
+    # Bind the listbox selection event to live updates
+    artwork_listbox.bind("<<ListboxSelect>>", on_artwork_select)
+
     # Selected artworks info
     info_frame = ttk.Frame(popup)
     info_frame.pack(fill="x", padx=10, pady=5)
@@ -135,7 +140,6 @@ def apply_even_spacing(wall_canvas, imported_artworks):
     # Buttons
     button_frame = ttk.Frame(popup)
     button_frame.pack(pady=10)
-    ttk.Button(button_frame, text="Select Artworks", command=on_select_artwork).pack(side="left", padx=5)
     ttk.Button(button_frame, text="Confirm", command=on_confirm, style="Accent.TButton").pack(side="left", padx=5)
     ttk.Button(button_frame, text="Cancel", command=popup.destroy).pack(side="left", padx=5)
 
