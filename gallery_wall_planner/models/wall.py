@@ -41,6 +41,11 @@ class Wall:
         self.color = color
     
     @property
+    def id(self) -> str:
+        """Get the wall id"""
+        return self._id
+
+    @property
     def name(self) -> str:
         """Get the wall name"""
         return self._name

@@ -3,7 +3,7 @@ from gallery_wall_planner.gui import WallCanvas
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import Position
 from gallery_wall_planner.gui.WallCanvas import WallCanvas
-from gallery_wall_planner.gui.WallItem import WallItem
+from gallery_wall_planner.gui.WallItem import WallItem, ItemLocation
 
 class WallItem_Draggable(WallItem):
     def __init__(self, wall_object: WallObject, parent_ui: WallCanvas):
@@ -54,19 +54,27 @@ class WallItem_Draggable(WallItem):
         new_x2 = coords[2] + dx
         new_y2 = coords[3] + dy
 
+        item_location = self.get_item_location()
         # Check boundaries in canvas coordinates
         if new_x1 < self.parent_ui.wall_position.wall_left:
-            dx = self.parent_ui.wall_position.wall_left - coords[0]
+            new_x1 = self.parent_ui.wall_position.wall_left 
+            new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
         if new_x2 > self.parent_ui.wall_position.wall_right:
-            dx = self.parent_ui.wall_position.wall_right - coords[2]
-        if new_y1 < self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom - self.parent_ui.wall.height*self.parent_ui.screen_scale:
-            dy = (self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom - self.parent_ui.wall.height*self.parent_ui.screen_scale) - coords[1]
-        if new_y2 > self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom:
-            dy = (self.parent_ui.canvas_dimensions.height - self.parent_ui.wall_position.wall_bottom) - coords[3]
+            new_x2 = self.parent_ui.wall_position.wall_right 
+            new_x1 = new_x2 - self.wall_object.width * self.parent_ui.screen_scale
+        if new_y1 < self.parent_ui.wall_position.wall_top:
+            new_y1 = self.parent_ui.wall_position.wall_top 
+            new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
+        if new_y2 > self.parent_ui.wall_position.wall_bottom:
+            new_y2 = self.parent_ui.wall_position.wall_bottom 
+            new_y1 = new_y2 - self.wall_object.height * self.parent_ui.screen_scale
 
         # Apply constrained movement
-        self.parent_ui.canvas.move(self.id, dx, dy)
-        label_position = self.get_label_location(coords[0]+dx, coords[2] + dx, coords[1] + dy, coords[3] + dy)
+        # self.parent_ui.canvas.move(self.id, dx, dy)
+        self.parent_ui.canvas.coords(self.id, new_x1, new_y1, new_x2, new_y2)
+        current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
+
+        label_position = self.get_label_location(current_location)
         self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
         self._drag_data.x += dx
         self._drag_data.y += dy
