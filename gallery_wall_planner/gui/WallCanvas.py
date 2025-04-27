@@ -129,3 +129,9 @@ class WallCanvas():
         for key in keys:
             self.canvas.itemconfig(self.draggable_items[key].id, outline="red" if key in colliding else "black")
         return len(colliding) > 0
+
+    def refresh_artworks(self):
+        """Clear and redraw all artworks with their current positions"""
+        self.clear_artworks()  # You may need to implement this
+        for artwork in self.selected_wall.artwork:
+            self.add_draggable(artwork)
