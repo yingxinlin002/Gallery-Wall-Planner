@@ -113,14 +113,16 @@ class Screen_EditorUI(Screen_Base):
         # Add new Tool menu with Even Spacing button
         self.tools_frame = self.create_collapsible_menu(self.control_panel, "Tools", expanded=True)
         
+        from gallery_wall_planner.utils.even_spacing import apply_even_spacing
+
         even_spacing_button = tk.Button(self.tools_frame,
-                                     text="Even Spacing",
-                                     command=self.apply_even_spacing,
-                                     bg=self.styles["bg_primary"],
-                                     fg=self.styles["fg_white"],
-                                     font=self.styles["button_font"],
-                                     padx=self.styles["button_padx"],
-                                     pady=self.styles["button_pady"])
+                                        text="Even Spacing",
+                                        command=lambda: apply_even_spacing(self.wall_canvas, self.selected_wall.artwork),
+                                        bg=self.styles["bg_primary"],
+                                        fg=self.styles["fg_white"],
+                                        font=self.styles["button_font"],
+                                        padx=self.styles["button_padx"],
+                                        pady=self.styles["button_pady"])
         even_spacing_button.pack(pady=5, fill="x")
 
         self.calc_button = tk.Button(self.control_panel,
@@ -469,11 +471,29 @@ class Screen_EditorUI(Screen_Base):
             toggle_btn.config(text="▼")
 
     def apply_even_spacing(self):
-        """Apply even spacing to all artworks on the wall"""
-        print("[DEBUG] Applying even spacing to artworks")
-        # Add your even spacing logic here
-        # This would typically distribute all artworks evenly across the wall
-        messagebox.showinfo("Even Spacing", "Even spacing applied to artworks")
+        """Apply even spacing to artworks using the utility function"""
+        from gallery_wall_planner.utils.even_spacing import apply_even_spacing
+        if not hasattr(self.selected_wall, 'artwork') or not self.selected_wall.artwork:
+            messagebox.showinfo("Info", "No artworks to space")
+            return
+        
+        # Get wall dimensions from your WallCanvas or selected_wall
+        wall_width = self.selected_wall.width  # or get from canvas dimensions
+        wall_height = self.selected_wall.height
+        
+        # Apply spacing
+        updated_artworks = apply_even_spacing(
+            self.selected_wall.artwork,
+            wall_width,
+            wall_height
+        )
+        
+        # Update the wall with new positions
+        self.selected_wall.artwork = updated_artworks
+        
+        # Refresh the display
+        self.wall_canvas.refresh_artworks()
+        messagebox.showinfo("Success", "Artworks evenly spaced")
         
     def back_to_wall_selection(self):
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)

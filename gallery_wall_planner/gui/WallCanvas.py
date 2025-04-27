@@ -32,9 +32,16 @@ class WallCanvas():
         from gallery_wall_planner.gui.WallItem import WallItem
         self.fixed_items : Dict[str,WallItem] = {}
 
-    def add_draggables(self, wall_objects : Dict[str,WallObject]):
-        for _, wall_object in wall_objects.items():
-            self.add_draggable(wall_object)
+    def add_draggable(self, wall_object):
+        """Add a draggable item to the canvas."""
+        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
+        di = WallItem_Draggable(
+            wall_object=wall_object,
+            parent_ui=self
+        )
+        di.create_canvas_item()
+        self.draggable_items[wall_object.id] = di  # Use wall_object.id as the key
+        print(f"[DEBUG] Artwork added to draggable_items: {wall_object.id}")
 
     def add_draggable(self, wall_object : WallObject):
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
@@ -104,14 +111,22 @@ class WallCanvas():
             y = self.wall.height - height
         return x, y
 
-    def move_item_to_canvas(self,item_index):
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        item : WallItem_Draggable = self.draggable_items[item_index]
-        x1 = self.wall_position.wall_left + item.wall_object.position.x * self.screen_scale
-        y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + item.wall_object.position.y * self.screen_scale)  # Changed from (y + height)
-        x2 = self.wall_position.wall_left + (item.wall_object.position.x + item.wall_object.width) * self.screen_scale
-        y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (item.wall_object.position.y + item.wall_object.height) * self.screen_scale)  # Changed from just y
-        self.canvas.coords(item.id, x1, y1, x2, y2)
+    def move_item_to_canvas(self, artwork):
+        """Move the specified artwork to the canvas."""
+        print(f"[DEBUG] Moving artwork: {artwork}")
+        print(f"[DEBUG] Available keys in draggable_items: {list(self.draggable_items.keys())}")
+
+        try:
+            item = self.draggable_items[artwork.id]  # Use artwork.id as the key
+            # Update the item's position on the canvas
+            x1 = self.wall_position.wall_left + artwork.x * self.screen_scale
+            y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + artwork.y * self.screen_scale)
+            x2 = x1 + artwork.width * self.screen_scale
+            y2 = y1 - artwork.height * self.screen_scale
+            self.canvas.coords(item.id, x1, y1, x2, y2)
+        except KeyError:
+            print(f"[ERROR] Artwork not found in draggable_items: {artwork}")
+            raise
 
     def check_all_collisions(self):
         n = len(self.draggable_items)
@@ -129,3 +144,9 @@ class WallCanvas():
         for key in keys:
             self.canvas.itemconfig(self.draggable_items[key].id, outline="red" if key in colliding else "black")
         return len(colliding) > 0
+
+    def refresh_artworks(self):
+        """Clear and redraw all artworks with their current positions"""
+        self.clear_artworks()  # You may need to implement this
+        for artwork in self.selected_wall.artwork:
+            self.add_draggable(artwork)
