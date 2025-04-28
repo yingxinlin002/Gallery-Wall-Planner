@@ -27,6 +27,7 @@ class WallCanvas():
         self.canvas: tk.Canvas = None
         self.screen_scale = None
         self.wall_position = None
+        self.zoom_level = 1.0  # Default zoom level
         from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
         self.draggable_items : Dict[str,WallItem_Draggable] = {}
         from gallery_wall_planner.gui.WallItem import WallItem
@@ -77,6 +78,7 @@ class WallCanvas():
 
 
     def load_content(self):
+        """Load the wall and its items into the canvas."""
         self.canvas = tk.Canvas(self.parent_frame, width=self.canvas_dimensions.width, height=self.canvas_dimensions.height)
         apply_canvas_style(self.canvas)
         self.canvas.pack(padx=self.canvas_dimensions.padding.left, pady=self.canvas_dimensions.padding.top)

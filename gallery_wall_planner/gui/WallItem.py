@@ -52,3 +52,11 @@ class WallItem:
         bx1, by1 = item2.wall_object.position.x, item2.wall_object.position.y
         bx2, by2 = bx1 + item2.wall_object.width, by1 + item2.wall_object.height
         return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
+
+    def redraw(self, screen_scale, wall_position):
+        """Redraw the wall item based on the current screen scale and wall position."""
+        x1 = wall_position.wall_left + self.wall_object.x * screen_scale
+        y1 = wall_position.wall_bottom - (self.wall_object.y + self.wall_object.height) * screen_scale
+        x2 = x1 + self.wall_object.width * screen_scale
+        y2 = y1 + self.wall_object.height * screen_scale
+        self.parent_ui.canvas.coords(self.id, x1, y1, x2, y2)

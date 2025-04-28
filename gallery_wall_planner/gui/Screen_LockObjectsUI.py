@@ -97,9 +97,9 @@ class Screen_LockObjectsUI(Screen_Base):
         # self.canvas.create_text(self.wall_position.wall_right - 5, self.canvas_height - self.wall_position.wall_bottom + 15, text=f"{self.wall.width}\"", anchor="n")
 
         # Create draggable items for each permanent object
-        buttons_per_row = 4
-        self.wall_canvas.add_draggables(self.wall.permanent_objects_dict)
-        for _, obj in self.wall_canvas.draggable_items.items():
+        #buttons_per_row = 4
+        #self.wall_canvas.add_draggables(self.wall.permanent_objects_dict)
+        #for _, obj in self.wall_canvas.draggable_items.items():
             #pos = obj.position
             # Initialize position in layout_items
             #self.layout_items[self.obstacle_names[i]] = pos if pos else {"x": 0.0, "y": 0.0}
@@ -123,10 +123,12 @@ class Screen_LockObjectsUI(Screen_Base):
             # apply_primary_button_style(btn)
             # btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
             # item_buttons[i] = btn
-            btn = BTN_WallItem(self.collapsible_menu.menu_frame, obj)
-            btn.pack(side="top", fill="x", padx=5, pady=5)
-            btn.load_content()
-            
+            #btn = BTN_WallItem(self.collapsible_menu.menu_frame, obj)
+            #btn.pack(side="top", fill="x", padx=5, pady=5)
+            #btn.load_content()
+        # Add draggable items for each permanent object
+        for obj in self.wall.permanent_objects_dict.values():
+            self.wall_canvas.add_draggable(obj)
 
         # Bottom buttons
         button_frame = ttk.Frame(self)
