@@ -9,7 +9,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.dimensions import SheetFormatProperties
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
-from gallery_wall_planner.models.permanentObject import PermanentObject
+from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
 
 def export_project(filepath, wall, permanent_objects, layout):

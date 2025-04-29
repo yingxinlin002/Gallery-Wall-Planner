@@ -8,9 +8,9 @@ from gallery_wall_planner.gui.ui_styles import (
     get_ui_styles
 )
 # from gallery_wall_planner.deprecated.virtualWall import VirtualWall
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.WallCanvas import WallCanvas
+from gallery_wall_planner.gui.screen_base import ScreenBase
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
 from gallery_wall_planner.gui.popup_install_instruct import open_install_instruct_popup  # NEW IMPORT INSIDE WHERE "Calculate Installation Instruction" BUTTON LIVES
 from gallery_wall_planner.models.artwork import Artwork
@@ -22,7 +22,7 @@ class ArtBtn(tk.Button):
         else:
             self.configure(background="green")
 
-class Screen_EditorUI(Screen_Base):
+class ScreenEditorUI(ScreenBase):
     def __init__(self, AppMain: AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.selected_wall = AppMain.editor_wall

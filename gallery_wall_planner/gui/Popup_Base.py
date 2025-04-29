@@ -1,7 +1,7 @@
 import tkinter as tk
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
 
-class Popup_Base(tk.Toplevel):
+class PopupBase(tk.Toplevel):
     def __init__(self, AppMain : AppMain, Title : str, Width : int, Height : int, *args, **kwargs):
         super().__init__(AppMain.root, *args, **kwargs)
         self.AppMain = AppMain

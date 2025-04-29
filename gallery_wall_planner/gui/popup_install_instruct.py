@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
 
 
 def open_install_instruct_popup(root, selected_wall, artwork_items):

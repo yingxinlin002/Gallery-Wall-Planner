@@ -10,8 +10,8 @@ from unittest.mock import patch, MagicMock
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.Screen_Home import Screen_Home
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.Screen_Home import ScreenHome
 
 from tests.AppTestContext import AppTestContext
 from tests.TestingSteps import TestingSteps
@@ -29,7 +29,7 @@ def test_initial_screen_is_home(app):
     assert app.current_screen == ScreenType.HOME
     
     # Verify that the frame_contents is an instance of Screen_Home
-    assert isinstance(app.frame_contents, Screen_Home)
+    assert isinstance(app.frame_contents, ScreenHome)
     
     # Verify that the home screen has the expected title
     title_label = None

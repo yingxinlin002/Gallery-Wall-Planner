@@ -2,11 +2,11 @@ import tkinter as tk
 from tkinter import messagebox, colorchooser
 import re
 from gallery_wall_planner.models.wall import Wall  
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
-from gallery_wall_planner.gui.Popup_NewExhibit import Popup_NewExhibit
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.screen_base import ScreenBase
+from gallery_wall_planner.gui.popup_new_exhibit import PopupNewExhibit
 
-class Screen_NewGalleryUI(Screen_Base):
+class ScreenNewGalleryUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.wall_width = None
@@ -227,7 +227,7 @@ class Screen_NewGalleryUI(Screen_Base):
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
 
         if len(self.AppMain.gallery.get_walls()) > 0:
-            self.popup = Popup_NewExhibit(self.AppMain, self)
+            self.popup = PopupNewExhibit(self.AppMain, self)
             self.popup.load_content()
 
         # Initial preview

@@ -4,8 +4,8 @@ from tkinter import ttk
 from typing import List, Dict
 
 # from gallery_wall_planner.gui.DraggableItem import DraggableItem
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.WallItem import WallItem
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.wall_item import WallItem
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.structures import CanvasDimensions, WallPosition
 from gallery_wall_planner.models.wall_object import WallObject
@@ -17,7 +17,6 @@ from gallery_wall_planner.gui.ui_styles import (
 
 
 class WallCanvas():
-    
     def __init__(self, AppMain : AppMain, parent_frame : tk.Frame, canvas_dimensions : CanvasDimensions, *args, **kwargs):
         self.AppMain = AppMain
         self.obstacle_names = [f"Obstacle{i+1}" for i in range(len(self.AppMain.gallery.current_wall.permanent_objects))]
@@ -27,15 +26,15 @@ class WallCanvas():
         self.canvas: tk.Canvas = None
         self.screen_scale = None
         self.wall_position = None
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        self.draggable_items : Dict[str,WallItem_Draggable] = {}
-        from gallery_wall_planner.gui.WallItem import WallItem
+        from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
+        self.draggable_items : Dict[str,WallItemDraggable] = {}
+        from gallery_wall_planner.gui.wall_item import WallItem
         self.fixed_items : Dict[str,WallItem] = {}
 
     def add_draggable(self, wall_object):
         """Add a draggable item to the canvas."""
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        di = WallItem_Draggable(
+        from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
+        di = WallItemDraggable(
             wall_object=wall_object,
             parent_ui=self
         )
@@ -44,8 +43,8 @@ class WallCanvas():
         print(f"[DEBUG] Artwork added to draggable_items: {wall_object.id}")
 
     def add_draggable(self, wall_object : WallObject):
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        di: WallItem_Draggable = WallItem_Draggable(
+        from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
+        di: WallItemDraggable = WallItemDraggable(
             wall_object=wall_object,
             parent_ui=self
             )

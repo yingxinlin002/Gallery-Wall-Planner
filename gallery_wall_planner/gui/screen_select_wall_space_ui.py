@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.models.wall import Wall
 from typing import Optional
 
-class Screen_SelectWallSpaceUI(Screen_Base):
+class ScreenSelectWallSpaceUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.walls = AppMain.gallery.get_walls()

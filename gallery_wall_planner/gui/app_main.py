@@ -31,8 +31,8 @@ class AppMain():
         print("Creating main frame...")
 
         # Create a main frame and add it to root
-        from gallery_wall_planner.gui.Screen_Base import Screen_Base
-        self.frame_contents: Screen_Base = None      
+        from gallery_wall_planner.gui.screen_base import ScreenBase
+        self.frame_contents: ScreenBase = None      
         self.current_screen: ScreenType = ScreenType.HOME
         self.frame_main = tk.Frame(self.root, bg="#F0F0F0")
         self.frame_main.pack(fill=tk.BOTH, expand=True)
@@ -99,29 +99,29 @@ class AppMain():
 
     def _load_home_screen(self):
         """Load the home screen"""
-        from gallery_wall_planner.gui.Screen_Home import Screen_Home
-        self.frame_contents = Screen_Home(self)
+        from gallery_wall_planner.gui.screen_home import ScreenHome
+        self.frame_contents = ScreenHome(self)
         print("Home screen loaded...")
         
     def _load_new_gallery_screen(self):
         """Load the new gallery screen"""
-        from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
-        self.frame_contents = Screen_NewGalleryUI(self)
+        from gallery_wall_planner.gui.screen_new_gallery_ui import ScreenNewGalleryUI
+        self.frame_contents = ScreenNewGalleryUI(self)
 
     def _load_select_wall_space_screen(self):
         """Load the select wall space screen"""
-        from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
-        self.frame_contents = Screen_SelectWallSpaceUI(self)
+        from gallery_wall_planner.gui.screen_select_wall_space_ui import ScreenSelectWallSpaceUI
+        self.frame_contents = ScreenSelectWallSpaceUI(self)
     
     def _load_permanent_object_screen(self):
         """Load the permanent object screen"""
-        from gallery_wall_planner.gui.Screen_PermanentObjectUI import Screen_PermanentObjectUI
-        self.frame_contents = Screen_PermanentObjectUI(self)
+        from gallery_wall_planner.gui.screen_permanent_object_ui import ScreenPermanentObjectUI
+        self.frame_contents = ScreenPermanentObjectUI(self)
     
     def _load_editor_screen(self):
         """Load the editor screen"""
-        from gallery_wall_planner.gui.Screen_EditorUI import Screen_EditorUI
-        self.frame_contents = Screen_EditorUI(self)
+        from gallery_wall_planner.gui.screen_editor_ui import ScreenEditorUI
+        self.frame_contents = ScreenEditorUI(self)
 
         # # Call load_content to initialize the screen
         # if hasattr(self.frame_contents, 'load_content'):
@@ -138,18 +138,18 @@ class AppMain():
 
     def _load_lock_objects_to_wall_screen(self):
         """Load the lock objects to wall screen"""
-        from gallery_wall_planner.gui.Screen_LockObjectsUI import Screen_LockObjectsUI
-        self.frame_contents = Screen_LockObjectsUI(self)
+        from gallery_wall_planner.gui.screen_lock_objects_ui import ScreenLockObjectsUI
+        self.frame_contents = ScreenLockObjectsUI(self)
 
     def _load_artwork_manual_screen(self):
         """Load the artwork manual screen"""
-        from gallery_wall_planner.gui.Screen_ArtworkManuallyUI import Screen_ArtworkManuallyUI
-        self.frame_contents = Screen_ArtworkManuallyUI(self)
+        from gallery_wall_planner.gui.screen_artwork_manually_ui import ScreenArtworkManuallyUI
+        self.frame_contents = ScreenArtworkManuallyUI(self)
 
     def _load_artwork_xlsx_screen(self):
         """Load the artwork xlsx screen"""
-        from gallery_wall_planner.gui.Screen_ArtworkxlsxUI import Screen_ArtworkxlsxUI
-        self.frame_contents = Screen_ArtworkxlsxUI(self)
+        from gallery_wall_planner.gui.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
+        self.frame_contents = ScreenArtworkxlsxUI(self)
 
     def quit_application(self):
         """Quit the application."""

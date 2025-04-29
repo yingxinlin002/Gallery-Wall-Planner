@@ -5,7 +5,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 
 # Use relative imports since we're within the gallery_wall_planner.models package
 from .artwork import Artwork
-from .permanentObject import PermanentObject
+from .permanent_object import PermanentObject
 from .wall_object import WallObject
 from .wall_line import SingleLine
 from .structures import Position, get_id
@@ -407,7 +407,7 @@ class Wall:
         wall = cls(data['name'], data['width'], data['height'], data['color'])
         wall.wall_lines = data.get('wall_lines', [])
         
-        from gallery_wall_planner.models.permanentObject import PermanentObject
+        from gallery_wall_planner.models.permanent_object import PermanentObject
         from gallery_wall_planner.models.structures import Position
         # Recreate permanent objects
         for obj_data in data.get('permanent_objects', []):
