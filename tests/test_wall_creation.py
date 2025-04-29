@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
-from gallery_wall_planner.gui.Screen_Home import Screen_Home
+from gallery_wall_planner.gui.screen_home import Screen_Home
 from gallery_wall_planner.models.wall import Wall
 from tests.AppTestContext import AppTestContext
 from tests.TestingSteps import TestingSteps

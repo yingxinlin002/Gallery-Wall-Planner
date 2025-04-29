@@ -1,7 +1,7 @@
 import tkinter as tk
 from gallery_wall_planner.gui.app_main import ScreenType
 from tests.AppTestContext import AppTestContext
-from gallery_wall_planner.gui.Screen_Home import Screen_Home
+from gallery_wall_planner.gui.screen_home import Screen_Home
 from gallery_wall_planner.gui.screen_permanent_object_ui import ScreenPermanentObjectUI
 
 class TestingSteps:
