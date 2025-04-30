@@ -162,7 +162,11 @@ class Artwork(WallObject):
         Process: Opens specified excel and specified sheet, gets all artwork data and creates artwork objects, then adds to a list
         Outputs: A list containing artwork objects gotten from the excel sheet
         """
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError("Excel file with specific name or path couldn't be found")
+            
         ws = wb[sheetname] # This can cause errors if the sheet name does not match the actual sheet
         # List of artworks
         artworks = []
