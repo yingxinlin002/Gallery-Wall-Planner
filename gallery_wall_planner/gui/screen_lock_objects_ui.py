@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Toplevel
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.gui.ui_styles import (
     apply_primary_button_style,
     apply_header_label_style,
@@ -9,21 +9,21 @@ from gallery_wall_planner.gui.ui_styles import (
 )
 from gallery_wall_planner.gui.popup_editor import open_popup_editor
 from gallery_wall_planner.models.structures import WallPosition, CanvasDimensions, Padding
-from gallery_wall_planner.gui.WallCanvas import WallCanvas
-from gallery_wall_planner.gui.CollapsibleMenu import CollapsibleMenu
-from gallery_wall_planner.gui.BTN_WallItem import BTN_WallItem
+from gallery_wall_planner.gui.wall_canvas import WallCanvas
+from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
+from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
 
 
 
-class Screen_LockObjectsUI(Screen_Base):
+class ScreenLockObjectsUI(ScreenBase):
     
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.obstacle_names = [f"Obstacle{i+1}" for i in range(len(self.AppMain.gallery.current_wall.permanent_objects_dict))]
         self.layout_items = {}
         self.popup_windows = {}
-        from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
-        self.items: list[WallItem_Draggable] = []
+        from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
+        self.items: list[WallItemDraggable] = []
         self.content_frame = None
         self.wall_canvas = None
         # self.canvas = None
@@ -127,7 +127,7 @@ class Screen_LockObjectsUI(Screen_Base):
             # apply_primary_button_style(btn)
             # btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
             # item_buttons[i] = btn
-            btn = BTN_WallItem(self.collapsible_menu.menu_frame, obj)
+            btn = BTNWallItem(self.collapsible_menu.menu_frame, obj)
             btn.pack(side="top", fill="x", padx=5, pady=5)
             btn.load_content()
             

@@ -1,6 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
+from tkinter import ttk, filedialog, messagebox
+import openpyxl
+from gallery_wall_planner.utils.export_helpers import (
+    save_to_excel,
+    save_to_text,
+    save_to_word,
+    save_to_pdf
+)
 
 
 def open_install_instruct_popup(root, selected_wall, artwork_items):
@@ -55,7 +63,16 @@ class InstallInstructionPopup(tk.Toplevel):
         button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", pady=20)
         ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="left", padx=10)
-        ttk.Button(button_frame, text="Save", command=self.print_measurement_instructions).pack(side="right", padx=10)
+
+        def on_save():
+            self.print_measurement_instructions()
+            self.save_measurement_instructions()
+
+        ttk.Button(button_frame, text="Save", command=on_save).pack(side="right", padx=10)
+
+    def print_and_save(self):
+        self.print_measurement_instructions()
+        self.save_measurement_instructions()
 
     def calculate_hang_locations(self):
         unsorted_locations = {}
@@ -119,9 +136,9 @@ class InstallInstructionPopup(tk.Toplevel):
             dx = abs(curr[1] - prev_x)
             dy = abs(curr[2] - prev_y)
             if curr[2] > prev_y:
-              print(f"FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_dir} {dy:.2f}")
-            else:
               print(f"FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_initial} {dy:.2f}")
+            else:
+              print(f"FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_dir} {dy:.2f}")
             prev_x, prev_y = curr[1], curr[2]
 
         # D) Backward pass (first-1 to start)
@@ -131,10 +148,39 @@ class InstallInstructionPopup(tk.Toplevel):
             dx = (curr[1] - prev_x)
             dy = (curr[2] - prev_y)
             if curr[2] < prev_y:
-                print(f"FROM {names[i+1]} measure {x_dir} {abs(dx):.2f}, and {y_initial} {abs(dy):.2f}")
-            else:
                 print(f"FROM {names[i+1]} measure {x_dir} {abs(dx):.2f}, and {y_dir} {abs(dy):.2f}")
+            else:
+                print(f"FROM {names[i+1]} measure {x_dir} {abs(dx):.2f}, and {y_initial} {abs(dy):.2f}")
             prev_x, prev_y = curr[1], curr[2]
 
         # E) Final message
         print("ALL ART SHOULD BE HUNG")
+
+
+    def save_measurement_instructions(self):
+        text_lines = self.generate_instruction_lines()
+        if not text_lines:
+            messagebox.showerror("Error", "No instructions to save.")
+            return
+
+        filetypes = [("All Files", "*.*")]
+        extension = self.file_type_var.get()
+        initial_ext = {"excel": ".xlsx", "word": ".docx", "pdf": ".pdf", "text": ".txt"}.get(extension, ".txt")
+        filepath = filedialog.asksaveasfilename(defaultextension=initial_ext, filetypes=filetypes)
+        if not filepath:
+            return
+
+        try:
+            if extension == "excel":
+                save_to_excel(text_lines, filepath)
+            elif extension == "word":
+                save_to_word(text_lines, filepath)
+            elif extension == "pdf":
+                save_to_pdf(text_lines, filepath)
+            elif extension == "text":
+                save_to_text(text_lines, filepath)
+            else:
+                raise ValueError("Unknown file type selected.")
+            messagebox.showinfo("Success", f"Instructions saved to {filepath}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save instructions:\n{e}")

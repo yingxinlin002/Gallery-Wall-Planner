@@ -4,7 +4,7 @@ import tkinter as tk
 
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
-class BTN_Base(tk.Frame):
+class BTNBase(tk.Frame):
     def __init__(self, parent_frame : tk.Frame, *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
         self.styles = get_ui_styles()

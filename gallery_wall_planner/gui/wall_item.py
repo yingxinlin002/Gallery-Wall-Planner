@@ -6,7 +6,6 @@ import os
 from gallery_wall_planner.models.structures import Position
 
 class ItemLocation:
-    
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
         self.x1 = x1
         self.y1 = y1
@@ -17,10 +16,9 @@ class ItemLocation:
         return f"ItemLocation(x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"
 
 class WallItem:
-
     def __init__(self, wall_object: WallObject, parent_ui):
         self.wall_object = wall_object
-        from gallery_wall_planner.gui.WallCanvas import WallCanvas
+        from gallery_wall_planner.gui.wall_canvas import WallCanvas
         self.parent_ui: WallCanvas = parent_ui
         self.id = None
         self.update_popup_fields = None

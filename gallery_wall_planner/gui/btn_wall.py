@@ -1,10 +1,10 @@
 import tkinter as tk
 
-from gallery_wall_planner.gui.BTN_Base import BTN_Base
+from gallery_wall_planner.gui.btn_base import BTNBase
 from gallery_wall_planner.models.wall import Wall
 
 
-class BTN_Wall(BTN_Base):
+class BTNWall(BTNBase):
     def __init__(self, parent_frame : tk.Frame, wall : Wall, *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
         self.wall: Wall = wall

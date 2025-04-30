@@ -5,7 +5,7 @@ import os
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.models.gallery import Gallery
 
 

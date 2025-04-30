@@ -1,9 +1,9 @@
 from unittest.mock import patch, MagicMock
 
-from gallery_wall_planner.gui.AppMain import ScreenType
+from gallery_wall_planner.gui.app_main import ScreenType
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.structures import Position
-from gallery_wall_planner.gui.WallItem_Draggable import WallItem_Draggable
+from gallery_wall_planner.gui.wall_item_draggable import WallItem_Draggable
 from tests.TestingSteps import TestingSteps
 from tests.AppTestContext import AppTestContext
 

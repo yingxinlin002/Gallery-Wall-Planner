@@ -1,11 +1,11 @@
 from tkinter import Toplevel, ttk
 
 from gallery_wall_planner.models.wall_line import SingleLine
-from gallery_wall_planner.gui.Popup_Base import Popup_Base
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.popup_base import PopupBase
+from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.gui.ui_styles import apply_primary_button_style
 
-class Popup_SameLine(Popup_Base):
+class PopupSameLine(PopupBase):
     def __init__(self, AppMain : AppMain, parent_ui: 'Screen_EditorUI', new_line: SingleLine, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.new_line = new_line

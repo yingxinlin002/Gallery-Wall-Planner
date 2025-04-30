@@ -4,20 +4,20 @@ from tkinter import ttk
 from tkinter import messagebox
 from typing import Optional, List
 
-from gallery_wall_planner.gui.Popup_Base import Popup_Base
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.popup_base import PopupBase
+from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.models.wall_line import SingleLine
 from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignment, VerticalAlignment
 
 from gallery_wall_planner.gui.ui_styles import apply_primary_button_style
 
 
-class Popup_SnapLines(Popup_Base):
+class PopupSnapLines(PopupBase):
     
     def __init__(self, AppMain : AppMain, parent_ui: 'Screen_EditorUI', existing_line: Optional[SingleLine] = None, *args, **kwargs):
         super().__init__(AppMain, "Add Snap Line" if existing_line is None else "Edit Snap Line", 300, 320, *args, **kwargs)
-        from gallery_wall_planner.gui.Screen_EditorUI import Screen_EditorUI
-        self.parent_ui: Screen_EditorUI = parent_ui
+        from gallery_wall_planner.gui.screen_editor_ui import ScreenEditorUI
+        self.parent_ui: ScreenEditorUI = parent_ui
         self.existing_line = existing_line
         self.align_buttons: List[tk.Radiobutton] = []
         self.alignment_frame: ttk.Frame = None
@@ -115,5 +115,4 @@ class Popup_SnapLines(Popup_Base):
         for line in self.AppMain.editor_wall.wall_lines:
             if line.approximate_equal(updated_line):
                 self.show_duplicate_line_popup(updated_line)
-                br
         self.destroy()

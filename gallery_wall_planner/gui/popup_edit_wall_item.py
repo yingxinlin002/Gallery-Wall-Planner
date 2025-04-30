@@ -1,17 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
 
-from gallery_wall_planner.gui.Popup_Base import Popup_Base
+from gallery_wall_planner.gui.popup_base import PopupBase
 from gallery_wall_planner.models.artwork import Artwork
-from gallery_wall_planner.models.permanentObject import PermanentObject
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.models.permanent_object import PermanentObject
+from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
-class Popup_EditWallItem(Popup_Base):
+class PopupEditWallItem(PopupBase):
     def __init__(self, AppMain : AppMain, parent_button, *args, **kwargs):
         super().__init__(AppMain, "Edit Wall Item", 300, 400, *args, **kwargs)
-        from gallery_wall_planner.gui.BTN_WallItem import BTN_WallItem
-        self.parent_button: BTN_WallItem = parent_button
+        from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
+        self.parent_button: BTNWallItem = parent_button
         self.styles = get_ui_styles()
 
         self.load_content()

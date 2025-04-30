@@ -1,12 +1,12 @@
 from __future__ import annotations
-from gallery_wall_planner.gui import WallCanvas
+from gallery_wall_planner.gui import wall_canvas
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import Position
-from gallery_wall_planner.gui.WallCanvas import WallCanvas
-from gallery_wall_planner.gui.WallItem import WallItem, ItemLocation
+from gallery_wall_planner.gui.wall_canvas import WallCanvas
+from gallery_wall_planner.gui.wall_item import WallItem, ItemLocation
 
-class WallItem_Draggable(WallItem):
-    def __init__(self, wall_object: WallObject, parent_ui: WallCanvas):
+class WallItemDraggable(WallItem):
+    def __init__(self, wall_object: WallObject, parent_ui: wall_canvas):
         super().__init__(wall_object, parent_ui)
         self.reference_lines = []  # Stores line IDs
         self.distance_labels = []  # Stores label IDs

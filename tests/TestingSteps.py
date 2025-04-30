@@ -1,8 +1,8 @@
 import tkinter as tk
-from gallery_wall_planner.gui.AppMain import ScreenType
+from gallery_wall_planner.gui.app_main import ScreenType
 from tests.AppTestContext import AppTestContext
-from gallery_wall_planner.gui.Screen_Home import Screen_Home
-from gallery_wall_planner.gui.Screen_PermanentObjectUI import Screen_PermanentObjectUI
+from gallery_wall_planner.gui.screen_home import Screen_Home
+from gallery_wall_planner.gui.screen_permanent_object_ui import ScreenPermanentObjectUI
 
 class TestingSteps:
     
@@ -84,7 +84,7 @@ class TestingSteps:
             f"Screen did not change to PERMANENT_OBJECT, current screen: {context.app.current_screen}"
         
         # Verify that we're on the PermanentObjectUI screen
-        assert isinstance(context.app.frame_contents, Screen_PermanentObjectUI), \
+        assert isinstance(context.app.frame_contents, ScreenPermanentObjectUI), \
             "Not on the PermanentObjectUI screen"
         
         return new_wall
