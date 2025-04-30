@@ -99,7 +99,7 @@ class Show:
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Error: excel file with specific name or path not found: {filename}")
+            raise FileNotFoundError(f"ShowFileNotFoundError: show excel file with specific name or path not found: {filename}")
         show = cls(name=wb.sheetnames[0])
         # Get gallery from sheet names
         for sheet_name in wb.sheetnames:
