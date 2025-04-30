@@ -45,7 +45,7 @@ def import_project(filepath):
         dict: Dictionary containing wall, permanent_objects, and layout.
     """
     if not os.path.exists(filepath):
-        raise FileNotFoundError(f"File not found: {filepath}")
+        raise FileNotFoundError(f"Project file not found: {filepath}")
 
     with open(filepath, "r") as f:
         project_data = json.load(f)
@@ -119,7 +119,7 @@ def import_project_from_excel(filepath):
     try:
         data = pd.read_excel(filepath, sheet_name=None)
     except FileNotFoundError:
-        raise FileNotFoundError(f"Error: excel file with specific name or path not found: {filepath}")
+        raise FileNotFoundError(f"ProjectFileNotFoundError: project excel file with specific name or path not found: {filepath}")
 
     # ----------- WALL -----------
     # Parses all wall data from excel
