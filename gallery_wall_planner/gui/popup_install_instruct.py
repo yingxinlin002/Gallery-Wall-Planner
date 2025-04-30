@@ -62,8 +62,12 @@ class InstallInstructionPopup(tk.Toplevel):
         button_frame = ttk.Frame(self)
         button_frame.pack(side="bottom", pady=20)
         ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="left", padx=10)
-        ttk.Button(button_frame, text="Save", command=self.print_measurement_instructions, command=self.save_measurement_instructions).pack(side="right", padx=10)
 
+        def on_save():
+            self.print_measurement_instructions()
+            self.save_measurement_instructions()
+
+        ttk.Button(button_frame, text="Save", command=on_save).pack(side="right", padx=10)
 
     def print_and_save(self):
         self.print_measurement_instructions()
