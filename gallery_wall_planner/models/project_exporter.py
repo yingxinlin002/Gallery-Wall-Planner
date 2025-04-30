@@ -116,7 +116,10 @@ def import_project_from_excel(filepath):
     Returns:
             wall, artwork and permanent object data as class objects
     """
-    data = pd.read_excel(filepath, sheet_name=None)
+    try:
+        data = pd.read_excel(filepath, sheet_name=None)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Error: excel file with specific name or path not found: {filepath}")
 
     # ----------- WALL -----------
     # Parses all wall data from excel
