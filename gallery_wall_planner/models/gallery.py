@@ -119,7 +119,7 @@ class Gallery:
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Error: excel file with specific name or path not found: {filename}")
+            raise FileNotFoundError(f"GallerExcelNotFoundError: gallery excel file with specific name or path not found: {filename}")
         ws = wb["Artworks"]
         #Initialize row and gallery
         row_idx = 1
