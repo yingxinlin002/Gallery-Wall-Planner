@@ -165,7 +165,7 @@ class Artwork(WallObject):
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:
-            raise FileNotFoundError("Excel file with specific name or path couldn't be found")
+            raise FileNotFoundError(f"Excel file with specific name or path couldn't be found: {filename}")
             
         ws = wb[sheetname] # This can cause errors if the sheet name does not match the actual sheet
         # List of artworks
