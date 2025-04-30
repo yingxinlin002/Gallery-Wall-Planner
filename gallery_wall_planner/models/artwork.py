@@ -50,6 +50,10 @@ class Artwork(WallObject):
     @height.setter
     def height(self, value: float):
         """Set the artwork's height with validation"""
+        if not isinstance(value, (int,float)):
+            raise ValueError("height must be a number")
+        if value <= 0:
+            raise ValueError("Height must be a positive value")
         self._height = float(value) if value is not None else 0.0
     
     @property
