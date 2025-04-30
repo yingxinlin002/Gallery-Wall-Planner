@@ -17,7 +17,7 @@ class ItemLocation:
 
 class WallItem:
     def __init__(self, wall_object: WallObject, parent_ui):
-        self.wall_object = wall_object
+        self.wall_object: WallObject = wall_object
         from gallery_wall_planner.gui.wall_canvas import WallCanvas
         self.parent_ui: WallCanvas = parent_ui
         self.id = None

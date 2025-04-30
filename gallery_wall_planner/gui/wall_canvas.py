@@ -31,16 +31,9 @@ class WallCanvas():
         from gallery_wall_planner.gui.wall_item import WallItem
         self.fixed_items : Dict[str,WallItem] = {}
 
-    def add_draggable(self, wall_object):
-        """Add a draggable item to the canvas."""
-        from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
-        di = WallItemDraggable(
-            wall_object=wall_object,
-            parent_ui=self
-        )
-        di.create_canvas_item()
-        self.draggable_items[wall_object.id] = di  # Use wall_object.id as the key
-        print(f"[DEBUG] Artwork added to draggable_items: {wall_object.id}")
+    def add_draggables(self, wall_objects: Dict[str, WallObject]):
+        for _, wall_object in wall_objects.items():
+            self.add_draggable(wall_object)
 
     def add_draggable(self, wall_object : WallObject):
         from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
