@@ -96,7 +96,10 @@ class Show:
         Process: Gets all artwork, wall and gallery data from an excel sheet (if in correct format)
         Output: A show object with all gallery, wall and artwork data
         """
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Error: excel file with specific name or path not found: {filename}")
         show = cls(name=wb.sheetnames[0])
         # Get gallery from sheet names
         for sheet_name in wb.sheetnames:
