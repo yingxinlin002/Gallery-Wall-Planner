@@ -7,13 +7,13 @@ import os
 import webbrowser
 from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
+from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
 
 class ScreenArtworkxlsxUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
-        self.selected_wall = AppMain.editor_wall
-        self.styles = self.get_ui_styles()
+        self.styles = get_ui_styles()
         self.init_styles()
         
         # Store current window size before making changes

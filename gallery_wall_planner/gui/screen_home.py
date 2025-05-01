@@ -85,7 +85,7 @@ class ScreenHome(ScreenBase):
         
         tk.Button(self.content_frame, 
                   text="Load Exhibit", 
-                  command=lambda: self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE), 
+                  command=lambda: self.AppMain.switch_screen(ScreenType.ARTWORK_XLSX),
                   **button_style).pack(pady=10)
         
         quit_button_style = button_style.copy()
