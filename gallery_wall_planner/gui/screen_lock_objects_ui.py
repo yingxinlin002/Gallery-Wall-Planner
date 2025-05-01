@@ -37,7 +37,6 @@ class ScreenLockObjectsUI(ScreenBase):
         self.next_button = None
 
         self.collapsible_menu = None
-        print(f"Root size: {self.AppMain.root.winfo_width()} x {self.AppMain.root.winfo_height()}")
 
 
     def load_content(self):
