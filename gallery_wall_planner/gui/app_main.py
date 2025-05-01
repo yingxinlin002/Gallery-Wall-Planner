@@ -87,8 +87,6 @@ class AppMain():
             self._load_lock_objects_to_wall_screen()
         elif screen_type == ScreenType.ARTWORK_MANUAL:
             self._load_artwork_manual_screen()
-        elif screen_type == ScreenType.ARTWORK_XLSX:
-            self._load_artwork_xlsx_screen()
         elif screen_type == ScreenType.ARTWORK_SELECTION:
             pass
                 
@@ -144,11 +142,6 @@ class AppMain():
         """Load the artwork manual screen"""
         from gallery_wall_planner.gui.screen_artwork_manually_ui import ScreenArtworkManuallyUI
         self.frame_contents = ScreenArtworkManuallyUI(self)
-
-    def _load_artwork_xlsx_screen(self):
-        """Load the artwork xlsx screen"""
-        from gallery_wall_planner.gui.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
-        self.frame_contents = ScreenArtworkxlsxUI(self)
 
     def quit_application(self):
         """Quit the application."""
