@@ -222,7 +222,7 @@ def import_artwork(art_name, file_name):
     # Legacy method, not going to remove yet as it might cause issues, but we should eventually remove this
     try:
         with open(file_name, "rb") as f:
-        data = f.read()
+            data = f.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"ArtworkJsonNotFoundError: Json file of artwork with specific name or path not found: {file_name}")
     art_name = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
