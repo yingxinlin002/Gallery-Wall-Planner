@@ -142,8 +142,6 @@ class ScreenPermanentObjectUI(ScreenBase):
     def hide_permanent_item_inputs(self):
         for widget in self.permanent_item_frame.winfo_children():
             widget.destroy()
-        for widget in self.object_preview_frame.winfo_children():
-            widget.destroy()
         self.submit_button.config(state="normal")
 
     def clear_placeholder(self, entry, placeholder):
