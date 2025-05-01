@@ -16,6 +16,8 @@ from gallery_wall_planner.gui.popup_install_instruct import open_install_instruc
 from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.gui.popup_snap_lines import PopupSnapLines
 from gallery_wall_planner.models.wall_line import SingleLine, Orientation
+from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
+from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
 
 class ArtBtn(tk.Button):
     def toggle_bg(self, on: bool = True):
@@ -37,6 +39,12 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas : WallCanvas = None
         self.selected_artwork : Artwork = None
         self.wall_space = None  # Initialize wall_space as None
+        self.tab_frame = None
+        self.artwork_tab_btn = None
+        self.snap_lines_tab_btn = None
+        self.artwork_tab_frame: tk.Frame = None
+        self.snap_lines_tab_frame: tk.Frame = None
+        self.actions_frame = None
 
     def handle_installation_popup(self):
         print("Installation popup")
@@ -60,45 +68,64 @@ class ScreenEditorUI(ScreenBase):
         content_frame = tk.Frame(main_frame)
         content_frame.pack(fill="both", expand=True)
 
-        # Sidebar container setup
-        self.sidebar_container = tk.Frame(content_frame)
-        self.sidebar_container.pack(side="left", fill="y")
+        # self.tab_frame = tk.Frame(self.control_panel)
+        # self.tab_frame.pack(side="top", fill="x")
+        # header = tk.Frame(self.tab_frame, bg="#e0e0e0")
+        # header.pack(fill="x")
 
-        # Control panel with initial width
-        self.control_panel = tk.Frame(self.sidebar_container,
-                                    width=self.sidebar_width,
-                                    bg="#f0f0f0")
-        self.control_panel.pack(side="left", fill="y")
-        self.control_panel.pack_propagate(False)  # Prevent children from changing width
+        # tk.Label(header,
+        #        text="Tabs",
+        #        font=self.styles["label_font"],
+        #        bg="#e0e0e0").pack(side="left", padx=5)
 
-        # Toggle button with improved styling
-        self.toggle_btn = tk.Button(self.sidebar_container,
-                                  text="◀",
-                                  command=self.toggle_sidebar,
-                                  bg="#e0e0e0",
-                                  fg="black",
-                                  bd=1,
-                                  relief="raised",
-                                  font=("Arial", 10),
-                                  width=3)
-        self.toggle_btn.pack(side="right", fill="y")
 
-        # Add collapsible menus
-        self.add_artwork_frame = self.create_collapsible_menu(
-            self.control_panel, "Add Artwork", expanded=True)
+        # self.artwork_tab_btn = tk.Button(self.tab_frame,
+        #                                 text="Artwork",
+        #                                 command=self.show_artwork_tab,
+        #                                 bg=self.styles["bg_info"],
+        #                                 fg=self.styles["fg_white"],
+        #                                 font=self.styles["button_font"],
+        #                                 padx=self.styles["button_padx"],
+        #                                 pady=self.styles["button_pady"])
+        # self.artwork_tab_btn.pack(side="left", fill="x")
 
-        # csv_button = tk.Button(self.add_artwork_frame,
-        #                      text="Add Artwork by xlsx file",
-        #                      command=self.open_artwork_xlsx_ui,
-        #                      bg=self.styles["bg_info"],
-        #                      fg=self.styles["fg_white"],
-        #                      font=self.styles["button_font"],
-        #                      padx=self.styles["button_padx"],
-        #                      pady=self.styles["button_pady"])
-        # csv_button.pack(pady=5, fill="x")
+        # self.snap_lines_tab_btn = tk.Button(self.tab_frame,
+        #                                     text="Snap Lines",
+        #                                     command=self.show_snap_lines_tab,
+        #                                     bg=self.styles["bg_info"],
+        #                                     fg=self.styles["fg_white"],
+        #                                     font=self.styles["button_font"],
+        #                                     padx=self.styles["button_padx"],
+        #                                     pady=self.styles["button_pady"])
+        # self.snap_lines_tab_btn.pack(side="left", fill="x")
 
-        manual_button = tk.Button(self.add_artwork_frame,
-                                text="Add Artwork Manually",
+        self.collapsible_menu = CollapsibleMenu(content_frame, "")
+        self.collapsible_menu.load_content()
+        self.collapsible_menu.pack(side="left", fill="y")
+
+        self.artwork_tab_frame = self.create_collapsible_menu(
+            self.collapsible_menu.menu_frame, "Imported Artwork", expanded=True)
+
+        self.create_artwork_list_frame()
+
+        self.snap_lines_tab_frame = self.create_collapsible_menu(
+            self.collapsible_menu.menu_frame, "Snap Lines", expanded=False)
+
+        self.create_snap_lines_list_frame()
+
+        # Add new Tool menu with Even Spacing button
+        self.actions_frame = tk.Frame(self.collapsible_menu.menu_frame)
+        self.actions_frame.pack(side="bottom", fill="x")
+        header = tk.Frame(self.actions_frame, bg="#e0e0e0")
+        header.pack(fill="x")
+
+        tk.Label(header,
+               text="Actions",
+               font=self.styles["label_font"],
+               bg="#e0e0e0").pack(side="left", padx=5)
+
+        manual_button = tk.Button(self.actions_frame,
+                                text="Add Artwork",
                                 command=self.open_artwork_manual_ui,
                                 bg=self.styles["bg_info"],
                                 fg=self.styles["fg_white"],
@@ -107,17 +134,20 @@ class ScreenEditorUI(ScreenBase):
                                 pady=self.styles["button_pady"])
         manual_button.pack(pady=5, fill="x")
 
-        self.imported_artwork_frame = self.create_collapsible_menu(
-            self.control_panel, "Imported Artwork", expanded=True)
+        self.add_snap_line_button = tk.Button(self.actions_frame,
+                                            text="Add Snap Line",
+                                            command=self.add_new_snap_line,
+                                            bg=self.styles["bg_info"],
+                                            fg=self.styles["fg_white"],
+                                            font=self.styles["button_font"],
+                                            padx=self.styles["button_padx"],
+                                            pady=self.styles["button_pady"])
+        self.add_snap_line_button.pack(pady=5, fill="x")
 
-        self.create_artwork_list_frame()
-
-        # Add new Tool menu with Even Spacing button
-        self.tools_frame = self.create_collapsible_menu(self.control_panel, "Tools", expanded=True)
         
         from gallery_wall_planner.utils.even_spacing import apply_even_spacing
 
-        even_spacing_button = tk.Button(self.tools_frame,
+        even_spacing_button = tk.Button(self.actions_frame,
                                         text="Even Spacing",
                                         command=lambda: apply_even_spacing(self.wall_canvas, self.selected_wall.artwork),
                                         bg=self.styles["bg_primary"],
@@ -127,7 +157,7 @@ class ScreenEditorUI(ScreenBase):
                                         pady=self.styles["button_pady"])
         even_spacing_button.pack(pady=5, fill="x")
 
-        self.calc_button = tk.Button(self.control_panel,
+        self.calc_button = tk.Button(self.actions_frame,
                                     text="Calculate Installation Instruction",
                                     command=self.handle_installation_popup,
                                     bg=self.styles["bg_primary"],
@@ -165,18 +195,17 @@ class ScreenEditorUI(ScreenBase):
         # apply_canvas_style(self.canvas)
         # self.canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
 
-        snap_button_frame = ttk.Frame(self.wall_space)
-        snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
+        # snap_button_frame = ttk.Frame(self.wall_space)
+        # snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
 
-        add_line_btn = ttk.Button(snap_button_frame, text="Add Snap Line", command=self.add_new_snap_line)
-        apply_primary_button_style(add_line_btn)
-        add_line_btn.pack(side="left", padx=5)
+        # add_line_btn = ttk.Button(snap_button_frame, text="Add Snap Line", command=self.add_new_snap_line)
+        # apply_primary_button_style(add_line_btn)
+        # add_line_btn.pack(side="left", padx=5)
 
-        edit_line_btn = ttk.Button(snap_button_frame, text="Move/Delete Line", command=self.open_manage_lines_popup)
-        apply_primary_button_style(edit_line_btn)
-        edit_line_btn.pack(side="left", padx=5)
+        # edit_line_btn = ttk.Button(snap_button_frame, text="Move/Delete Line", command=self.open_manage_lines_popup)
+        # apply_primary_button_style(edit_line_btn)
+        # edit_line_btn.pack(side="left", padx=5)
 
-            
     # def initialize_virtual_wall(self):
     #     """Initialize the virtual wall display"""
     #     # Clear existing wall if any
@@ -281,7 +310,7 @@ class ScreenEditorUI(ScreenBase):
             
         self.sidebar_animation_running = True
         
-        current_width = self.control_panel.winfo_width()
+        current_width = self.collapsible_menu.menu_frame.winfo_width()
         step = 15  # Pixels to move each frame
         direction = 1 if target_width > current_width else -1
         
@@ -293,12 +322,12 @@ class ScreenEditorUI(ScreenBase):
             if (direction == 1 and current_width >= target_width) or \
             (direction == -1 and current_width <= target_width):
                 current_width = target_width
-                self.control_panel.config(width=current_width)
+                self.collapsible_menu.menu_frame.config(width=current_width)
                 self.sidebar_animation_running = False
                 self.finalize_sidebar_state()
                 return
             
-            self.control_panel.config(width=current_width)
+            self.collapsible_menu.menu_frame.config(width=current_width)
             self.after(10, update_animation)  # Changed from self.root.after to self.after
         
         update_animation()
@@ -328,35 +357,24 @@ class ScreenEditorUI(ScreenBase):
 
     def create_artwork_list_frame(self):
         """Create the frame for displaying imported artworks in the sidebar."""
-        for widget in self.imported_artwork_frame.winfo_children():
-            widget.destroy()
 
         self.artwork_list = []  # Clear existing list
 
-        # Create scrollable canvas for artwork list
-        canvas = tk.Canvas(self.imported_artwork_frame, bg="white")
-        scrollbar = tk.Scrollbar(self.imported_artwork_frame, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas, bg="white")
-
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        self.artwork_scroll_box = ScrollBoxVertical(self.artwork_tab_frame)
+        self.artwork_scroll_box.load_content()
+        self.artwork_scroll_box.pack(side="left", fill="both", expand=True)
 
         # Add artworks to the list
         if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
             for artwork in self.selected_wall.artwork:
-                self.add_artwork_item(scrollable_frame, artwork)
+                self.add_artwork_item(self.artwork_scroll_box.scrollable_frame, artwork)
         else:
-            tk.Label(scrollable_frame,
+            tk.Label(self.artwork_scroll_box.scrollable_frame,
                      text="No artworks added yet",
                      fg="gray").pack(pady=20)
+
+    def create_snap_lines_list_frame(self):
+        print("create_snap_lines_list_frame")
 
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
@@ -444,6 +462,7 @@ class ScreenEditorUI(ScreenBase):
         header = tk.Frame(menu_frame, bg="#e0e0e0")
         header.pack(fill="x")
 
+        content_frame = tk.Frame(menu_frame, bg="white")
         toggle_btn = tk.Button(header,
                              text="▼" if expanded else "▶",
                              command=lambda: self.toggle_menu(menu_frame, toggle_btn, content_frame),
@@ -458,15 +477,16 @@ class ScreenEditorUI(ScreenBase):
                font=self.styles["label_font"],
                bg="#e0e0e0").pack(side="left", padx=5)
 
-        content_frame = tk.Frame(menu_frame, bg="white")
         if expanded:
             content_frame.pack(fill="x")
-        else:
-            content_frame.pack_forget()
+        # else:
+        #     content_frame.pack_forget()
 
         return content_frame
 
     def toggle_menu(self, menu_frame, toggle_btn, content_frame):
+        self.artwork_tab_frame.pack_forget()
+        self.snap_lines_tab_frame.pack_forget()
         if content_frame.winfo_ismapped():
             content_frame.pack_forget()
             toggle_btn.config(text="▶")
