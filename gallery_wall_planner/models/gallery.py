@@ -116,7 +116,10 @@ class Gallery:
 
     @classmethod
     def import_gallery(cls, filename="gallery_export.xlsx"):
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"GallerExcelNotFoundError: gallery excel file with specific name or path not found: {filename}")
         ws = wb["Artworks"]
         #Initialize row and gallery
         row_idx = 1

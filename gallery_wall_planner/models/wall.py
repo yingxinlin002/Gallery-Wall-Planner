@@ -345,7 +345,10 @@ class Wall:
         Process: Import all wall data and artwork data attached to wall
         Outputs: A wall object containing all relevant artwork, data and metadata
         """
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"WallExcelNotFoundError: excel file with specific name or path of the wall not found: {filename}")
         ws = wb.active
     
         name = ws["B2"].value
@@ -401,9 +404,11 @@ class Wall:
     @classmethod
     def load_from_file(cls, filename: str) -> Wall:
         """Load wall data from JSON file"""
-        with open(filename) as f:
-            data = json.load(f)
-        
+        try:
+            with open(filename) as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"WallJsonNotFoundError: json file of the wall with specific name or path not found: {filename}")
         wall = cls(data['name'], data['width'], data['height'], data['color'])
         wall.wall_lines = data.get('wall_lines', [])
         

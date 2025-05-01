@@ -166,7 +166,11 @@ class Artwork(WallObject):
         Process: Opens specified excel and specified sheet, gets all artwork data and creates artwork objects, then adds to a list
         Outputs: A list containing artwork objects gotten from the excel sheet
         """
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"ArtworkExcelNotFoundError: Excel file of the artwork with specific name or path couldn't be found: {filename}")
+            
         ws = wb[sheetname] # This can cause errors if the sheet name does not match the actual sheet
         # List of artworks
         artworks = []
@@ -220,7 +224,10 @@ class Artwork(WallObject):
 
 def import_artwork(art_name, file_name):
     # Legacy method, not going to remove yet as it might cause issues, but we should eventually remove this
-    with open(file_name, "rb") as f:
-        data = f.read()
+    try:
+        with open(file_name, "rb") as f:
+            data = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"ArtworkJsonNotFoundError: Json file of artwork with specific name or path not found: {file_name}")
     art_name = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
