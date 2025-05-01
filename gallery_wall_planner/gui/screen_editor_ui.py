@@ -568,6 +568,9 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas.draw_snap_lines()
 
     def add_snap_line(self, line: SingleLine):
+        if len(self.AppMain.gallery.current_wall.wall_lines) == 0:
+            for widget in self.snap_lines_scroll_box.scrollable_frame.winfo_children():
+                widget.destroy()
         self.AppMain.gallery.current_wall.wall_lines.append(line)
         from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
         btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, line, self.AppMain)

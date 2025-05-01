@@ -6,16 +6,16 @@ from gallery_wall_planner.models.wall_line import SingleLine
 from gallery_wall_planner.gui.app_main import AppMain
 
 class BTNSnapLine(BTNBase):
-    def __init__(self, parent_frame : tk.Frame, snap_line_id : str, AppMain : AppMain, *args, **kwargs):
+    def __init__(self, parent_frame : tk.Frame, snap_line : SingleLine, AppMain : AppMain, *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
-        self.snap_line_id: str = snap_line_id 
+        self.snap_line: SingleLine = snap_line 
         self.AppMain: AppMain = AppMain
+        self.item_text: str = str(snap_line)
 
     @override
     def on_clicked(self, event):
-        print(f"Clicked on {self.snap_line_id}")
+        print(f"Clicked on {self.snap_line.id}")
 
     @override
     def on_edit_clicked(self):
-        print(f"Edit clicked on {self.snap_line_id}")
-        
+        print(f"Edit clicked on {self.snap_line.id}")
