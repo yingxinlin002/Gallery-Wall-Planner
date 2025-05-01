@@ -234,8 +234,11 @@ class SingleLine:
 
 def import_wall_line(file_name):
     """Import a wall line object from JSON file."""
-    with open(file_name, "r") as f:
+    try:
+        with open(file_name, "r") as f:
         data = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"WallLineJsonNotFound: wall line json with specific name or path not found: {file_name}")
     obj = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     # Convert string values back to enum instances if needed
