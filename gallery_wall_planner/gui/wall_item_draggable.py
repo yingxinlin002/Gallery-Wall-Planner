@@ -133,8 +133,8 @@ class WallItemDraggable(WallItem):
         # Update distance labels
         left_dist = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
         right_dist = (self.parent_ui.wall_position.wall_right - coords[2]) / self.parent_ui.screen_scale
-        top_dist = (self.parent_ui.AppMain.gallery.current_wall.height - ((self.parent_ui.canvas_dimensions.height - coords[1] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale))  # Changed calculation
-        bottom_dist = ((self.parent_ui.canvas_dimensions.height - coords[3] - self.parent_ui.wall_position.wall_bottom)/self.parent_ui.screen_scale)  # Changed calculation
+        top_dist = (coords[1] - self.parent_ui.wall_position.wall_top) / self.parent_ui.screen_scale
+        bottom_dist = (self.parent_ui.wall_position.wall_bottom - coords[3]) / self.parent_ui.screen_scale
         self.parent_ui.canvas.coords(self.distance_labels[0],
                     coords[0],
                     (coords[1] + coords[3])/2)
