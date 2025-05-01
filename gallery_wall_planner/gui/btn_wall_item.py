@@ -16,10 +16,6 @@ class BTNWallItem(BTNBase):
     def __init__(self, parent_frame : tk.Frame, draggable_item : WallItemDraggable, *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
         self.draggable_item: WallItemDraggable = draggable_item
-        self.styles = get_ui_styles()
-        self.label: tk.Label = None
-        self.edit_button: tk.Button = None
-        self.edit_button_text: str = "Edit"
         self.item_text: str = self.draggable_item.wall_object.name
         
     @override

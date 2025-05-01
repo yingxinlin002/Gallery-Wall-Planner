@@ -188,6 +188,8 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
         self.wall_canvas.add_fixed_items(self.AppMain.gallery.current_wall.permanent_objects_dict)
+        #TODO  Only add artwork that has been placed on the wall.
+        self.wall_canvas.add_draggables(self.AppMain.gallery.current_wall.artwork_dict)
 
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
@@ -301,58 +303,6 @@ class ScreenEditorUI(ScreenBase):
     #         fill="black", tags="measurement"
     #     )
 
-    def animate_sidebar(self, target_width):
-        """Smoothly animate the sidebar width change"""
-        if self.sidebar_animation_running:
-            return
-            
-        self.sidebar_animation_running = True
-        
-        current_width = self.collapsible_menu.menu_frame.winfo_width()
-        step = 15  # Pixels to move each frame
-        direction = 1 if target_width > current_width else -1
-        
-        def update_animation():
-            nonlocal current_width
-            current_width += step * direction
-            
-            # Check if we've reached or passed the target
-            if (direction == 1 and current_width >= target_width) or \
-            (direction == -1 and current_width <= target_width):
-                current_width = target_width
-                self.collapsible_menu.menu_frame.config(width=current_width)
-                self.sidebar_animation_running = False
-                self.finalize_sidebar_state()
-                return
-            
-            self.collapsible_menu.menu_frame.config(width=current_width)
-            self.after(10, update_animation)  # Changed from self.root.after to self.after
-        
-        update_animation()
-
-    def finalize_sidebar_state(self):
-        """Final adjustments after animation completes"""
-        if self.sidebar_visible:
-            self.toggle_btn.config(text="◀")
-            self.toggle_btn.pack_forget()
-            self.toggle_btn.pack(side="right", fill="y")
-        else:
-            self.toggle_btn.config(text="▶")
-            self.toggle_btn.pack_forget()
-            self.toggle_btn.pack(side="left", fill="y")
-
-    def toggle_sidebar(self):
-        """Toggle sidebar visibility with animation"""
-        if self.sidebar_animation_running:
-            return
-            
-        if self.sidebar_visible:
-            self.animate_sidebar(0)
-        else:
-            self.animate_sidebar(self.sidebar_width)
-        
-        self.sidebar_visible = not self.sidebar_visible
-
     def create_artwork_list_frame(self):
         """Create the frame for displaying imported artworks in the sidebar."""
 
@@ -364,6 +314,12 @@ class ScreenEditorUI(ScreenBase):
 
         # Add artworks to the list
         if hasattr(self.AppMain.gallery.current_wall, 'artwork') and self.AppMain.gallery.current_wall.artwork:
+            # TODO: Need to figure out how we're storing artwork first
+            # from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
+            # for artwork in self.AppMain.gallery.current_wall.artwork:
+            #     btn = BTNWallItem(self.artwork_scroll_box.scrollable_frame, artwork)
+            #     btn.pack(side="top", fill="x", padx=5, pady=5)
+            #     btn.load_content()
             for artwork in self.AppMain.gallery.current_wall.artwork:
                 self.add_artwork_item(self.artwork_scroll_box.scrollable_frame, artwork)
         else:
@@ -373,6 +329,21 @@ class ScreenEditorUI(ScreenBase):
 
     def create_snap_lines_list_frame(self):
         print("create_snap_lines_list_frame")
+        self.snap_lines_scroll_box = ScrollBoxVertical(self.snap_lines_tab_frame)
+        self.snap_lines_scroll_box.load_content()
+        self.snap_lines_scroll_box.pack(side="left", fill="both", expand=True)
+
+        # Add snap lines to the list
+        if hasattr(self.AppMain.gallery.current_wall, 'snap_lines') and self.AppMain.gallery.current_wall.wall_lines:
+            from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
+            for snap_line in self.AppMain.gallery.current_wall.wall_lines:
+                btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, snap_line, self.AppMain)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
+        else:
+            tk.Label(self.snap_lines_scroll_box.scrollable_frame,
+                     text="No snap lines added yet",
+                     fg="gray").pack(pady=20)
 
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
@@ -405,7 +376,7 @@ class ScreenEditorUI(ScreenBase):
         print(f"DEBUG: select_artwork called with {artwork.name}")
         # btn.config(bg='red')
         self.wall_canvas.add_draggable(artwork)
-        
+
         # # Store the selected artwork
         # self.selected_artwork = artwork
         #
@@ -598,6 +569,10 @@ class ScreenEditorUI(ScreenBase):
 
     def add_snap_line(self, line: SingleLine):
         self.AppMain.gallery.current_wall.wall_lines.append(line)
+        from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
+        btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, line, self.AppMain)
+        btn.pack(side="top", fill="x", padx=5, pady=5)
+        btn.load_content()
         self.draw_snap_lines()
 
     def open_manage_lines_popup(self):
