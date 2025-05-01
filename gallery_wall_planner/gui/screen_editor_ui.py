@@ -29,13 +29,11 @@ class ArtBtn(tk.Button):
 class ScreenEditorUI(ScreenBase):
     def __init__(self, AppMain: AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
-        self.selected_wall = AppMain.editor_wall
         self.styles = get_ui_styles()
         self.artwork_list = []
         self.sidebar_visible = True
         self.sidebar_width = 300
         self.sidebar_animation_running = False
-        # self.virtual_wall = None
         self.wall_canvas : WallCanvas = None
         self.selected_artwork : Artwork = None
         self.wall_space = None  # Initialize wall_space as None
@@ -149,7 +147,7 @@ class ScreenEditorUI(ScreenBase):
 
         even_spacing_button = tk.Button(self.actions_frame,
                                         text="Even Spacing",
-                                        command=lambda: apply_even_spacing(self.wall_canvas, self.selected_wall.artwork),
+                                        command=lambda: apply_even_spacing(self.wall_canvas, self.AppMain.gallery.current_wall.artwork),
                                         bg=self.styles["bg_primary"],
                                         fg=self.styles["fg_white"],
                                         font=self.styles["button_font"],
@@ -189,7 +187,7 @@ class ScreenEditorUI(ScreenBase):
                                             50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, self.wall_space, canvas_dimensions)
         self.wall_canvas.load_content()
-        self.wall_canvas.add_fixed_items(self.selected_wall.permanent_objects_dict)
+        self.wall_canvas.add_fixed_items(self.AppMain.gallery.current_wall.permanent_objects_dict)
 
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
@@ -365,8 +363,8 @@ class ScreenEditorUI(ScreenBase):
         self.artwork_scroll_box.pack(side="left", fill="both", expand=True)
 
         # Add artworks to the list
-        if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
-            for artwork in self.selected_wall.artwork:
+        if hasattr(self.AppMain.gallery.current_wall, 'artwork') and self.AppMain.gallery.current_wall.artwork:
+            for artwork in self.AppMain.gallery.current_wall.artwork:
                 self.add_artwork_item(self.artwork_scroll_box.scrollable_frame, artwork)
         else:
             tk.Label(self.artwork_scroll_box.scrollable_frame,
@@ -497,23 +495,23 @@ class ScreenEditorUI(ScreenBase):
     def apply_even_spacing(self):
         """Apply even spacing to artworks using the utility function"""
         from gallery_wall_planner.utils.even_spacing import apply_even_spacing
-        if not hasattr(self.selected_wall, 'artwork') or not self.selected_wall.artwork:
+        if not hasattr(self.AppMain.gallery.current_wall, 'artwork') or not self.AppMain.gallery.current_wall.artwork:
             messagebox.showinfo("Info", "No artworks to space")
             return
         
         # Get wall dimensions from your WallCanvas or selected_wall
-        wall_width = self.selected_wall.width  # or get from canvas dimensions
-        wall_height = self.selected_wall.height
+        wall_width = self.AppMain.gallery.current_wall.width  # or get from canvas dimensions
+        wall_height = self.AppMain.gallery.current_wall.height
         
         # Apply spacing
         updated_artworks = apply_even_spacing(
-            self.selected_wall.artwork,
+            self.AppMain.gallery.current_wall.artwork,
             wall_width,
             wall_height
         )
         
         # Update the wall with new positions
-        self.selected_wall.artwork = updated_artworks
+        self.AppMain.gallery.current_wall.artwork = updated_artworks
         
         # Refresh the display
         self.wall_canvas.refresh_artworks()
@@ -599,7 +597,7 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas.draw_snap_lines()
 
     def add_snap_line(self, line: SingleLine):
-        self.selected_wall.wall_lines.append(line)
+        self.AppMain.gallery.current_wall.wall_lines.append(line)
         self.draw_snap_lines()
 
     def open_manage_lines_popup(self):

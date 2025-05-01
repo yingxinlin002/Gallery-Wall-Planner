@@ -172,7 +172,7 @@ class ScreenSelectWallSpaceUI(ScreenBase):
     def continue_to_next(self):
         selected_wall = self.get_selected_wall()
         if selected_wall:
-            self.AppMain.editor_wall = selected_wall
+            self.AppMain.gallery.current_wall = selected_wall
             # Navigate to EditorUI
             self.AppMain.switch_screen(ScreenType.EDITOR)
         else:

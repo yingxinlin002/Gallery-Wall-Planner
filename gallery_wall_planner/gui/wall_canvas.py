@@ -155,7 +155,7 @@ class WallCanvas():
             self.canvas.delete(line)
         self.snap_lines.clear()
         line_number = 0
-        for line in self.AppMain.editor_wall.wall_lines:
+        for line in self.AppMain.gallery.current_wall.wall_lines:
             if line.orientation == Orientation.HORIZONTAL:
                 y = self.wall_position.wall_top + line.distance * self.screen_scale
                 line_number = self.canvas.create_line(

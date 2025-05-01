@@ -40,7 +40,6 @@ class AppMain():
 
         # TODO this can possibly be replaced with gallery.current_wall
         # Track editor state
-        self.editor_wall: Optional[Wall] = None
         self.editor_artwork_selected: Optional[Artwork] = None
 
         self._load_or_resize()
@@ -62,7 +61,7 @@ class AppMain():
         
         # Update editor state if provided
         if wall:
-            self.editor_wall = wall
+            self.gallery.current_wall = wall
         if artwork:
             self.editor_artwork_selected = artwork
         
