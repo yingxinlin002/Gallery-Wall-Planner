@@ -265,6 +265,15 @@ class ScreenNewGalleryUI(ScreenBase):
 
         canvas_width = 400
         canvas_height = 300
+        if wall_width == 0 or wall_height == 0:
+            raise ValueError("Error: Wall dimensions must be positive")
+        if wall_width < 0:
+            wall_width = abs(wall_width)
+            print("Wall width must be positive, defaulting to positive value")
+        if wall_height < 0:
+            wall_height = abs(wall_height)
+            print("Wall height must be positive, defaulting to positive value")
+        
         ratio = min(canvas_width / wall_width, canvas_height / wall_height)
         scaled_width = wall_width * ratio
         scaled_height = wall_height * ratio
