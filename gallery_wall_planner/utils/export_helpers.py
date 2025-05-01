@@ -1,8 +1,8 @@
 import openpyxl
 from openpyxl.styles import Font
 from docx import Document
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+# from reportlab.lib.pagesizes import letter
+# from reportlab.pdfgen import canvas
 
 
 def save_to_excel(lines, filename):

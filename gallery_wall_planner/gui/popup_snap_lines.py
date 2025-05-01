@@ -84,12 +84,12 @@ class PopupSnapLines(PopupBase):
             messagebox.showerror("Error", "Distance cannot be negative.")
             return
 
-        if Orientation[self.orientation_var.get()] == Orientation.HORIZONTAL and distance > self.AppMain.editor_wall.height:
-            messagebox.showerror("Error", f"Distance exceeds wall height ({self.AppMain.editor_wall.height} inches).")
+        if Orientation[self.orientation_var.get()] == Orientation.HORIZONTAL and distance > self.AppMain.gallery.current_wall.height:
+            messagebox.showerror("Error", f"Distance exceeds wall height ({self.AppMain.gallery.current_wall.height} inches).")
             return
 
-        if Orientation[self.orientation_var.get()] == Orientation.VERTICAL and distance > self.AppMain.editor_wall.width:
-            messagebox.showerror("Error", f"Distance exceeds wall width ({self.AppMain.editor_wall.width} inches).")
+        if Orientation[self.orientation_var.get()] == Orientation.VERTICAL and distance > self.AppMain.gallery.current_wall.width:
+            messagebox.showerror("Error", f"Distance exceeds wall width ({self.AppMain.gallery.current_wall.width} inches).")
             return
 
         orientation_enum = Orientation[self.orientation_var.get()]
@@ -112,7 +112,12 @@ class PopupSnapLines(PopupBase):
             moveable=True
         )
 
-        for line in self.AppMain.editor_wall.wall_lines:
+        is_duplicate = False
+        for line in self.AppMain.gallery.current_wall.wall_lines:
             if line.approximate_equal(updated_line):
                 self.show_duplicate_line_popup(updated_line)
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            self.parent_ui.add_snap_line(updated_line)
         self.destroy()
