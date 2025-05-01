@@ -14,7 +14,7 @@ from gallery_wall_planner.gui.ui_styles import (
     apply_header_label_style,
     apply_canvas_style
 )
-
+from gallery_wall_planner.models.wall_line import Orientation
 
 class WallCanvas():
     def __init__(self, AppMain : AppMain, parent_frame : tk.Frame, canvas_dimensions : CanvasDimensions, *args, **kwargs):
@@ -30,6 +30,7 @@ class WallCanvas():
         self.draggable_items : Dict[str,WallItemDraggable] = {}
         from gallery_wall_planner.gui.wall_item import WallItem
         self.fixed_items : Dict[str,WallItem] = {}
+        self.snap_lines : List[int] = []
 
     def add_draggables(self, wall_objects: Dict[str, WallObject]):
         for _, wall_object in wall_objects.items():
@@ -148,3 +149,26 @@ class WallCanvas():
         self.clear_artworks()  # You may need to implement this
         for artwork in self.selected_wall.artwork:
             self.add_draggable(artwork)
+
+    def draw_snap_lines(self):
+        for line in self.snap_lines:
+            self.canvas.delete(line)
+        self.snap_lines.clear()
+        line_number = 0
+        for line in self.AppMain.editor_wall.wall_lines:
+            if line.orientation == Orientation.HORIZONTAL:
+                y = self.wall_position.wall_top + line.distance * self.screen_scale
+                line_number = self.canvas.create_line(
+                    self.wall_position.wall_left, y,
+                    self.wall_position.wall_right, y,
+                    fill="blue", dash=(4, 2), width=2, tags="snap_line"
+                )
+            elif line.orientation == Orientation.VERTICAL:
+                x = self.wall_position.wall_left + line.distance * self.screen_scale
+                line_number = self.canvas.create_line(
+                    x, self.wall_position.wall_top,
+                    x, self.wall_position.wall_bottom,
+                    fill="blue", dash=(4, 2), width=2, tags="snap_line"
+                )
+            self.snap_lines.append(line_number)
+

@@ -112,7 +112,12 @@ class PopupSnapLines(PopupBase):
             moveable=True
         )
 
+        is_duplicate = False
         for line in self.AppMain.editor_wall.wall_lines:
             if line.approximate_equal(updated_line):
                 self.show_duplicate_line_popup(updated_line)
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            self.parent_ui.add_snap_line(updated_line)
         self.destroy()

@@ -14,6 +14,8 @@ from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
 from gallery_wall_planner.gui.popup_install_instruct import open_install_instruct_popup  # NEW IMPORT INSIDE WHERE "Calculate Installation Instruction" BUTTON LIVES
 from gallery_wall_planner.models.artwork import Artwork
+from gallery_wall_planner.gui.popup_snap_lines import PopupSnapLines
+from gallery_wall_planner.models.wall_line import SingleLine, Orientation
 
 class ArtBtn(tk.Button):
     def toggle_bg(self, on: bool = True):
@@ -553,6 +555,8 @@ class ScreenEditorUI(ScreenBase):
 
     def add_new_snap_line(self):
         print("[DEBUG] add_new_snap_line called")
+        snap_line_popup = PopupSnapLines(self.AppMain, self)
+        snap_line_popup.load_content()
 
         # def handle_save(new_line):
         #     print(f"[DEBUG] Saving Snap Line line.orientation={new_line.orientation}, line.alignment={new_line.alignment}, type={type(new_line.alignment)}")
@@ -571,6 +575,12 @@ class ScreenEditorUI(ScreenBase):
         #     wall_height=self.wall_height
         # )
 
+    def draw_snap_lines(self):
+        self.wall_canvas.draw_snap_lines()
+
+    def add_snap_line(self, line: SingleLine):
+        self.selected_wall.wall_lines.append(line)
+        self.draw_snap_lines()
 
     def open_manage_lines_popup(self):
         print("[DEBUG] open_manage_lines_popup called")
