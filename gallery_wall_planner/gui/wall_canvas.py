@@ -31,6 +31,7 @@ class WallCanvas():
         from gallery_wall_planner.gui.wall_item import WallItem
         self.fixed_items : Dict[str,WallItem] = {}
         self.snap_lines : List[int] = []
+        self.snap_draggables: bool = True
 
     def add_draggables(self, wall_objects: Dict[str, WallObject]):
         for _, wall_object in wall_objects.items():
@@ -98,6 +99,9 @@ class WallCanvas():
                         text=f"{self.wall.height}\"", anchor="e")
         self.canvas.create_text(self.wall_position.wall_left + 5, self.wall_position.wall_bottom + 5, text="0", anchor="n")
         self.canvas.create_text(self.wall_position.wall_right + 10, self.wall_position.wall_top - 5, text=f"{self.wall.width}\"", anchor="w")
+
+        # Add snap lines
+        self.draw_snap_lines()
 
     def enforce_boundaries(self, x, y, width, height):
         if x < 0:
