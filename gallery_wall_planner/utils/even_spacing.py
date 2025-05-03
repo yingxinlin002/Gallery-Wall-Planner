@@ -1,144 +1,287 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from typing import List, Dict, Tuple, Optional
+from gallery_wall_planner.gui.wall_canvas import WallCanvas
+from gallery_wall_planner.models.artwork import Artwork
 
-def apply_even_spacing(wall_canvas, imported_artworks):
+def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]) -> None:
     """
-    Apply even spacing to the selected artworks on the wall canvas.
-
+    Apply even spacing to selected artworks on the wall canvas with interactive UI.
+    
+    Features:
+    - Visual selection of artworks with order tracking
+    - Real-time calculation of total width
+    - Customizable X and Y positions
+    - Input validation
+    
     Args:
-        wall_canvas: The WallCanvas instance where the artworks are displayed.
-        imported_artworks: List of imported artworks to be evenly spaced.
+        wall_canvas: The WallCanvas instance where artworks are displayed
+        imported_artworks: List of imported artworks to be spaced
     """
-    def on_confirm():
-        try:
-            # Get left and right points from user input
-            left_point = float(left_point_entry.get())
-            right_point = float(right_point_entry.get())
-
-            if left_point >= right_point:
-                messagebox.showerror("Error", "Left point must be less than the right point.")
+    
+    # Constants
+    DEFAULT_Y_POSITION = 62  # Default height in inches
+    MIN_SPACING = 0.5  # Minimum spacing between artworks in inches
+    
+    class SpacingUI:
+        def __init__(self, master):
+            self.master = master
+            self.selected_artworks: List[Artwork] = []
+            self.selection_order: Dict[int, int] = {}
+            self.setup_ui()
+            
+        def setup_ui(self):
+            """Initialize all UI components."""
+            self.master.title("Even Spacing Tool")
+            self.master.geometry("500x650")  # Increased height for Y position input
+            self.master.attributes("-topmost", True)
+            
+            # Main container
+            main_frame = ttk.Frame(self.master)
+            main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+            
+            # Input section
+            self.setup_input_section(main_frame)
+            
+            # Position section
+            self.setup_position_section(main_frame)
+            
+            # Artwork selection
+            self.setup_selection_section(main_frame)
+            
+            # Info display
+            self.setup_info_section(main_frame)
+            
+            # Action buttons
+            self.setup_action_buttons(main_frame)
+        
+        def setup_input_section(self, parent):
+            """Setup spacing boundary inputs."""
+            input_frame = ttk.LabelFrame(parent, text="Spacing Boundaries (inches)")
+            input_frame.pack(fill="x", pady=(0, 10))
+            
+            # Left boundary
+            ttk.Label(input_frame, text="Left Boundary:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+            self.left_entry = ttk.Entry(input_frame)
+            self.left_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+            self.left_entry.insert(0, "0")
+            
+            # Right boundary
+            ttk.Label(input_frame, text="Right Boundary:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+            self.right_entry = ttk.Entry(input_frame)
+            self.right_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+            self.right_entry.insert(0, f"{wall_canvas.wall.width:.1f}")
+            
+            input_frame.columnconfigure(1, weight=1)
+        
+        def setup_position_section(self, parent):
+            """Setup position inputs including new Y position field."""
+            position_frame = ttk.LabelFrame(parent, text="Artwork Position")
+            position_frame.pack(fill="x", pady=(0, 10))
+            
+            # Y Position
+            ttk.Label(position_frame, text="Y Position (height):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+            self.y_entry = ttk.Entry(position_frame)
+            self.y_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+            self.y_entry.insert(0, f"{DEFAULT_Y_POSITION}")  # Default value
+            
+            # Add tooltip/info label
+            ttk.Label(position_frame, 
+                     text="Distance from bottom of wall",
+                     font=("TkDefaultFont", 8)).grid(row=1, column=1, sticky="w", padx=5)
+            
+            position_frame.columnconfigure(1, weight=1)
+        
+        def setup_selection_section(self, parent):
+            """Setup artwork selection listbox."""
+            selection_frame = ttk.LabelFrame(parent, text="Select Artworks (click to select order)")
+            selection_frame.pack(fill="both", expand=True, pady=(0, 10))
+            
+            # Listbox with scrollbar
+            self.listbox = tk.Listbox(
+                selection_frame,
+                selectmode="multiple",
+                height=10,
+                activestyle="none",
+                font=("TkDefaultFont", 10)
+            )
+            
+            scrollbar = ttk.Scrollbar(selection_frame, orient="vertical", command=self.listbox.yview)
+            self.listbox.config(yscrollcommand=scrollbar.set)
+            
+            scrollbar.pack(side="right", fill="y")
+            self.listbox.pack(side="left", fill="both", expand=True)
+            
+            # Populate listbox
+            for artwork in imported_artworks:
+                self.listbox.insert(tk.END, f"{artwork.name} ({artwork.width}\" × {artwork.height}\")")
+            
+            self.listbox.bind("<<ListboxSelect>>", self.on_artwork_select)
+        
+        def setup_info_section(self, parent):
+            """Setup information display labels."""
+            info_frame = ttk.Frame(parent)
+            info_frame.pack(fill="x", pady=(0, 10))
+            
+            self.selected_label = ttk.Label(info_frame, text="Selected: 0")
+            self.selected_label.pack(side="left", padx=5)
+            
+            self.width_label = ttk.Label(info_frame, text="Total Width: 0.0\"")
+            self.width_label.pack(side="left", padx=5)
+            
+            self.spacing_label = ttk.Label(info_frame, text="Spacing: -")
+            self.spacing_label.pack(side="right", padx=5)
+        
+        def setup_action_buttons(self, parent):
+            """Setup action buttons."""
+            button_frame = ttk.Frame(parent)
+            button_frame.pack(fill="x")
+            
+            ttk.Button(
+                button_frame,
+                text="Apply Spacing",
+                command=self.apply_spacing,
+                style="Accent.TButton"
+            ).pack(side="left", padx=5)
+            
+            ttk.Button(
+                button_frame,
+                text="Cancel",
+                command=self.master.destroy
+            ).pack(side="right", padx=5)
+        
+        def get_y_position(self) -> Optional[float]:
+            """Validate and return Y position input."""
+            try:
+                y_pos = float(self.y_entry.get())
+                if y_pos < 0 or y_pos > wall_canvas.wall.height:
+                    messagebox.showerror("Error", 
+                                       f"Y position must be between 0 and {wall_canvas.wall.height} inches")
+                    return None
+                return y_pos
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid number for Y position")
+                return None
+        
+        def on_artwork_select(self, event):
+            """Handle artwork selection with order tracking that toggles and renumbers."""
+            selected_idx = self.listbox.curselection()
+            
+            if not selected_idx:  # If nothing is selected, do nothing
                 return
-
-            # Ensure points are within wall boundaries
-            if left_point < 0 or right_point > wall_canvas.canvas_dimensions.width:
-                messagebox.showerror("Error", "Points must be within the wall boundaries.")
+            
+            clicked_idx = selected_idx[-1]  # Get the most recently clicked item
+            
+            # Toggle selection - if already selected, remove it
+            if clicked_idx in self.selection_order:
+                # Remove the clicked item and renumber remaining items
+                removed_order = self.selection_order.pop(clicked_idx)
+                # Decrement orders higher than the removed one
+                self.selection_order = {
+                    idx: (order if order < removed_order else order - 1)
+                    for idx, order in self.selection_order.items()
+                }
+            else:
+                # Add the clicked item with the next available order number
+                next_order = len(self.selection_order) + 1
+                self.selection_order[clicked_idx] = next_order
+            
+            # Update the selected artworks list based on current selection order
+            sorted_selection = sorted(self.selection_order.items(), key=lambda x: x[1])
+            self.selected_artworks = [imported_artworks[idx] for idx, _ in sorted_selection]
+            
+            # Update the display to show current numbering
+            self.update_display()
+        
+        def update_display(self):
+            """Update all display elements."""
+            # Update listbox with order indicators
+            self.listbox.delete(0, tk.END)
+            for idx, artwork in enumerate(imported_artworks):
+                order = f" {self.selection_order[idx]}" if idx in self.selection_order else ""
+                self.listbox.insert(tk.END, f"{artwork.name} ({artwork.width}\" × {artwork.height}\"){order}")
+            
+            # Update info labels
+            total_width = sum(art.width for art in self.selected_artworks)
+            self.selected_label.config(text=f"Selected: {len(self.selected_artworks)}")
+            self.width_label.config(text=f"Total Width: {total_width:.1f}\"")
+            
+            # Calculate and display projected spacing
+            try:
+                left = float(self.left_entry.get())
+                right = float(self.right_entry.get())
+                if right > left and self.selected_artworks:
+                    spacing = (right - left - total_width) / (len(self.selected_artworks) + 1)
+                    self.spacing_label.config(text=f"Spacing: {spacing:.1f}\"")
+            except ValueError:
+                pass
+        
+        def validate_inputs(self) -> Tuple[Optional[float], Optional[float]]:
+            """Validate and return spacing boundaries."""
+            try:
+                left = float(self.left_entry.get())
+                right = float(self.right_entry.get())
+                
+                if left < 0 or right > wall_canvas.wall.width:
+                    messagebox.showerror("Error", "Boundaries must be within wall dimensions.")
+                    return None, None
+                
+                if left >= right:
+                    messagebox.showerror("Error", "Left boundary must be less than right boundary.")
+                    return None, None
+                
+                return left, right
+            except ValueError:
+                messagebox.showerror("Error", "Please enter valid numbers for boundaries.")
+                return None, None
+        
+        def apply_spacing(self):
+            """Apply the calculated spacing to selected artworks."""
+            left, right = self.validate_inputs()
+            if left is None:
                 return
-
-            # Ensure artworks are selected
-            if not selected_artworks:
-                messagebox.showerror("Error", "No artworks selected.")
+            
+            y_pos = self.get_y_position()
+            if y_pos is None:
                 return
-
-            # Calculate spacing
-            total_width = sum(artwork.width for artwork in selected_artworks)
-            available_space = right_point - left_point
-            if total_width > available_space:
-                messagebox.showerror("Error", f"Artworks exceed the available space. Total width: {total_width}, Available space: {available_space}.")
+            
+            if not self.selected_artworks:
+                messagebox.showerror("Error", "Please select at least one artwork.")
                 return
-
-            # Calculate spacing: n+1 gaps for n artworks
-            num_artworks = len(selected_artworks)
-            spacing = (available_space - total_width) / (num_artworks + 1)
-
-            # Update artwork positions
-            current_x = left_point + spacing  # Start at left_point + spacing
-            for artwork in selected_artworks:
+            
+            total_width = sum(art.width for art in self.selected_artworks)
+            available_space = right - left
+            spacing = (available_space - total_width) / (len(self.selected_artworks) + 1)
+            
+            if spacing < MIN_SPACING:
+                if not messagebox.askyesno(
+                    "Warning",
+                    f"Calculated spacing ({spacing:.1f}\") is very small. Continue anyway?"
+                ):
+                    return
+            
+            # Position artworks
+            current_x = left + spacing
+            for artwork in self.selected_artworks:
                 artwork.x = current_x
-                artwork.y = 62  # Default height at 62 inches
+                artwork.y = y_pos  # Use the user-specified Y position
+                
                 if artwork.id not in wall_canvas.draggable_items:
-                    wall_canvas.add_draggable(artwork)  # Ensure artwork is registered
+                    wall_canvas.add_draggable(artwork)
+                
                 wall_canvas.move_item_to_canvas(artwork)
-                current_x += artwork.width + spacing  # Move to the next position
+                current_x += artwork.width + spacing
+            
+            messagebox.showinfo(
+                "Success",
+                f"Artworks spaced successfully.\n"
+                f"Total width: {total_width:.1f}\"\n"
+                f"Spacing: {spacing:.1f}\"\n"
+                f"Height: {y_pos:.1f}\" from bottom"
+            )
+            self.master.destroy()
 
-            # Close the popup
-            popup.destroy()
-            messagebox.showinfo("Success", f"Artworks have been evenly spaced. Total width: {total_width}, Spacing: {spacing:.2f}.")
-        except ValueError:
-            messagebox.showerror("Error", "Please enter valid numeric values for the points.")
-
-    def on_select_artwork():
-        """Handle artwork selection."""
-        selected = artwork_listbox.curselection()
-        if not selected:
-            messagebox.showerror("Error", "Please select at least one artwork.")
-            return
-
-        # Clear previous selections
-        selected_artworks.clear()
-        selection_order.clear()
-
-        # Update selected artworks and their order
-        for idx in selected:
-            selected_artworks.append(imported_artworks[idx])
-            selection_order[idx] = len(selection_order) + 1
-
-        # Update the listbox to show the selection order
-        update_listbox_with_order()
-
-        # Update labels for selected count and total width
-        total_width = sum(artwork.width for artwork in selected_artworks)
-        selected_count_label.config(text=f"Selected Artworks: {len(selected_artworks)}")
-        total_width_label.config(text=f"Total Width: {total_width:.2f} inches")
-        messagebox.showinfo("Success", "Artworks selected. You can now confirm.")
-
-    def update_listbox_with_order():
-        """Update the listbox to display the selection order."""
-        artwork_listbox.delete(0, tk.END)
-        for idx, artwork in enumerate(imported_artworks):
-            order_label = f" ({selection_order[idx]})" if idx in selection_order else ""
-            artwork_listbox.insert(tk.END, f"{artwork.name} ({artwork.width}\" x {artwork.height}\"){order_label}")
-
-    # Create the popup window
-    popup = tk.Toplevel()
-    popup.title("Even Spacing")
-    popup.geometry("500x500")
-
-    # Make the popup stay on top of other windows
-    popup.attributes("-topmost", True)
-
-    # Left and right points input
-    input_frame = ttk.LabelFrame(popup, text="Spacing Input")
-    input_frame.pack(fill="x", padx=10, pady=10)
-    ttk.Label(input_frame, text="Left Point:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    left_point_entry = ttk.Entry(input_frame)
-    left_point_entry.grid(row=0, column=1, padx=5, pady=5)
-    left_point_entry.insert(0, "0")  # Default value
-
-    ttk.Label(input_frame, text="Right Point:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-    right_point_entry = ttk.Entry(input_frame)
-    right_point_entry.grid(row=1, column=1, padx=5, pady=5)
-    right_point_entry.insert(0, f"{wall_canvas.canvas_dimensions.width}")  # Default value
-
-    # Artwork selection
-    selection_frame = ttk.LabelFrame(popup, text="Artwork Selection")
-    selection_frame.pack(fill="both", expand=True, padx=10, pady=10)
-    artwork_listbox = tk.Listbox(selection_frame, selectmode="multiple", height=10)
-    artwork_listbox.pack(side="left", fill="both", expand=True, padx=5, pady=5)
-
-    # Add scrollbar for the listbox
-    scrollbar = ttk.Scrollbar(selection_frame, orient="vertical", command=artwork_listbox.yview)
-    scrollbar.pack(side="right", fill="y")
-    artwork_listbox.config(yscrollcommand=scrollbar.set)
-
-    # Populate the listbox with imported artworks
-    for artwork in imported_artworks:
-        artwork_listbox.insert(tk.END, f"{artwork.name} ({artwork.width}\" x {artwork.height}\")")
-
-    # Selected artworks info
-    info_frame = ttk.Frame(popup)
-    info_frame.pack(fill="x", padx=10, pady=5)
-    selected_count_label = ttk.Label(info_frame, text="Selected Artworks: 0")
-    selected_count_label.pack(side="left", padx=5)
-    total_width_label = ttk.Label(info_frame, text="Total Width: 0.00 inches")
-    total_width_label.pack(side="left", padx=5)
-
-    # Buttons
-    button_frame = ttk.Frame(popup)
-    button_frame.pack(pady=10)
-    ttk.Button(button_frame, text="Select Artworks", command=on_select_artwork).pack(side="left", padx=5)
-    ttk.Button(button_frame, text="Confirm", command=on_confirm, style="Accent.TButton").pack(side="left", padx=5)
-    ttk.Button(button_frame, text="Cancel", command=popup.destroy).pack(side="left", padx=5)
-
-    # Track selected artworks and their order
-    selected_artworks = []
-    selection_order = {}
+    # Create and run the UI
+    root = tk.Toplevel()
+    SpacingUI(root)
+    root.mainloop()
