@@ -1,9 +1,20 @@
 from __future__ import annotations
+
+from typing import Union
+
 from gallery_wall_planner.gui import wall_canvas
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import Position
 from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.gui.wall_item import WallItem, ItemLocation
+from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignment, VerticalAlignment, SingleLine
+
+class SnapAction():
+    def __init__(self, orientation: Orientation):
+        self.orientation: Orientation = orientation
+        self.distance: int = None
+        self.alignment: Union[HorizontalAlignment, VerticalAlignment] = None
+
 
 class WallItemDraggable(WallItem):
     def __init__(self, wall_object: WallObject, parent_ui: wall_canvas):
@@ -68,6 +79,35 @@ class WallItemDraggable(WallItem):
         if new_y2 > self.parent_ui.wall_position.wall_bottom:
             new_y2 = self.parent_ui.wall_position.wall_bottom 
             new_y1 = new_y2 - self.wall_object.height * self.parent_ui.screen_scale
+
+        snap_action_x: SnapAction = SnapAction(Orientation.HORIZONTAL)
+        snap_action_y: SnapAction = SnapAction(Orientation.VERTICAL)
+        center_x = (new_x1 + new_x2) / 2
+        center_y = (new_y1 + new_y2) / 2
+        snap_points_x = [new_x1, new_x2, center_x]
+        snap_points_y = [new_y1, new_y2, center_y]
+        for snap_line in self.parent_ui.wall.wall_lines:
+            if snap_line.orientation == Orientation.VERTICAL:
+                for snap_point in snap_points_x:
+                    check_distance = self.parent_ui.wall_position.wall_left + snap_line.distance * self.parent_ui.screen_scale
+                    if abs(check_distance - snap_point) < 5 and (snap_action_x.distance is None or
+                        abs(check_distance - snap_point) < snap_action_x.distance):
+                        snap_action_x.distance = check_distance - snap_point
+            if snap_line.orientation == Orientation.HORIZONTAL:
+                for snap_point in snap_points_y:
+                    check_distance = self.parent_ui.wall_position.wall_top + snap_line.distance * self.parent_ui.screen_scale
+                    if abs(check_distance - snap_point) < 5 and (snap_action_y.distance is None or
+                        abs(check_distance - snap_point) < snap_action_y.distance):
+                        snap_action_y.distance = check_distance - snap_point
+
+        if snap_action_x.distance is not None:
+            new_x1 = new_x1 + snap_action_x.distance
+            new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
+        if snap_action_y.distance is not None:
+            new_y1 = new_y1 + snap_action_y.distance
+            new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
+
+
 
         # Apply constrained movement
         # self.parent_ui.canvas.move(self.id, dx, dy)
