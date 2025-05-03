@@ -84,44 +84,28 @@ class WallItemDraggable(WallItem):
         snap_action_y: SnapAction = SnapAction(Orientation.VERTICAL)
         center_x = (new_x1 + new_x2) / 2
         center_y = (new_y1 + new_y2) / 2
-        snap_points_x = [(new_x1, VerticalAlignment.LEFT), (new_x2, VerticalAlignment.RIGHT), (center_x, VerticalAlignment.CENTER)]
-        snap_points_y = [(new_y1, HorizontalAlignment.TOP), (new_y2, HorizontalAlignment.BOTTOM), (center_y, HorizontalAlignment.CENTER)]
+        snap_points_x = [new_x1, new_x2, center_x]
+        snap_points_y = [new_y1, new_y2, center_y]
         for snap_line in self.parent_ui.wall.wall_lines:
             if snap_line.orientation == Orientation.VERTICAL:
                 for snap_point in snap_points_x:
                     check_distance = self.parent_ui.wall_position.wall_left + snap_line.distance * self.parent_ui.screen_scale
-                    if abs(check_distance - snap_point[0]) < 5 and (snap_action_x.distance is None or
-                        abs(check_distance - snap_point[0]) < snap_action_x.distance):
-                        snap_action_x.distance = check_distance - snap_point[0]
-                        snap_action_x.alignment = snap_point[1]
+                    if abs(check_distance - snap_point) < 5 and (snap_action_x.distance is None or
+                        abs(check_distance - snap_point) < snap_action_x.distance):
+                        snap_action_x.distance = check_distance - snap_point
             if snap_line.orientation == Orientation.HORIZONTAL:
                 for snap_point in snap_points_y:
                     check_distance = self.parent_ui.wall_position.wall_top + snap_line.distance * self.parent_ui.screen_scale
-                    if abs(check_distance - snap_point[0]) < 5 and (snap_action_y.distance is None or
-                        abs(check_distance - snap_point[0]) < snap_action_y.distance):
-                        snap_action_y.distance = check_distance - snap_point[0]
-                        snap_action_y.alignment = snap_point[1]
+                    if abs(check_distance - snap_point) < 5 and (snap_action_y.distance is None or
+                        abs(check_distance - snap_point) < snap_action_y.distance):
+                        snap_action_y.distance = check_distance - snap_point
 
         if snap_action_x.distance is not None:
-            if snap_action_x.alignment == VerticalAlignment.LEFT:
-                new_x1 = new_x1 + snap_action_x.distance
-                new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
-            elif snap_action_x.alignment == VerticalAlignment.RIGHT:
-                new_x2 = new_x2 + snap_action_x.distance
-                new_x1 = new_x2 - self.wall_object.width * self.parent_ui.screen_scale
-            elif snap_action_x.alignment == VerticalAlignment.CENTER:
-                new_x1 = new_x1 + snap_action_x.distance
-                new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
+            new_x1 = new_x1 + snap_action_x.distance
+            new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
         if snap_action_y.distance is not None:
-            if snap_action_y.alignment == HorizontalAlignment.TOP:
-                new_y1 = new_y1 + snap_action_y.distance
-                new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
-            elif snap_action_y.alignment == HorizontalAlignment.BOTTOM:
-                new_y2 = new_y2 + snap_action_y.distance
-                new_y1 = new_y2 - self.wall_object.height * self.parent_ui.screen_scale
-            elif snap_action_y.alignment == HorizontalAlignment.CENTER:
-                new_y1 = new_y1 + snap_action_y.distance
-                new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
+            new_y1 = new_y1 + snap_action_y.distance
+            new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
 
 
 
