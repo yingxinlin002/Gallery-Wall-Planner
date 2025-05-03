@@ -5,7 +5,7 @@ from typing import List, Dict, Tuple, Union, Optional, Any
 
 # Use relative imports since we're within the gallery_wall_planner.models package
 from .artwork import Artwork
-from .permanentObject import PermanentObject
+from .permanent_object import PermanentObject
 from .wall_object import WallObject
 from .wall_line import SingleLine
 from .structures import Position, get_id
@@ -33,6 +33,7 @@ class Wall:
 
         self._permanent_objects_dict: Dict[str, PermanentObject] = {}
         self._artwork_dict: Dict[str, Artwork] = {}
+        self._wall_lines_dict: Dict[str, SingleLine] = {}
         
         # Set properties with validation
         self.name = name
@@ -40,6 +41,11 @@ class Wall:
         self.height = height
         self.color = color
     
+    @property
+    def id(self) -> str:
+        """Get the wall id"""
+        return self._id
+
     @property
     def name(self) -> str:
         """Get the wall name"""
@@ -115,6 +121,11 @@ class Wall:
         """Get the list of wall lines"""
         return self._wall_lines
     
+    @property
+    def wall_lines_dict(self) -> Dict[str, SingleLine]:
+        """Get the dictionary of wall lines"""
+        return self._wall_lines_dict
+    
     @wall_lines.setter
     def wall_lines(self, value: List[SingleLine]):
         """Set the wall lines list with validation"""
@@ -125,7 +136,57 @@ class Wall:
             if not isinstance(item, SingleLine):
                 raise ValueError("All items in wall_lines list must be SingleLine objects")
         self._wall_lines = value
+        self._wall_lines_dict = {line.id: line for line in self._wall_lines}
     
+    def add_wall_line(self, line: SingleLine) -> bool:
+        """
+        Add a new wall line to the wall with validation
+        
+        Args:
+            line (SingleLine): The line to add
+            
+        Returns:
+            bool: True if added successfully
+        """
+        if not isinstance(line, SingleLine):
+            raise ValueError("Can only add SingleLine instances")
+        self._wall_lines.append(line)
+        self._wall_lines_dict[line.id] = line
+        return True
+    
+    def remove_wall_line(self, line: SingleLine) -> bool:
+        """
+        Remove a wall line from the wall with validation
+        
+        Args:
+            line (SingleLine): The line to remove
+            
+        Returns:
+            bool: True if removed, False if not found
+        """
+        if isinstance(line, str):
+            # Find by id
+            if line in self._wall_lines_dict:
+                self._wall_lines.remove(self._wall_lines_dict[line])
+                self._wall_lines_dict.pop(line)
+                return True
+            return False
+        else:
+            if line in self._wall_lines:
+                self._wall_lines.remove(line)
+                self._wall_lines_dict.pop(line.id)
+                return True
+            return False
+    
+    def update_wall_line(self, old_id: str, line: SingleLine) -> bool:
+        if old_id in self._wall_lines_dict:
+            old_line = self._wall_lines_dict.pop(old_id)
+            self._wall_lines.remove(old_line)
+            self._wall_lines.append(line)
+            self._wall_lines_dict[line.id] = line
+            return True
+        return False
+
     @property
     def permanent_objects(self) -> List[PermanentObject]:
         """Get the list of permanent objects"""
@@ -189,11 +250,15 @@ class Wall:
 
     def update_wall_item(self, old_id: str, obj: WallObject) -> bool:
         if old_id in self._permanent_objects_dict:
-            self._permanent_objects_dict.pop(old_id)
+            old_obj = self._permanent_objects_dict.pop(old_id)
+            self._permanent_objects.remove(old_obj)
+            self._permanent_objects.append(obj)
             self._permanent_objects_dict[obj.id] = obj
             return True
         if old_id in self._artwork_dict:
-            self._artwork_dict.pop(old_id)
+            old_art = self._artwork_dict.pop(old_id)
+            self._artwork.remove(old_art)
+            self._artwork.append(obj)
             self._artwork_dict[obj.id] = obj
             return True
         return False
@@ -280,7 +345,10 @@ class Wall:
         Process: Import all wall data and artwork data attached to wall
         Outputs: A wall object containing all relevant artwork, data and metadata
         """
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"WallExcelNotFoundError: excel file with specific name or path of the wall not found: {filename}")
         ws = wb.active
     
         name = ws["B2"].value
@@ -336,13 +404,15 @@ class Wall:
     @classmethod
     def load_from_file(cls, filename: str) -> Wall:
         """Load wall data from JSON file"""
-        with open(filename) as f:
-            data = json.load(f)
-        
+        try:
+            with open(filename) as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"WallJsonNotFoundError: json file of the wall with specific name or path not found: {filename}")
         wall = cls(data['name'], data['width'], data['height'], data['color'])
         wall.wall_lines = data.get('wall_lines', [])
         
-        from gallery_wall_planner.models.permanentObject import PermanentObject
+        from gallery_wall_planner.models.permanent_object import PermanentObject
         from gallery_wall_planner.models.structures import Position
         # Recreate permanent objects
         for obj_data in data.get('permanent_objects', []):

@@ -6,7 +6,7 @@ import os
 from types import SimpleNamespace
 from enum import Enum, auto
 from typing import Union, Optional, List
-
+from models.structures import get_id
 
 class HorizontalAlignment(Enum):
     TOP = "top"
@@ -48,15 +48,15 @@ class SingleLine:
         distance: float = 0.0               # Distance from wall edge (in inches)
     ):
         # Initialize private attributes
-        self._x_cord = None
-        self._y_cord = None
-        self._length = None
-        self._angle = None
-        self._snap_to = None
-        self._moveable = None
-        self._orientation = None
-        self._alignment = None
-        self._distance = None
+        self._x_cord: float = None
+        self._y_cord: float = None
+        self._length: float = None
+        self._angle: float = None
+        self._snap_to: bool = None
+        self._moveable: bool = None
+        self._orientation: Orientation = None
+        self._alignment: Union[HorizontalAlignment,VerticalAlignment] = None
+        self._distance: float = None
 
         # Set properties with validation
         self.x_cord = x
@@ -68,6 +68,16 @@ class SingleLine:
         self.orientation = orientation  # Use the Orientation enum
         self.alignment = alignment
         self.distance = distance
+
+        self._id = get_id("line"+f"x{self.x_cord},y{self.y_cord},length{self.length},angle{self.angle},snap_to{self.snap_to},moveable{self.moveable},orientation{self.orientation},alignment{self.alignment},distance{self.distance}")
+
+    def __str__(self):
+        return f"Line {self.orientation.value} {self.distance}"
+
+    @property
+    def id(self) -> str:
+        """Get the line id"""
+        return self._id
 
     @property
     def x_cord(self) -> float:
@@ -227,8 +237,11 @@ class SingleLine:
 
 def import_wall_line(file_name):
     """Import a wall line object from JSON file."""
-    with open(file_name, "r") as f:
-        data = f.read()
+    try:
+        with open(file_name, "r") as f:
+            data = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"WallLineJsonNotFound: wall line json with specific name or path not found: {file_name}")
     obj = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
 
     # Convert string values back to enum instances if needed

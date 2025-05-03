@@ -9,7 +9,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.dimensions import SheetFormatProperties
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
-from gallery_wall_planner.models.permanentObject import PermanentObject
+from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
 
 def export_project(filepath, wall, permanent_objects, layout):
@@ -45,7 +45,7 @@ def import_project(filepath):
         dict: Dictionary containing wall, permanent_objects, and layout.
     """
     if not os.path.exists(filepath):
-        raise FileNotFoundError(f"File not found: {filepath}")
+        raise FileNotFoundError(f"Project file not found: {filepath}")
 
     with open(filepath, "r") as f:
         project_data = json.load(f)
@@ -116,7 +116,10 @@ def import_project_from_excel(filepath):
     Returns:
             wall, artwork and permanent object data as class objects
     """
-    data = pd.read_excel(filepath, sheet_name=None)
+    try:
+        data = pd.read_excel(filepath, sheet_name=None)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"ProjectFileNotFoundError: project excel file with specific name or path not found: {filepath}")
 
     # ----------- WALL -----------
     # Parses all wall data from excel

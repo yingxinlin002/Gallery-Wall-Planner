@@ -1,12 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
-from gallery_wall_planner.models.permanentObject import PermanentObject
+from gallery_wall_planner.models.permanent_object import PermanentObject
 import re
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.screen_base import ScreenBase
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 
-class Screen_PermanentObjectUI(Screen_Base):
+class ScreenPermanentObjectUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.name_entry = None
@@ -141,8 +141,6 @@ class Screen_PermanentObjectUI(Screen_Base):
 
     def hide_permanent_item_inputs(self):
         for widget in self.permanent_item_frame.winfo_children():
-            widget.destroy()
-        for widget in self.object_preview_frame.winfo_children():
             widget.destroy()
         self.submit_button.config(state="normal")
 

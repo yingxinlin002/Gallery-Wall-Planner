@@ -39,12 +39,13 @@ class CollapsibleMenu(tk.Frame):
                                   width=3)
         self.toggle_btn.pack(side="right", fill="y")
 
-        header = tk.Frame(self.content_frame, bg="#e0e0e0")
-        header.pack(fill="x")
-        tk.Label(header,
-               text=self.title,
-               font=self.styles["label_font"],
-               bg="#e0e0e0").pack(side="left", padx=5)
+        if self.title != "":
+            header = tk.Frame(self.content_frame, bg="#e0e0e0")
+            header.pack(fill="x")
+            tk.Label(header,
+                   text=self.title,
+                   font=self.styles["label_font"],
+                   bg="#e0e0e0").pack(side="left", padx=5)
 
         self.menu_frame = tk.Frame(self.content_frame, bg="#e0e0e0", bd=1, relief="raised")
         self.menu_frame.pack(fill="x", pady=2)

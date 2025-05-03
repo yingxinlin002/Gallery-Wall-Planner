@@ -3,13 +3,13 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 
 from typing import override
-from gallery_wall_planner.gui.Screen_Base import Screen_Base
-from gallery_wall_planner.gui.AppMain import AppMain, ScreenType
+from gallery_wall_planner.gui.screen_base import ScreenBase
+from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
 from gallery_wall_planner.models.artwork import Artwork
 
-class Screen_ArtworkManuallyUI(Screen_Base):
+class ScreenArtworkManuallyUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.styles = get_ui_styles()

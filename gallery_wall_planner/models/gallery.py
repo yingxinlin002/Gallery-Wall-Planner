@@ -11,46 +11,53 @@ class Gallery:
     def __init__(self, name: str = "Gallery"):
         self.name = name  # Exhibit title
         self.walls = []  # List of Wall objects for this specific gallery
-        self.current_wall: Optional['Wall'] = None
+        self.walls_dict: Dict[str, Wall] = {}
+        self.current_wall: Optional[Wall] = None
 
     # Class methods to manage all walls
-    def add_wall(self, wall: 'Wall') -> None:
+    def add_wall(self, wall: Wall) -> None:
         self.walls.append(wall)
+        self.walls_dict[wall.id] = wall
         self.current_wall = wall
         
-    def get_walls(self) -> List['Wall']:
+    def get_walls(self) -> List[Wall]:
         return self.walls
-        
-    def remove_wall(self, wall: 'Wall') -> None:
-        self.walls.remove(wall)
 
-    def get_wall_by_name(self, name: str) -> Optional['Wall']:
+    def get_walls_dict(self) -> Dict[str, Wall]:
+        return self.walls_dict
+        
+    def remove_wall(self, wall: Wall) -> None:
+        self.walls.remove(wall)
+        self.walls_dict.pop(wall.id)
+
+    def get_wall_by_name(self, name: str) -> Optional[Wall]:
         """Find a wall by its name"""
         for wall in self.walls:
             if wall.name == name:
                 return wall
         return None
-    
-    def add_artwork_to_wall(self, wall_name: str, artwork: Artwork) -> bool:
-        wall = self.get_wall_by_name(wall_name)
-        if wall:
-            wall.add_artwork(artwork)
-            return True
-        return False
-    
-    def remove_artwork_from_wall(self, wall_name: str, artwork: Artwork) -> bool:
-        """
-        Remove an artwork from a specific wall
-        Args:
-            wall_name: Name of the wall to remove artwork from
-            artwork: Artwork object to remove
-        Returns:
-            bool: True if successful, False if wall not found or artwork not in wall
-        """
-        wall = self.get_wall_by_name(wall_name)
-        if wall:
-            return wall.remove_artwork(artwork)
-        return False
+
+    # TODO Remove these. They can be performed by calling the wall directly
+    # def add_artwork_to_wall(self, wall_name: str, artwork: Artwork) -> bool:
+    #     wall = self.get_wall_by_name(wall_name)
+    #     if wall:
+    #         wall.add_artwork(artwork)
+    #         return True
+    #     return False
+    #
+    # def remove_artwork_from_wall(self, wall_name: str, artwork: Artwork) -> bool:
+    #     """
+    #     Remove an artwork from a specific wall
+    #     Args:
+    #         wall_name: Name of the wall to remove artwork from
+    #         artwork: Artwork object to remove
+    #     Returns:
+    #         bool: True if successful, False if wall not found or artwork not in wall
+    #     """
+    #     wall = self.get_wall_by_name(wall_name)
+    #     if wall:
+    #         return wall.remove_artwork(artwork)
+    #     return False
 
     def export_gallery(self, filename="gallery_export.xlsx"):
         wb = openpyxl.Workbook()
@@ -109,7 +116,10 @@ class Gallery:
 
     @classmethod
     def import_gallery(cls, filename="gallery_export.xlsx"):
-        wb = openpyxl.load_workbook(filename)
+        try:
+            wb = openpyxl.load_workbook(filename)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"GallerExcelNotFoundError: gallery excel file with specific name or path not found: {filename}")
         ws = wb["Artworks"]
         #Initialize row and gallery
         row_idx = 1

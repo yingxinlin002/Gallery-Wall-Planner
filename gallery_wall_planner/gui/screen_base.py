@@ -1,8 +1,8 @@
 import tkinter as tk
 
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
 
-class Screen_Base(tk.Canvas):
+class ScreenBase(tk.Canvas):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain.frame_main, *args, **kwargs)
         self.AppMain = AppMain

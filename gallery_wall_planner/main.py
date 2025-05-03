@@ -4,15 +4,10 @@ import tkinter as tk
 from tkinter import font
 from PIL import Image, ImageTk
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from gallery_wall_planner.gui.Screen_NewGalleryUI import Screen_NewGalleryUI
-from gallery_wall_planner.gui.Screen_SelectWallSpaceUI import Screen_SelectWallSpaceUI
-from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.models.wall import Wall
-from gallery_wall_planner.models.permanentObject import PermanentObject
 
 from gallery_wall_planner.config import Config
 
-from gallery_wall_planner.gui.AppMain import AppMain
+from gallery_wall_planner.gui.app_main import AppMain
 
 # # Initialize example wall once at startup
 # example_wall = Wall("Example Wall", 200, 125, "grey")
