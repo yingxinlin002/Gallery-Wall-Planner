@@ -122,7 +122,7 @@ class WallItemDraggable(WallItem):
 
         if self.image_id is not None:
             image_location = self.get_item_location()
-            self.parent_ui.canvas.coords(self.image_id, image_location.x, image_location.y)
+            self.parent_ui.canvas.coords(self.image_id, new_x1, new_y1)
         elif self.label_id is not None:
             label_position = self.get_label_location(current_location)
             self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
