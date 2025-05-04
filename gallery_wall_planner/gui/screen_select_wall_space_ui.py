@@ -215,7 +215,7 @@ class ScreenSelectWallSpaceUI(ScreenBase):
                 pos = obj.position
                 if pos:  # Only draw if object has a position
                     obj_x0 = x0 + pos.x * ratio
-                    obj_y0 = y0 + (wall_height - pos.y - obj.height) * ratio  # Adjust for bottom-left origin
+                    obj_y0 = y0 + pos.y * ratio  # Adjust for bottom-left origin
                     obj_x1 = obj_x0 + obj.width * ratio
                     obj_y1 = obj_y0 + obj.height * ratio
                     
