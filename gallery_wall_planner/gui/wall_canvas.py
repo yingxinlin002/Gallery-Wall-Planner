@@ -115,7 +115,6 @@ class WallCanvas():
         x = max(min_x, min(x, max_x))
         y = max(min_y, min(y, max_y))
         
-        print(f"Boundary check: Input ({x:.1f}, {y:.1f}) -> Output ({x:.1f}, {y:.1f})")
         return x, y
     
     def enforce_boundaries(self, x, y, width, height):

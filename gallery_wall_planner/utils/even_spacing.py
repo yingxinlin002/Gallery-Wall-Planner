@@ -283,7 +283,7 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                     artwork.width, artwork.height
                 )
                 
-                print(f"  After boundary check: X={artwork.x:.1f}, Y={artwork.y:.1f}")
+                # print(f"  After boundary check: X={artwork.x:.1f}, Y={artwork.y:.1f}")
 
                 # Check if artwork already exists on canvas
                 if artwork.id in wall_canvas.draggable_items:
