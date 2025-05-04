@@ -20,9 +20,19 @@ class InstallInstructionPopup(tk.Toplevel):
         super().__init__(root)
         self.selected_wall = selected_wall
         self.artworks = artworks
+
+        # Make the window stay on top
+        self.attributes("-topmost", True)
+
         self.geometry("400x500")
         self.title("Installation Instructions")
 
+        # Make sure window stays on top while it's open
+        self.transient(root)  # Set as transient window of parent
+        self.grab_set()       # Grab all events to this window
+        # When window closes, release the grab
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+        
         # ----------------------------------
         # -------- First Piece Hung --------
         # ----------------------------------
@@ -70,6 +80,11 @@ class InstallInstructionPopup(tk.Toplevel):
 
         ttk.Button(button_frame, text="Save", command=on_save).pack(side="right", padx=10)
 
+    def on_close(self):
+        """Handle window closing"""
+        self.grab_release()
+        self.destroy()
+        
     def print_and_save(self):
         self.print_measurement_instructions()
         self.save_measurement_instructions()
@@ -81,19 +96,17 @@ class InstallInstructionPopup(tk.Toplevel):
 
 
         for art in self.artworks:
-            coords = art.wall_ref.canvas.coords(art.id)
-            if not coords or len(coords) < 4:
-                continue
+            # Get position from Artwork object directly (using WallObject's position property)
+            x1 = art.position.x
+            x2 = art.position.x + art.width
+            y_top = art.position.y + art.height  # Top edge of artwork
+            hang_height = art.hanging_point  # Using hanging_point from Artwork class
 
-            x1 = (coords[0] - art.wall_ref.wall_left) / art.wall_ref.scale
-            x2 = (coords[2] - art.wall_ref.wall_left) / art.wall_ref.scale
-            y1_canvas = coords[3]
-            y_top = (art.wall_ref.canvas_height - y1_canvas - art.wall_ref.wall_bottom) / art.wall_ref.scale
-            hang_height = art.art_data.get("Hang", 0)
+            # Calculate hanging coordinates
+            hang_x = (x1 + x2) / 2  # Center of artwork
+            hang_y = y_top - hang_height  # Hanging point position
 
-            hang_x = (x1 + x2) / 2
-            hang_y = y_top + (art.height - hang_height)
-
+            # Adjust based on measurement preferences
             if self.wall_measure_var.get() == "right":
                 hang_x = wall_width - hang_x
             if self.height_measure_var.get() == "ceiling":
