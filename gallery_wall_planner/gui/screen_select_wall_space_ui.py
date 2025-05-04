@@ -75,6 +75,25 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         self.btn_continue = tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
         self.btn_continue.pack(side="right", padx=10)
 
+        for wall in self.walls:
+            wall_frame = tk.Frame(self.list_container)
+            wall_frame.pack(fill="both", padx=5, pady=5)
+
+            # wall_name_label = tk.Label(wall_frame, text=wall.name, font=("Arial", 12))
+            # wall_name_label.pack(side="left", fill="both", padx=5)
+
+            # Add "Edit" button
+            edit_button = tk.Button(
+                wall_frame, text="Edit", command=lambda w=wall: self.on_edit_wall(w)
+            )
+            edit_button.pack(side="right", padx=5)
+
+    def on_edit_wall(self, wall):
+        # Open the edit wall popup
+        #Popup_EditWall(self.AppMain, wall)
+        print("Button pressed, loading wall for editing")
+        self.AppMain.switch_screen(ScreenType.EDITOR, wall=wall)
+
     def on_wall_selected(self, event=None):
         """Handle wall selection - update preview and show delete button"""
         self.update_wall_preview()
@@ -249,3 +268,5 @@ class ScreenSelectWallSpaceUI(ScreenBase):
                     f"Color: {selected_wall.color}\n"
                     f"Permanent Objects: {obj_count}"
             )
+
+        

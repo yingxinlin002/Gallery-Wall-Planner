@@ -226,9 +226,9 @@ class ScreenNewGalleryUI(ScreenBase):
         self.wall_width_entry.bind("<KeyRelease>", self.update_preview)
         self.wall_height_entry.bind("<KeyRelease>", self.update_preview)
 
-        if len(self.AppMain.gallery.get_walls()) > 0:
-            self.popup = PopupNewExhibit(self.AppMain, self)
-            self.popup.load_content()
+        # if len(self.AppMain.gallery.get_walls()) > 0:
+        #     self.popup = PopupNewExhibit(self.AppMain, self)
+        #     self.popup.load_content()
 
         # Initial preview
         self.update_preview()
