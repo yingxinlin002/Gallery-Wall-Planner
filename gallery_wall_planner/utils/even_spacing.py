@@ -262,7 +262,6 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
 
             # Position artworks
             current_x = left + spacing
-            wall_height = wall_canvas.wall.height
 
             for artwork in self.selected_artworks:
                 # Calculate position in inches (wall coordinates)
@@ -286,15 +285,16 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                 
                 print(f"  After boundary check: X={artwork.x:.1f}, Y={artwork.y:.1f}")
 
-                # Add to canvas if not already present
-                if artwork.id not in wall_canvas.draggable_items:
-                    wall_canvas.add_draggable(artwork)
-                else:
-                    # If already exists, update its position
+                # Check if artwork already exists on canvas
+                if artwork.id in wall_canvas.draggable_items:
+                    # Update existing draggable
                     draggable = wall_canvas.draggable_items[artwork.id]
                     draggable.wall_object.x = artwork.x
                     draggable.wall_object.y = artwork.y
                     draggable.update_position()
+                else:
+                    # Add new draggable
+                    wall_canvas.add_draggable(artwork)
 
                 current_x += artwork.width + spacing
             
