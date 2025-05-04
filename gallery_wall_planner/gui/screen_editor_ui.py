@@ -487,6 +487,26 @@ class ScreenEditorUI(ScreenBase):
         # Refresh the display
         self.wall_canvas.refresh_artworks()
         messagebox.showinfo("Success", "Artworks evenly spaced")
+
+    def handle_installation_popup(self):
+        """Handle the installation instructions popup button click"""
+        if not hasattr(self.AppMain.gallery, 'current_wall') or not self.AppMain.gallery.current_wall:
+            messagebox.showwarning("Warning", "No wall selected")
+            return
+        
+        # Get all artwork 
+        all_artwork = self.AppMain.gallery.current_wall.artwork
+        
+        if not all_artwork:
+            messagebox.showwarning("Warning", "No artwork placed on the wall")
+            return
+        
+        # Open the popup with the current wall and placed artwork
+        open_install_instruct_popup(
+            self._root(), 
+            self.AppMain.gallery.current_wall, 
+            all_artwork 
+        )
         
     def back_to_wall_selection(self):
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
