@@ -29,10 +29,15 @@ class WallItemDraggable(WallItem):
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
         self.parent_ui.canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonRelease-1>", self.on_drop)
+        if self.image_id is not None:
+            self.parent_ui.canvas.tag_bind(self.image_id, "<ButtonPress-1>", self.on_start)
+            self.parent_ui.canvas.tag_bind(self.image_id, "<B1-Motion>", self.on_drag)
+            self.parent_ui.canvas.tag_bind(self.image_id, "<ButtonRelease-1>", self.on_drop)
         if self.label_id is not None:
             self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonPress-1>", self.on_start)
             self.parent_ui.canvas.tag_bind(self.label_id, "<B1-Motion>", self.on_drag)
             self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonRelease-1>", self.on_drop)
+
 
     def on_start(self, event):
         self._drag_data.x = event.x
@@ -115,8 +120,12 @@ class WallItemDraggable(WallItem):
         current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
         self.wall_object.position = Position((new_x1 + new_x2) / 2, (new_y1 + new_y2) / 2)
 
-        label_position = self.get_label_location(current_location)
-        self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
+        if self.image_id is not None:
+            image_location = self.get_item_location()
+            self.parent_ui.canvas.coords(self.image_id, new_x1, new_y1)
+        elif self.label_id is not None:
+            label_position = self.get_label_location(current_location)
+            self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
         self._drag_data.x += dx
         self._drag_data.y += dy
         self.update_reference_lines()

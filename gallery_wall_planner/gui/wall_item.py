@@ -20,10 +20,11 @@ class WallItem:
         self.wall_object: WallObject = wall_object
         from gallery_wall_planner.gui.wall_canvas import WallCanvas
         self.parent_ui: WallCanvas = parent_ui
-        self.id = None
+        self.id: int = None
         self.update_popup_fields = None
         self.image_obj : ImageTk = None
         self.label_id: int = None
+        self.image_id: int = None
 
     def create_canvas_item(self, fill_color:str = "lightblue"):
         # Convert from bottom-left origin to canvas coordinates
@@ -37,13 +38,14 @@ class WallItem:
         #             self.wall_object.position.y + self.wall_object.height) * self.parent_ui.screen_scale)  # Changed from just y
 
         item_location = self.get_item_location()
+        self.id = self.parent_ui.canvas.create_rectangle(item_location.x1, item_location.y1, item_location.x2,
+                                                         item_location.y2, fill=fill_color, outline="black", width=2)
         if self.wall_object.image_path and os.path.isfile(self.wall_object.image_path):
             img = Image.open(self.wall_object.image_path)
-            img = img.resize((int(item_location.x2 - item_location.x1), int(item_location.y2 - item_location.y1)), Image.ANTIALIAS)
+            img = img.resize((int(item_location.x2 - item_location.x1), int(item_location.y2 - item_location.y1)))
             self.image_obj = ImageTk.PhotoImage(img)
-            self.id = self.parent_ui.canvas.create_image(item_location.x1, item_location.y1, anchor="nw", image=self.image_obj)
+            self.image_id = self.parent_ui.canvas.create_image(item_location.x1, item_location.y1, anchor='nw', image=self.image_obj)
         else:
-            self.id = self.parent_ui.canvas.create_rectangle(item_location.x1, item_location.y1, item_location.x2, item_location.y2, fill=fill_color, outline="black", width=2)
             label_position = self.get_label_location(item_location)
             self.label_id = self.parent_ui.canvas.create_text(label_position.x,label_position.y, text=self.wall_object.name, fill="black",
                                                              font=("Arial", 10))
