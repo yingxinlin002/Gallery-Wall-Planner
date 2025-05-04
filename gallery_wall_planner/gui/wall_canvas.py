@@ -137,6 +137,7 @@ class WallCanvas():
         colliding = set()
         for i in range(n):
             for j in range(i+1, n):
+                print(f"Item1: {self.draggable_items[keys[i]].wall_object.position}, Item2: {self.draggable_items[keys[j]].wall_object.position}")
                 if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
                     colliding.add(keys[i])
                     colliding.add(keys[j])

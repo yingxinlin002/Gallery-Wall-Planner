@@ -117,7 +117,9 @@ class WallItemDraggable(WallItem):
         # self.parent_ui.canvas.move(self.id, dx, dy)
         self.parent_ui.canvas.coords(self.id, new_x1, new_y1, new_x2, new_y2)
         current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
-        self.wall_object.position = Position((new_x1 + new_x2) / 2, (new_y1 + new_y2) / 2)
+        new_position_x = (new_x1 - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
+        new_position_y = (new_y1 - self.parent_ui.wall_position.wall_top) / self.parent_ui.screen_scale
+        self.wall_object.position = Position(new_position_x, new_position_y)
 
         if self.image_id is not None:
             image_location = self.get_item_location()
@@ -128,12 +130,13 @@ class WallItemDraggable(WallItem):
         self._drag_data.x += dx
         self._drag_data.y += dy
         self.update_reference_lines()
+        self.parent_ui.check_all_collisions()
 
     def on_drop(self, event):
         coords = self.parent_ui.canvas.coords(self.id)
         # Convert from canvas coordinates back to bottom-left origin
         new_x = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
-        new_y = (self.parent_ui.canvas_dimensions.height - coords[3] - self.parent_ui.wall_position.wall_bottom) / self.parent_ui.screen_scale  # Using bottom coordinate (y2)
+        new_y = (coords[1] - self.parent_ui.wall_position.wall_top) / self.parent_ui.screen_scale
         new_x, new_y = self.parent_ui.enforce_boundaries(new_x, new_y, self.wall_object.width, self.wall_object.height)
 
         self.wall_object.position = Position(new_x, new_y)
