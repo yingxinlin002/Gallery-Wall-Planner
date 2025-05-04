@@ -80,7 +80,7 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
             position_frame.pack(fill="x", pady=(0, 10))
 
             # Y Position
-            ttk.Label(position_frame, text="Y Position (height):").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+            ttk.Label(position_frame, text="Center height from floor (standard: 62\")", font=("TkDefaultFont", 8)).grid(row=1, column=1, sticky="w", padx=5)
             self.y_entry = ttk.Entry(position_frame)
             self.y_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
             self.y_entry.insert(0, f"{DEFAULT_Y_POSITION}")  # Default value
@@ -241,8 +241,8 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
             if left is None:
                 return
 
-            y_pos = self.get_y_position()
-            if y_pos is None:
+            y_pos_center = self.get_y_position()
+            if y_pos_center is None:
                 return
 
             if not self.selected_artworks:
@@ -262,23 +262,43 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
 
             # Position artworks
             current_x = left + spacing
-            for artwork in self.selected_artworks:
-                artwork.x = current_x
-                artwork.y = y_pos  # Use the user-specified Y position
+            wall_height = wall_canvas.wall.height
 
+            for artwork in self.selected_artworks:
+                # Calculate position in inches (wall coordinates)
+                artwork.x = current_x
+                # Calculate Y position so center is at y_pos_center
+                artwork.y = y_pos_center - (artwork.height / 2)
+
+                # Debug output
+                print(f"Positioning {artwork.name}:")
+                print(f"  Target X (inches): {artwork.x:.1f}")
+                print(f"  Target Y (inches): {artwork.y:.1f} (from bottom: {y_pos_center:.1f})")
+                print(f"  Artwork size: {artwork.width}\" × {artwork.height}\"")
+
+                # Check boundaries - now checking if entire artwork fits
+                artwork.x, artwork.y = wall_canvas.enforce_boundaries_even_spacing(
+                    artwork.x, artwork.y, 
+                    artwork.width, artwork.height
+                )
+                
+                print(f"  After boundary check: X={artwork.x:.1f}, Y={artwork.y:.1f}")
+
+                # Add to canvas if not already present
                 if artwork.id not in wall_canvas.draggable_items:
                     wall_canvas.add_draggable(artwork)
 
+                # Move to calculated position
                 wall_canvas.move_item_to_canvas(artwork)
-                current_x += artwork.width + spacing
+                
+                # Verify final canvas position
+                if artwork.id in wall_canvas.draggable_items:
+                    item = wall_canvas.draggable_items[artwork.id]
+                    coords = wall_canvas.canvas.coords(item.id)
+                    print(f"  Final canvas coords: {coords}")
 
-            messagebox.showinfo(
-                "Success",
-                f"Artworks spaced successfully.\n"
-                f"Total width: {total_width:.1f}\"\n"
-                f"Spacing: {spacing:.1f}\"\n"
-                f"Height: {y_pos:.1f}\" from bottom"
-            )
+                current_x += artwork.width + spacing
+            
             self.master.destroy()
 
     # Create and run the UI

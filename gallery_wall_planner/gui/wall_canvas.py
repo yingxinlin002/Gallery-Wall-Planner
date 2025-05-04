@@ -103,6 +103,21 @@ class WallCanvas():
         # Add snap lines
         self.draw_snap_lines()
 
+    def enforce_boundaries_even_spacing(self, x, y, width, height):
+        """Ensure the item stays within wall boundaries when centered at Y position"""
+        min_x = 0
+        max_x = self.wall.width - width
+        
+        # Calculate min/max Y based on keeping center within bounds
+        min_y = height/2  # Can't go so high that center would be above wall
+        max_y = self.wall.height - height/2  # Can't go so low that center would be below floor
+        
+        x = max(min_x, min(x, max_x))
+        y = max(min_y, min(y, max_y))
+        
+        print(f"Boundary check: Input ({x:.1f}, {y:.1f}) -> Output ({x:.1f}, {y:.1f})")
+        return x, y
+    
     def enforce_boundaries(self, x, y, width, height):
         if x < 0:
             x = 0
@@ -117,15 +132,17 @@ class WallCanvas():
     def move_item_to_canvas(self, artwork):
         """Move the specified artwork to the canvas."""
         print(f"[DEBUG] Moving artwork: {artwork}")
-        print(f"[DEBUG] Available keys in draggable_items: {list(self.draggable_items.keys())}")
 
         try:
-            item = self.draggable_items[artwork.id]  # Use artwork.id as the key
+            item = self.draggable_items[artwork.id]
             # Update the item's position on the canvas
             x1 = self.wall_position.wall_left + artwork.x * self.screen_scale
-            y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + artwork.y * self.screen_scale)
+            y1 = self.wall_position.wall_top + artwork.y * self.screen_scale
             x2 = x1 + artwork.width * self.screen_scale
-            y2 = y1 - artwork.height * self.screen_scale
+            y2 = y1 + artwork.height * self.screen_scale
+
+            print(f"Moving to canvas: X={x1:.1f}-{x2:.1f}, Y={y1:.1f}-{y2:.1f} (pixels)")
+
             self.canvas.coords(item.id, x1, y1, x2, y2)
         except KeyError:
             print(f"[ERROR] Artwork not found in draggable_items: {artwork}")
