@@ -140,7 +140,7 @@ class WallCanvas():
                 if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
                     colliding.add(keys[i])
                     colliding.add(keys[j])
-            for fixed in self.fixed_items:
+            for fixed in self.fixed_items.values():
                 if self.draggable_items[keys[i]].rectangles_overlap(fixed):
                     colliding.add(keys[i])
 
