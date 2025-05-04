@@ -174,17 +174,22 @@ class ScreenLockObjectsUI(ScreenBase):
     #     # Export the wall with updated permanent object positions
     #     export_project(file_path, wall)
     #     # TODO what is this supposed to be doing?
-    #     SelectWallSpaceUI(root, file_path)
+    #     SelectWallSpaceUI(root, file_path) 
 
-    # TODO Create Popup class
+class PopupHandler:
+    def __init__(self, AppMain: AppMain, permanent_objects_dict: dict, popup_windows: dict):
+        self.AppMain = AppMain
+        self.permanent_objects_dict = permanent_objects_dict  # Directly use permanent_objects_dict
+        self.popup_windows = popup_windows
+
     def show_item_popup(self, item_index):
         print("showing popup for item", item_index)
-        print("Needs to be fixed")
-        return
-        # Get the permanent object and its position
-        permanent_object, position = self.wall.permanent_objects[item_index]
+        
+        # Get the permanent object and its position directly from the passed dictionary
+        permanent_object = self.permanent_objects_dict[item_index]
+        position = permanent_object.position  # Assuming this is a dict with 'x' and 'y'
 
-        # Prepare the item data as a dictionary that popup_editor expects
+        # Prepare the item data as a dictionary that the popup editor expects
         item_data = {
             "Name": permanent_object.name,  # Using the object's actual name
             "Width": permanent_object.width,
@@ -193,24 +198,60 @@ class ScreenLockObjectsUI(ScreenBase):
             "y": position["y"] if position else 0.0
         }
 
+        # Open the popup editor with the prepared data
+        self.open_popup_editor(item_index, item_data)
+
+    def open_popup_editor(self, item_index, item_data):
+        """
+        Opens the popup editor with the item data and passes all necessary information.
+        """
+        from gallery_wall_planner.gui.popup_editor import open_popup_editor
+
         open_popup_editor(
-            root=root,
+            root=self.AppMain.root,  # Root window reference
             item_index=item_index,
             item_data=item_data,  # Pass the prepared dictionary
-            obstacles=[(obj.name, obj.width, obj.height) for obj, _ in permanent_objects],
-            obstacle_names=obstacle_names,
-            layout_items=layout_items,
-            items=items,
-            item_buttons=item_buttons,
-            canvas=canvas,
-            scale=scale,
-            wall_left=wall_left,
-            wall_bottom=wall_bottom,
-            canvas_height=canvas_height,
-            move_item_to_canvas=move_item_to_canvas,
-            check_all_collisions=check_all_collisions,
-            enforce_boundaries=lambda x, y, w, h: enforce_boundaries(x, y, w, h, wall_width, wall_height),
-            popup_windows=popup_windows,
+            obstacles=[(obj.name, obj.width, obj.height) for obj in self.permanent_objects_dict.values()],
+            popup_windows=self.popup_windows  # Managing multiple popups if needed
         )
+
+
+
+    # # TODO Create Popup class
+    # def show_item_popup(self, item_index):
+    #     print("showing popup for item", item_index)
+    #     print("Needs to be fixed")
+    #     return
+    #     # Get the permanent object and its position
+    #     permanent_object, position = self.wall.permanent_objects[item_index]
+
+    #     # Prepare the item data as a dictionary that popup_editor expects
+    #     item_data = {
+    #         "Name": permanent_object.name,  # Using the object's actual name
+    #         "Width": permanent_object.width,
+    #         "Height": permanent_object.height,
+    #         "x": position["x"] if position else 0.0,
+    #         "y": position["y"] if position else 0.0
+    #     }
+
+    #     open_popup_editor(
+    #         root=root,
+    #         item_index=item_index,
+    #         item_data=item_data,  # Pass the prepared dictionary
+    #         obstacles=[(obj.name, obj.width, obj.height) for obj, _ in permanent_objects],
+    #         obstacle_names=obstacle_names,
+    #         layout_items=layout_items,
+    #         items=items,
+    #         item_buttons=item_buttons,
+    #         canvas=canvas,
+    #         scale=scale,
+    #         wall_left=wall_left,
+    #         wall_bottom=wall_bottom,
+    #         canvas_height=canvas_height,
+    #         move_item_to_canvas=move_item_to_canvas,
+    #         check_all_collisions=check_all_collisions,
+    #         enforce_boundaries=lambda x, y, w, h: enforce_boundaries(x, y, w, h, wall_width, wall_height),
+    #         popup_windows=popup_windows,
+    #     )
 
 

@@ -104,7 +104,7 @@ def open_popup_editor(
             popup.update_idletasks()
             popup.update()
 
-
+ 
     items[item_index].update_popup_fields = update_popup_fields
     update_popup_fields()
     
