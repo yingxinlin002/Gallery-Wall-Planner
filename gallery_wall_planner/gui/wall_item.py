@@ -39,9 +39,9 @@ class WallItem:
         item_location = self.get_item_location()
         if self.wall_object.image_path and os.path.isfile(self.wall_object.image_path):
             img = Image.open(self.wall_object.image_path)
-            img = img.resize((int(item_location.x2 - item_location.x1), int(item_location.y2 - item_location.y1)), Image.ANTIALIAS)
+            img = img.resize((int(item_location.x2 - item_location.x1), int(item_location.y2 - item_location.y1)))
             self.image_obj = ImageTk.PhotoImage(img)
-            self.id = self.parent_ui.canvas.create_image(item_location.x1, item_location.y1, anchor="nw", image=self.image_obj)
+            self.id = self.parent_ui.canvas.create_image(item_location.x1, item_location.y1, anchor='nw', image=self.image_obj)
         else:
             self.id = self.parent_ui.canvas.create_rectangle(item_location.x1, item_location.y1, item_location.x2, item_location.y2, fill=fill_color, outline="black", width=2)
             label_position = self.get_label_location(item_location)
