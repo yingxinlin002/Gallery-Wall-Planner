@@ -115,8 +115,12 @@ class WallItemDraggable(WallItem):
         current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
         self.wall_object.position = Position((new_x1 + new_x2) / 2, (new_y1 + new_y2) / 2)
 
-        label_position = self.get_label_location(current_location)
-        self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
+        if self.image_id is not None:
+            image_location = self.get_image_location(current_location)
+            self.parent_ui.canvas.coords(self.image_id, image_location.x, image_location.y)
+        elif self.label_id is not None:
+            label_position = self.get_label_location(current_location)
+            self.parent_ui.canvas.coords(self.label_id, label_position.x, label_position.y)
         self._drag_data.x += dx
         self._drag_data.y += dy
         self.update_reference_lines()
