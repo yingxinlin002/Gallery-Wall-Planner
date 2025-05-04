@@ -29,10 +29,15 @@ class WallItemDraggable(WallItem):
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
         self.parent_ui.canvas.tag_bind(self.id, "<B1-Motion>", self.on_drag)
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonRelease-1>", self.on_drop)
+        if self.image_id is not None:
+            self.parent_ui.canvas.tag_bind(self.image_id, "<ButtonPress-1>", self.on_start)
+            self.parent_ui.canvas.tag_bind(self.image_id, "<B1-Motion>", self.on_drag)
+            self.parent_ui.canvas.tag_bind(self.image_id, "<ButtonRelease-1>", self.on_drop)
         if self.label_id is not None:
             self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonPress-1>", self.on_start)
             self.parent_ui.canvas.tag_bind(self.label_id, "<B1-Motion>", self.on_drag)
             self.parent_ui.canvas.tag_bind(self.label_id, "<ButtonRelease-1>", self.on_drop)
+
 
     def on_start(self, event):
         self._drag_data.x = event.x
