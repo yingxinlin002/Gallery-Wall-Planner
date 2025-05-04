@@ -161,7 +161,7 @@ class WallCanvas():
         line_number = 0
         for line in self.AppMain.gallery.current_wall.wall_lines:
             if line.orientation == Orientation.HORIZONTAL:
-                y = self.wall_position.wall_top + line.distance * self.screen_scale
+                y = self.wall_position.wall_bottom - line.distance * self.screen_scale
                 line_number = self.canvas.create_line(
                     self.wall_position.wall_left, y,
                     self.wall_position.wall_right, y,

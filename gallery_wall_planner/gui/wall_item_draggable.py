@@ -70,21 +70,6 @@ class WallItemDraggable(WallItem):
         new_x2 = coords[2] + dx
         new_y2 = coords[3] + dy
 
-        item_location = self.get_item_location()
-        # Check boundaries in canvas coordinates
-        if new_x1 < self.parent_ui.wall_position.wall_left:
-            new_x1 = self.parent_ui.wall_position.wall_left 
-            new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
-        if new_x2 > self.parent_ui.wall_position.wall_right:
-            new_x2 = self.parent_ui.wall_position.wall_right 
-            new_x1 = new_x2 - self.wall_object.width * self.parent_ui.screen_scale
-        if new_y1 < self.parent_ui.wall_position.wall_top:
-            new_y1 = self.parent_ui.wall_position.wall_top 
-            new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
-        if new_y2 > self.parent_ui.wall_position.wall_bottom:
-            new_y2 = self.parent_ui.wall_position.wall_bottom 
-            new_y1 = new_y2 - self.wall_object.height * self.parent_ui.screen_scale
-
         snap_action_x: SnapAction = SnapAction(Orientation.HORIZONTAL)
         snap_action_y: SnapAction = SnapAction(Orientation.VERTICAL)
         center_x = (new_x1 + new_x2) / 2
@@ -100,7 +85,7 @@ class WallItemDraggable(WallItem):
                         snap_action_x.distance = check_distance - snap_point
             if snap_line.orientation == Orientation.HORIZONTAL:
                 for snap_point in snap_points_y:
-                    check_distance = self.parent_ui.wall_position.wall_top + snap_line.distance * self.parent_ui.screen_scale
+                    check_distance = self.parent_ui.wall_position.wall_bottom - snap_line.distance * self.parent_ui.screen_scale
                     if abs(check_distance - snap_point) < 5 and (snap_action_y.distance is None or
                         abs(check_distance - snap_point) < snap_action_y.distance):
                         snap_action_y.distance = check_distance - snap_point
@@ -111,6 +96,20 @@ class WallItemDraggable(WallItem):
         if snap_action_y.distance is not None:
             new_y1 = new_y1 + snap_action_y.distance
             new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
+
+        # Check boundaries in canvas coordinates
+        if new_x1 < self.parent_ui.wall_position.wall_left:
+            new_x1 = self.parent_ui.wall_position.wall_left 
+            new_x2 = new_x1 + self.wall_object.width * self.parent_ui.screen_scale
+        if new_x2 > self.parent_ui.wall_position.wall_right:
+            new_x2 = self.parent_ui.wall_position.wall_right 
+            new_x1 = new_x2 - self.wall_object.width * self.parent_ui.screen_scale
+        if new_y1 < self.parent_ui.wall_position.wall_top:
+            new_y1 = self.parent_ui.wall_position.wall_top 
+            new_y2 = new_y1 + self.wall_object.height * self.parent_ui.screen_scale
+        if new_y2 > self.parent_ui.wall_position.wall_bottom:
+            new_y2 = self.parent_ui.wall_position.wall_bottom 
+            new_y1 = new_y2 - self.wall_object.height * self.parent_ui.screen_scale
 
 
 
