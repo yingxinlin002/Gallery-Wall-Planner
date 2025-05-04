@@ -129,25 +129,6 @@ class WallCanvas():
             y = self.wall.height - height
         return x, y
 
-    def move_item_to_canvas(self, artwork):
-        """Move the specified artwork to the canvas."""
-        print(f"[DEBUG] Moving artwork: {artwork}")
-
-        try:
-            item = self.draggable_items[artwork.id]
-            # Update the item's position on the canvas
-            x1 = self.wall_position.wall_left + artwork.x * self.screen_scale
-            y1 = self.wall_position.wall_top + artwork.y * self.screen_scale
-            x2 = x1 + artwork.width * self.screen_scale
-            y2 = y1 + artwork.height * self.screen_scale
-
-            print(f"Moving to canvas: X={x1:.1f}-{x2:.1f}, Y={y1:.1f}-{y2:.1f} (pixels)")
-
-            self.canvas.coords(item.id, x1, y1, x2, y2)
-        except KeyError:
-            print(f"[ERROR] Artwork not found in draggable_items: {artwork}")
-            raise
-
     def check_all_collisions(self):
         n = len(self.draggable_items)
         keys = list(self.draggable_items.keys())

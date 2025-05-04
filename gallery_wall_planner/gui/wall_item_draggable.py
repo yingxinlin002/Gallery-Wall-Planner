@@ -206,3 +206,10 @@ class WallItemDraggable(WallItem):
         for label in self.distance_labels:
             self.parent_ui.canvas.itemconfig(label, state='hidden')
             
+    def update_position(self):
+        """Update the position of the draggable item on the canvas."""
+        x1 = self.parent_ui.wall_position.wall_left + self.wall_object.x * self.parent_ui.screen_scale
+        y1 = self.parent_ui.wall_position.wall_bottom - self.wall_object.y * self.parent_ui.screen_scale
+        x2 = x1 + self.wall_object.width * self.parent_ui.screen_scale
+        y2 = y1 - self.wall_object.height * self.parent_ui.screen_scale
+        self.parent_ui.canvas.coords(self.id, x1, y1, x2, y2)

@@ -271,9 +271,11 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                 artwork.y = y_pos_center - (artwork.height / 2)
 
                 # Debug output
+                center_x = artwork.x + (artwork.width / 2)
+                center_y = artwork.y + (artwork.height / 2)
                 print(f"Positioning {artwork.name}:")
-                print(f"  Target X (inches): {artwork.x:.1f}")
-                print(f"  Target Y (inches): {artwork.y:.1f} (from bottom: {y_pos_center:.1f})")
+                print(f"  Center X (inches): {center_x:.1f}")
+                print(f"  Center Y (inches): {center_y:.1f} (from bottom: {y_pos_center:.1f})")
                 print(f"  Artwork size: {artwork.width}\" × {artwork.height}\"")
 
                 # Check boundaries - now checking if entire artwork fits
@@ -287,15 +289,12 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                 # Add to canvas if not already present
                 if artwork.id not in wall_canvas.draggable_items:
                     wall_canvas.add_draggable(artwork)
-
-                # Move to calculated position
-                wall_canvas.move_item_to_canvas(artwork)
-                
-                # Verify final canvas position
-                if artwork.id in wall_canvas.draggable_items:
-                    item = wall_canvas.draggable_items[artwork.id]
-                    coords = wall_canvas.canvas.coords(item.id)
-                    print(f"  Final canvas coords: {coords}")
+                else:
+                    # If already exists, update its position
+                    draggable = wall_canvas.draggable_items[artwork.id]
+                    draggable.wall_object.x = artwork.x
+                    draggable.wall_object.y = artwork.y
+                    draggable.update_position()
 
                 current_x += artwork.width + spacing
             
