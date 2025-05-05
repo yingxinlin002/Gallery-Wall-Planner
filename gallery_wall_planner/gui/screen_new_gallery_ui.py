@@ -4,7 +4,6 @@ import re
 from gallery_wall_planner.models.wall import Wall  
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.screen_base import ScreenBase
-from gallery_wall_planner.gui.popup_new_exhibit import PopupNewExhibit
 
 class ScreenNewGalleryUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
