@@ -19,7 +19,6 @@ class PopupNewWallItem(PopupBase):
         self.current_measure_from: MeasureFrom = MeasureFrom.EDGES
         self.current_measure_horizontal: MeasureHorizontal = MeasureHorizontal.LEFT
         self.current_measure_vertical: MeasureVertical = MeasureVertical.TOP
-        self.new_wall_object = 
 
         self.load_content()
     

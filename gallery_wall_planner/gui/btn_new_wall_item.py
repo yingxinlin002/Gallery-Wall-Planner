@@ -2,8 +2,7 @@
 
 
 import tkinter as tk
-from tkinter import ttk
-
+from tkinter import ttk, messagebox
 from typing import override
 
 from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
@@ -57,7 +56,11 @@ class BTNNewWallItem(BTNBase):
         print(f"Edit clicked on {self.item_text}")
 
 
-    def update_wall_object(self, wall_object: WallObject):
+    def update_wall_object(self, wall_object: WallObject) -> bool:
+        if wall_object.id in self.parent_ui.AppMain.gallery.current_wall.permanent_objects_dict:
+            messagebox.showerror("Error", "Permanent Object already exists")
+            return False
         self.wall_object = wall_object
         self.draggable_item = WallItemDraggable(self.wall_object, self.parent_ui.wall_canvas)
         self.parent_ui.new_wall_item_button(self.draggable_item)
+        return True
