@@ -94,80 +94,52 @@ class InstallInstructionPopup(tk.Toplevel):
         wall_width = self.selected_wall.width
         wall_height = self.selected_wall.height
 
-
+        print("\n=== DEBUG: Artwork Positions ===")
+        print(f"Wall dimensions: {wall_width}\" wide x {wall_height}\" tall")
+        print(f"Measurement reference: From {self.wall_measure_var.get()} wall, from {self.height_measure_var.get()}")
+        
         for art in self.artworks:
-            # Get position from Artwork object directly (using WallObject's position property)
-            x1 = art.position.x
-            x2 = art.position.x + art.width
-            y_top = art.position.y + art.height  # Top edge of artwork
-            hang_height = art.hanging_point  # Using hanging_point from Artwork class
-
-            # Calculate hanging coordinates
-            hang_x = (x1 + x2) / 2  # Center of artwork
-            hang_y = y_top - hang_height  # Hanging point position
-
+            # Get bottom-left position
+            bottom_left_x = art.x
+            bottom_left_y = art.y
+            
+            # Calculate center position
+            center_x = bottom_left_x + (art.width / 2)
+            
+            # Calculate top edge (in wall coordinates where 0 is bottom)
+            top_edge = bottom_left_y + art.height
+            
+            # Hanging point is top edge minus hanging point offset
+            hang_x = center_x
+            hang_y = top_edge - art.hanging_point
+            
+            print(f"\nArtwork: {art.name}")
+            print(f"Size: {art.width}\" x {art.height}\"")
+            print(f"Bottom-left position: ({bottom_left_x:.2f}, {bottom_left_y:.2f})")
+            print(f"Top edge: {top_edge:.2f}\" from floor")
+            print(f"Hanging point offset: {art.hanging_point}\" from top")
+            print(f"Calculated nail position: ({hang_x:.2f}, {hang_y:.2f})")
+            
             # Adjust based on measurement preferences
             if self.wall_measure_var.get() == "right":
                 hang_x = wall_width - hang_x
             if self.height_measure_var.get() == "ceiling":
                 hang_y = wall_height - hang_y
-
+                
+            print(f"Final hanging point (adjusted): ({hang_x:.2f}, {hang_y:.2f})")
+            
             unsorted_locations[art.name] = (hang_x, hang_y)
 
+        print("\n=== END DEBUG ===\n")
+        
         # Sort by hang_x ascending, then hang_y descending
         sorted_items = sorted(unsorted_locations.items(), key=lambda kv: (kv[1][0], -kv[1][1]))
         return dict(sorted_items)
-
+    
     def print_measurement_instructions(self):
-        locations = self.calculate_hang_locations()
-        if not locations:
-            return
-
-        wall_ref = self.wall_measure_var.get()
-        height_ref = self.height_measure_var.get()
-        first_name = self.first_piece_var.get()
-
-        names = list(locations.keys())
-        if first_name not in names:
-            print("Error: First piece not found in artwork list.")
-            return
-
-        first_index = names.index(first_name)
-
-        # A) Measure from wall/floor to first piece
-        first = (first_name, *locations[first_name])
-        x_initial = "RIGHT" if wall_ref == "left" else "LEFT"
-        y_initial = "UP" if height_ref == "floor" else "DOWN"
-        x_dir = "LEFT" if wall_ref == "left" else "RIGHT"
-        y_dir = "DOWN" if height_ref == "floor" else "UP"
-        print(f"FROM {wall_ref.upper()} WALL measure {x_initial} {first[1]:.2f}. FROM {height_ref.upper()} measure {y_initial} {first[2]:.2f}")
-
-        # B) Forward pass (first+1 to end)
-        prev_x, prev_y = first[1], first[2]
-        for i in range(first_index + 1, len(names)):
-            curr = (names[i], *locations[names[i]])
-            dx = abs(curr[1] - prev_x)
-            dy = abs(curr[2] - prev_y)
-            if curr[2] > prev_y:
-              print(f"FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_initial} {dy:.2f}")
-            else:
-              print(f"FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_dir} {dy:.2f}")
-            prev_x, prev_y = curr[1], curr[2]
-
-        # D) Backward pass (first-1 to start)
-        prev_x, prev_y = first[1], first[2]
-        for i in range(first_index - 1, -1, -1):
-            curr = (names[i], *locations[names[i]])
-            dx = (curr[1] - prev_x)
-            dy = (curr[2] - prev_y)
-            if curr[2] < prev_y:
-                print(f"FROM {names[i+1]} measure {x_dir} {abs(dx):.2f}, and {y_dir} {abs(dy):.2f}")
-            else:
-                print(f"FROM {names[i+1]} measure {x_dir} {abs(dx):.2f}, and {y_initial} {abs(dy):.2f}")
-            prev_x, prev_y = curr[1], curr[2]
-
-        # E) Final message
-        print("ALL ART SHOULD BE HUNG")
+        instructions = self.generate_instruction_lines()
+        for line in instructions:
+            print(line)
 
 
     def save_measurement_instructions(self):
@@ -176,10 +148,35 @@ class InstallInstructionPopup(tk.Toplevel):
             messagebox.showerror("Error", "No instructions to save.")
             return
 
-        filetypes = [("All Files", "*.*")]
+        # Get the file extension based on selected file type
         extension = self.file_type_var.get()
-        initial_ext = {"excel": ".xlsx", "word": ".docx", "pdf": ".pdf", "text": ".txt"}.get(extension, ".txt")
-        filepath = filedialog.asksaveasfilename(defaultextension=initial_ext, filetypes=filetypes)
+        file_ext = {
+            "excel": ".xlsx",
+            "word": ".docx", 
+            "pdf": ".pdf",
+            "text": ".txt"
+        }.get(extension, ".txt")
+
+        # Create default filename using wall name (sanitized to remove special characters)
+        wall_name = "".join(c for c in self.selected_wall.name if c.isalnum() or c in (' ', '_')).rstrip()
+        default_filename = f"Installation_Instructions_{wall_name}{file_ext}"
+
+        # Set up file dialog with default filename
+        filetypes = [
+            ("Word Document", "*.docx"),
+            ("Excel Spreadsheet", "*.xlsx"),
+            ("PDF Document", "*.pdf"),
+            ("Text File", "*.txt"),
+            ("All Files", "*.*")
+        ]
+        
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=file_ext,
+            initialfile=default_filename,
+            filetypes=filetypes,
+            title="Save Installation Instructions"
+        )
+        
         if not filepath:
             return
 
@@ -197,3 +194,57 @@ class InstallInstructionPopup(tk.Toplevel):
             messagebox.showinfo("Success", f"Instructions saved to {filepath}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save instructions:\n{e}")
+
+    def generate_instruction_lines(self):
+        locations = self.calculate_hang_locations()
+        if not locations:
+            return []
+
+        wall_ref = self.wall_measure_var.get()
+        height_ref = self.height_measure_var.get()
+        first_name = self.first_piece_var.get()
+
+        names = list(locations.keys())
+        if first_name not in names:
+            return ["Error: First piece not found in artwork list."]
+
+        first_index = names.index(first_name)
+        instructions = []
+
+        # A) Measure from wall/floor to first piece
+        first = (first_name, *locations[first_name])
+        x_initial = "RIGHT" if wall_ref == "left" else "LEFT"
+        y_initial = "UP" if height_ref == "floor" else "DOWN"
+        x_dir = "LEFT" if wall_ref == "left" else "RIGHT"
+        y_dir = "DOWN" if height_ref == "floor" else "UP"
+        
+        instructions.append(f"Artwork {first[0]}: FROM {wall_ref.upper()} WALL measure {x_initial} {first[1]:.2f}. FROM {height_ref.upper()} measure {y_initial} {first[2]:.2f}")
+
+        # B) Forward pass (first+1 to end)
+        prev_x, prev_y = first[1], first[2]
+        for i in range(first_index + 1, len(names)):
+            curr = (names[i], *locations[names[i]])
+            dx = abs(curr[1] - prev_x)
+            dy = abs(curr[2] - prev_y)
+            if curr[2] > prev_y:
+                instructions.append(f"Artwork {curr[0]}: FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_initial} {dy:.2f}")
+            else:
+                instructions.append(f"Artwork {curr[0]}: FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_dir} {dy:.2f}")
+            prev_x, prev_y = curr[1], curr[2]
+
+        # D) Backward pass (first-1 to start)
+        prev_x, prev_y = first[1], first[2]
+        for i in range(first_index - 1, -1, -1):
+            curr = (names[i], *locations[names[i]])
+            dx = abs(curr[1] - prev_x)
+            dy = abs(curr[2] - prev_y)
+            if curr[2] < prev_y:
+                instructions.append(f"Artwork {curr[0]}: FROM {names[i+1]} measure {x_dir} {dx:.2f}, and {y_dir} {dy:.2f}")
+            else:
+                instructions.append(f"Artwork {curr[0]}: FROM {names[i+1]} measure {x_dir} {dx:.2f}, and {y_initial} {dy:.2f}")
+            prev_x, prev_y = curr[1], curr[2]
+
+        # E) Final message
+        instructions.append("ALL ART SHOULD BE HUNG")
+        
+        return instructions
