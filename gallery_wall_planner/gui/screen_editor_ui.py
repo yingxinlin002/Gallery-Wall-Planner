@@ -18,6 +18,8 @@ from gallery_wall_planner.gui.popup_snap_lines import PopupSnapLines
 from gallery_wall_planner.models.wall_line import SingleLine, Orientation
 from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
 from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
+from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
+from typing import Dict
 
 class ArtBtn(tk.Button):
     def toggle_bg(self, on: bool = True):
@@ -43,6 +45,7 @@ class ScreenEditorUI(ScreenBase):
         self.artwork_tab_frame: tk.Frame = None
         self.snap_lines_tab_frame: tk.Frame = None
         self.actions_frame = None
+        self.snap_line_buttons: Dict[str, BTNSnapLine] = {}
 
     def handle_installation_popup(self):
         print("Installation popup")
@@ -109,7 +112,6 @@ class ScreenEditorUI(ScreenBase):
         self.snap_lines_tab_frame = self.create_collapsible_menu(
             self.collapsible_menu.menu_frame, "Snap Lines", expanded=False)
 
-        self.create_snap_lines_list_frame()
 
         # Add new Tool menu with Even Spacing button
         self.actions_frame = tk.Frame(self.collapsible_menu.menu_frame)
@@ -134,7 +136,7 @@ class ScreenEditorUI(ScreenBase):
 
         self.add_snap_line_button = tk.Button(self.actions_frame,
                                             text="Add Snap Line",
-                                            command=self.add_new_snap_line,
+                                            command=self.add_new_snap_line_popup,
                                             bg=self.styles["bg_info"],
                                             fg=self.styles["fg_white"],
                                             font=self.styles["button_font"],
@@ -190,6 +192,9 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas.add_fixed_items(self.AppMain.gallery.current_wall.permanent_objects_dict)
         #TODO  Only add artwork that has been placed on the wall.
         self.wall_canvas.create_draggables(self.AppMain.gallery.current_wall.artwork_dict)
+
+        self.create_snap_lines_list_frame()
+        self.wall_canvas.draw_snap_lines()
 
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
@@ -334,12 +339,10 @@ class ScreenEditorUI(ScreenBase):
         self.snap_lines_scroll_box.pack(side="left", fill="both", expand=True)
 
         # Add snap lines to the list
-        if hasattr(self.AppMain.gallery.current_wall, 'snap_lines') and self.AppMain.gallery.current_wall.wall_lines:
+        if self.AppMain.gallery.current_wall.wall_lines:
             from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
             for snap_line in self.AppMain.gallery.current_wall.wall_lines:
-                btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, snap_line, self.AppMain)
-                btn.pack(side="top", fill="x", padx=5, pady=5)
-                btn.load_content()
+                self.add_snap_line(snap_line)
         else:
             tk.Label(self.snap_lines_scroll_box.scrollable_frame,
                      text="No snap lines added yet",
@@ -562,10 +565,9 @@ class ScreenEditorUI(ScreenBase):
         #     # Add to existing virtual wall
         #     self.virtual_wall.add_artwork_to_wall(artwork)
 
-    def add_new_snap_line(self):
-        print("[DEBUG] add_new_snap_line called")
+    def add_new_snap_line_popup(self):
+        print("[DEBUG] add_new_snap_line_popup called")
         snap_line_popup = PopupSnapLines(self.AppMain, self)
-        snap_line_popup.load_content()
 
         # def handle_save(new_line):
         #     print(f"[DEBUG] Saving Snap Line line.orientation={new_line.orientation}, line.alignment={new_line.alignment}, type={type(new_line.alignment)}")
@@ -587,15 +589,33 @@ class ScreenEditorUI(ScreenBase):
     def draw_snap_lines(self):
         self.wall_canvas.draw_snap_lines()
 
+    def add_new_snap_line(self, line: SingleLine):
+        self.add_snap_line(line)
+        self.AppMain.gallery.current_wall.add_wall_line(line)
+        self.draw_snap_lines()
+
     def add_snap_line(self, line: SingleLine):
         if len(self.AppMain.gallery.current_wall.wall_lines) == 0:
             for widget in self.snap_lines_scroll_box.scrollable_frame.winfo_children():
                 widget.destroy()
-        self.AppMain.gallery.current_wall.wall_lines.append(line)
         from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
-        btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, line, self.AppMain)
+        btn = BTNSnapLine(self.snap_lines_scroll_box.scrollable_frame, line, self.AppMain, self)
         btn.pack(side="top", fill="x", padx=5, pady=5)
         btn.load_content()
+        self.snap_line_buttons[line.id] = btn
+
+    def update_snap_line(self, old_line: SingleLine, new_line: SingleLine):
+        print("[DEBUG] update_snap_line called")
+        self.AppMain.gallery.current_wall.update_wall_line(old_line.id, new_line)
+        self.snap_line_buttons[old_line.id].destroy()
+        self.snap_line_buttons.pop(old_line.id)
+        self.add_snap_line(new_line)
+        self.draw_snap_lines()
+
+    def delete_snap_line(self, line: SingleLine):
+        self.AppMain.gallery.current_wall.remove_wall_line(line.id)
+        self.snap_line_buttons[line.id].destroy()
+        self.snap_line_buttons.pop(line.id)
         self.draw_snap_lines()
 
     def open_manage_lines_popup(self):
