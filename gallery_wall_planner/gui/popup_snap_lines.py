@@ -18,12 +18,10 @@ class PopupSnapLines(PopupBase):
         super().__init__(AppMain, "Add Snap Line" if existing_line is None else "Edit Snap Line", 300, 320, *args, **kwargs)
         from gallery_wall_planner.gui.screen_editor_ui import ScreenEditorUI
         self.parent_ui: ScreenEditorUI = parent_ui
-        self.existing_line = existing_line
-        self.align_buttons: List[tk.Radiobutton] = []
-        self.alignment_frame: ttk.Frame = None
+        self.existing_line: Optional[SingleLine] = existing_line
         self.orientation_var: tk.StringVar = None
-        self.alignment_var: tk.StringVar = None
         self.distance_var: tk.DoubleVar = None
+        self.load_content()
 
     def load_content(self):
         # Orientation Radio Buttons
@@ -31,19 +29,6 @@ class PopupSnapLines(PopupBase):
         ttk.Label(self, text="Orientation:").pack(anchor="w", padx=10, pady=(10, 0))
         ttk.Radiobutton(self, text="Horizontal", variable=self.orientation_var, value=Orientation.HORIZONTAL.name).pack(anchor="w", padx=20)
         ttk.Radiobutton(self, text="Vertical", variable=self.orientation_var, value=Orientation.VERTICAL.name).pack(anchor="w", padx=20)
-
-        # Alignment Radio Buttons
-        self.alignment_var = tk.StringVar(value=self.existing_line.alignment.name if self.existing_line else HorizontalAlignment.CENTER.name)
-        self.alignment_frame = ttk.Frame(self)
-        self.alignment_frame.pack(anchor="w", padx=10, pady=(10, 0))
-
-        ttk.Label(self.alignment_frame, text="Alignment:").pack(anchor="w")
-
-        self.align_buttons = []
-
-        # Trigger the alignment buttons update when orientation changes
-        self.orientation_var.trace_add("write", lambda *_: self.update_alignment_buttons(self.orientation_var))
-        self.update_alignment_buttons(self.orientation_var)
 
         # Distance Entry
         ttk.Label(self, text="Distance (inches):").pack(anchor="w", padx=10, pady=(10, 0))
@@ -58,18 +43,6 @@ class PopupSnapLines(PopupBase):
         self.transient(self.AppMain.root)
         self.grab_set()
         self.wait_window()
-
-    def update_alignment_buttons(self, orientation_var: tk.StringVar):
-        # Clear existing buttons
-        for btn in self.align_buttons:
-            btn.destroy()
-        self.align_buttons.clear()
-
-        current_orientation = Orientation[orientation_var.get()]
-        for alignment in Orientation.alignment_options(current_orientation):
-            b = ttk.Radiobutton(self.alignment_frame, text=alignment.name.capitalize(), variable=self.alignment_var, value=alignment.name)
-            b.pack(anchor="w", padx=20)
-            self.align_buttons.append(b)
 
     # Save Button
     def save(self):
@@ -93,31 +66,17 @@ class PopupSnapLines(PopupBase):
             return
 
         orientation_enum = Orientation[self.orientation_var.get()]
-        alignment_str = self.alignment_var.get().upper()
-        if orientation_enum == Orientation.HORIZONTAL and alignment_str in ["TOP", "CENTER", "BOTTOM"]:
-            alignment_enum = HorizontalAlignment[alignment_str]
-        elif orientation_enum == Orientation.VERTICAL and alignment_str in ["LEFT", "CENTER", "RIGHT"]:
-            alignment_enum = VerticalAlignment[alignment_str]
-        else:
-            alignment_enum = HorizontalAlignment.CENTER if orientation_enum == Orientation.HORIZONTAL else VerticalAlignment.CENTER
-
-
-        print(f"[DEBUG] snap_line_popup Saving: orientation={orientation_enum}, alignment={alignment_enum}, type={type(alignment_enum)}")
 
         updated_line = SingleLine(
             orientation=orientation_enum,
-            alignment=alignment_enum,
+            alignment=HorizontalAlignment.CENTER,
             distance=distance,
             snap_to=True,
             moveable=True
         )
 
-        is_duplicate = False
-        for line in self.AppMain.gallery.current_wall.wall_lines:
-            if line.approximate_equal(updated_line):
-                self.show_duplicate_line_popup(updated_line)
-                is_duplicate = True
-                break
-        if not is_duplicate:
-            self.parent_ui.add_snap_line(updated_line)
+        if self.existing_line:
+            self.parent_ui.update_snap_line(self.existing_line, updated_line)
+        else:
+            self.parent_ui.add_new_snap_line(updated_line)
         self.destroy()
