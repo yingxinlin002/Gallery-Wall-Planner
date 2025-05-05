@@ -13,6 +13,7 @@ class PopupEditWall(PopupBase):
 
 
     def load_content(self):
+        super().load_content()
         # Main container
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
@@ -108,7 +109,7 @@ class PopupEditWall(PopupBase):
 
     def delete_wall(self):
         self.btn.delete_wall()
-        self.destroy()
+        self.on_close()
 
     def submit_wall_info(self):
         new_wall = Wall(
@@ -118,7 +119,7 @@ class PopupEditWall(PopupBase):
             self.color_box.cget("bg")
         )
         self.btn.update_wall(new_wall)
-        self.destroy()
+        self.on_close()
         
 
     def pick_color(self):

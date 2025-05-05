@@ -144,7 +144,7 @@ class PopupNewWallItem(PopupBase):
         )
         wall_object.position = self.current_position
         self.parent_button.update_wall_object(wall_object)
-        self.destroy()
+        self.on_close()
 
     def update_position(self):
         self.current_position = Position(0,0)
