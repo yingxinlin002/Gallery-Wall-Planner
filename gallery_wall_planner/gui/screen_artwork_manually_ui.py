@@ -231,6 +231,10 @@ class ScreenArtworkManuallyUI(ScreenBase):
                 image_path=image_path
             )
 
+            if artwork.id in self.AppMain.gallery.current_wall.artwork_dict:
+                messagebox.showerror("Error", "Artwork already exists")
+                return
+
             self.show_artwork_preview(artwork)
             self.AppMain.gallery.current_wall.add_artwork(artwork)
             self.clear_form()
