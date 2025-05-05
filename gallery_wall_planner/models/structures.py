@@ -1,4 +1,5 @@
 
+from enum import Enum
 
 def get_id(input: str) -> str:
     """Generate a simple hash from the input string.
@@ -13,6 +14,18 @@ def get_id(input: str) -> str:
     hash_value = sum(ord(c) * (i + 1) for i, c in enumerate(input))
     # Convert to a hex string and take the last 8 characters
     return f"{hash_value:x}"[-8:].zfill(8)
+
+class MeasureFrom(Enum):
+    EDGES = "edges"
+    CENTER = "center"
+
+class MeasureHorizontal(Enum):
+    LEFT = "left"
+    RIGHT = "right"
+
+class MeasureVertical(Enum):
+    TOP = "top"
+    BOTTOM = "bottom"
 
 class Padding:
     def __init__(self, top: int, right: int, bottom: int, left: int):

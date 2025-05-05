@@ -12,7 +12,7 @@ class ScrollBoxVertical(tk.Frame):
     def load_content(self):
         self.canvas = tk.Canvas(self, bg="white")
         self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas, bg="green")
+        self.scrollable_frame = tk.Frame(self.canvas, bg="white")
 
         self.scrollable_frame.bind(
             "<Configure>",

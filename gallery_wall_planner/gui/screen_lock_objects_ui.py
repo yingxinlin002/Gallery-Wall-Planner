@@ -13,6 +13,7 @@ from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
 from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
 from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
+from gallery_wall_planner.gui.btn_new_wall_item import BTNNewWallItem
 from typing import Dict
 
 class ScreenLockObjectsUI(ScreenBase):
@@ -66,9 +67,9 @@ class ScreenLockObjectsUI(ScreenBase):
         self.collapsible_menu.load_content()
         self.collapsible_menu.pack(side="left", fill="y")
 
-        self.scroll_box = ScrollBoxVertical(self.left_panel)
+        self.scroll_box = ScrollBoxVertical(self.collapsible_menu.menu_frame)
         self.scroll_box.load_content()
-        self.scroll_box.pack(side="left", fill="y")
+        self.scroll_box.pack(side="top", fill="y")
         
         
 
@@ -83,15 +84,16 @@ class ScreenLockObjectsUI(ScreenBase):
         self.wall_canvas = WallCanvas(self.AppMain, canvas_frame, canvas_dimensions)
         self.wall_canvas.load_content()
 
-        self.wall_canvas.add_draggables(self.wall.permanent_objects_dict)
+        self.wall_canvas.create_draggables(self.wall.permanent_objects_dict)
         for _, obj in self.wall_canvas.draggable_items.items():
             btn = BTNWallItem(self.scroll_box.scrollable_frame, obj)
             btn.pack(side="top", fill="x", padx=5, pady=5)
             btn.load_content()
             self.permanent_object_buttons[obj.wall_object.id] = btn
             
-        self.add_permanent_object_button = ttk.Button(self.left_panel, text="Add Permanent Object", command=self.add_permanent_object)
-        self.add_permanent_object_button.pack(side="top", fill="x", padx=5, pady=5)
+        self.add_permanent_object_button = BTNNewWallItem(self.collapsible_menu.menu_frame, self, False)
+        self.add_permanent_object_button.load_content()
+        self.add_permanent_object_button.pack(side="bottom", fill="x", padx=5, pady=5)
 
         # Bottom buttons
         button_frame = ttk.Frame(self)
@@ -106,6 +108,13 @@ class ScreenLockObjectsUI(ScreenBase):
         apply_primary_button_style(self.next_button)
         self.next_button.pack(side="right", padx=10)
 
+    def new_wall_item_button(self, draggable_item : 'WallItemDraggable'):
+        self.AppMain.gallery.current_wall.add_permanent_object(draggable_item.wall_object)
+        self.wall_canvas.add_draggable(draggable_item)
+        btn = BTNWallItem(self.scroll_box.scrollable_frame, draggable_item)
+        btn.pack(side="top", fill="x", padx=5, pady=5)
+        btn.load_content()
+        self.permanent_object_buttons[draggable_item.wall_object.id] = btn        
 
     def save_and_continue(self):
         if self.wall_canvas.check_all_collisions():
@@ -127,10 +136,6 @@ class ScreenLockObjectsUI(ScreenBase):
         # Positions are already saved in the wall object through the DraggableItem class
         # Now just launch the SelectWallSpaceUI with the updated wall
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
-
-    def add_permanent_object(self):
-        # Load popup
-        print("Add permanent object")
 
     # def export_then_continue(self):
     #     file_path = filedialog.asksaveasfilename(defaultextension=".json", title="Save Project")

@@ -33,11 +33,11 @@ class WallCanvas():
         self.snap_lines : List[int] = []
         self.snap_draggables: bool = True
 
-    def add_draggables(self, wall_objects: Dict[str, WallObject]):
+    def create_draggables(self, wall_objects: Dict[str, WallObject]):
         for _, wall_object in wall_objects.items():
-            self.add_draggable(wall_object)
+            self.create_draggable(wall_object)
 
-    def add_draggable(self, wall_object : WallObject):
+    def create_draggable(self, wall_object : WallObject):
         from gallery_wall_planner.gui.wall_item_draggable import WallItemDraggable
         di: WallItemDraggable = WallItemDraggable(
             wall_object=wall_object,
@@ -45,6 +45,10 @@ class WallCanvas():
             )
         di.create_canvas_item()
         self.draggable_items[wall_object.id] = di
+
+    def add_draggable(self, draggable_item : 'WallItemDraggable'):
+        draggable_item.create_canvas_item()
+        self.draggable_items[draggable_item.wall_object.id] = draggable_item
 
     def add_fixed_items(self, wall_objects : Dict[str,WallObject]):
         for _,obj in wall_objects.items():
@@ -149,7 +153,7 @@ class WallCanvas():
         """Clear and redraw all artworks with their current positions"""
         self.clear_artworks()  # You may need to implement this
         for artwork in self.selected_wall.artwork:
-            self.add_draggable(artwork)
+            self.create_draggable(artwork)
 
     def draw_snap_lines(self):
         for line in self.snap_lines:
