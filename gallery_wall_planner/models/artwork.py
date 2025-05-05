@@ -1,8 +1,11 @@
 import json
 import re
 import os
+import openpyxl
 from types import SimpleNamespace
-from typing import Optional
+from openpyxl.styles import Font, PatternFill
+from openpyxl.drawing.image import Image
+from PIL import Image as PILImage
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import get_id
 
