@@ -13,6 +13,7 @@ class Gallery:
         self.walls = []  # List of Wall objects for this specific gallery
         self.walls_dict: Dict[str, Wall] = {}
         self.current_wall: Optional[Wall] = None
+        self.unplaced_artwork = []
 
     # Class methods to manage all walls
     def add_wall(self, wall: Wall) -> None:
@@ -36,7 +37,37 @@ class Gallery:
             if wall.name == name:
                 return wall
         return None
+        
+    def add_unplaced_artwork(self, artwork: Artwork):
+        self.unplaced_artwork.append(artwork)
+        
+    def get_art_by_name(self, name: str):
+        for art in self.unplaced_artwork:
+            if art.name == name:
+                return art
+                
+    def remove_artwork(self, artwork: Artwork):
+        self.unplaced_artwork.remove(artwork)
+        
+    def place_art(self, art_name: str, wall_name: str):
+        """
+        Args: self, The name of the art to place, the name of the wall to place art upon
+        Returns: None
+        """
+        art = self.get_art_by_name(art_name)
+        wall = self.get_wall_by_name(wall_name)
+        wall.add_artwork(art)
+        self.remove_artwork(art)
 
+    def unplace_art(self, art: Artwork, wall_name: str):
+        """
+        Args: self, The artwork object to unplace, the name of the wall to remove the art from
+        Returns: None
+        """
+        wall = self.get_wall_by_name(wall_name)
+        self.add_unplaced_artwork(art)
+        wall.remove_artwork(art)
+        
     # TODO Remove these. They can be performed by calling the wall directly
     # def add_artwork_to_wall(self, wall_name: str, artwork: Artwork) -> bool:
     #     wall = self.get_wall_by_name(wall_name)
@@ -114,6 +145,37 @@ class Gallery:
         wb.save(filename)
         print(f"Gallery exported to {filename}")
 
+        # Unplaced Artworks marker
+        ws.append([])
+        ws.append(["Unplaced Artwork"])
+        ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=10)
+        title_cell = ws.cell(row=ws.max_row, column=1)
+        title_cell.font = Font(size=12, bold=True)
+        title_cell.fill = PatternFill(start_color="F0E68C", end_color="F0E68C", fill_type="solid")
+
+        # Add headers again for unplaced artwork
+        header_row = ws.max_row + 1
+        for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
+            cell = ws.cell(row=header_row, column=col_num, value=header)
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+
+        # Append unplaced artworks
+        for artwork in self.unplaced_artwork:
+            art_counter += 1
+            ws.append([
+                getattr(artwork, "id", art_counter),
+                artwork.title,
+                "",
+                artwork.medium,
+                artwork.width,
+                artwork.height,
+                artwork.depth,
+                artwork.price,
+                artwork.nfs,
+                artwork.notes
+            ])
+        
     @classmethod
     def import_gallery(cls, filename="gallery_export.xlsx"):
         try:
@@ -140,12 +202,20 @@ class Gallery:
         
         row_idx += 2  # Skip empty row and headers
         
+        reading_unplaced = False
+        current_wall = gallery.walls[-1] if gallery.walls else None
+
         for row in ws.iter_rows(min_row=row_idx, values_only=True):
             if not any(row):
-                break
-            # Get artwork based on expected data structure
+                continue
+            if row[0] == "Unplaced Artwork":
+                reading_unplaced = True
+                continue
+            if row[0] == "ID":  # Header row (reappears before unplaced)
+                continue
+
+            # Unpack artwork row
             art_id, title, _, medium, width, height, depth, price, nfs, notes = row
-            # Create artwork
             artwork = Artwork(
                 title=title or "",
                 medium=medium or "",
@@ -154,12 +224,15 @@ class Gallery:
                 depth=depth or 0,
                 price=price or 0,
                 nfs=bool(nfs),
-                notes = notes or ""
+                notes=notes or ""
             )
             setattr(artwork, "id", art_id)
-            # Append artwork to wall
-            if gallery.walls:
-                gallery.walls[-1].artwork.append(artwork)
+
+            if reading_unplaced:
+                gallery.unplaced_artwork.append(artwork)
+            elif current_wall:
+                current_wall.artwork.append(artwork)
 
         print(f"Gallery '{gallery.name}' imported successfully with {sum(len(w.artwork) for w in gallery.walls)} artworks.")
+        print(f"Unplaced artworks: {len(gallery.unplaced_artwork)}")
         return gallery
