@@ -13,6 +13,7 @@ class PopupEditWall(PopupBase):
 
 
     def load_content(self):
+        super().load_content()
         # Main container
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)

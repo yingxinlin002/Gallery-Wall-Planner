@@ -21,7 +21,8 @@ class PopupEditWallItem(PopupBase):
         self.current_measure_from: MeasureFrom = MeasureFrom.EDGES
         self.current_measure_horizontal: MeasureHorizontal = MeasureHorizontal.LEFT
         self.current_measure_vertical: MeasureVertical = MeasureVertical.TOP
-
+        
+        # Load content after initialization
         self.load_content()
         
     @property
@@ -29,6 +30,7 @@ class PopupEditWallItem(PopupBase):
         return self.parent_button.draggable_item
 
     def load_content(self):
+        super().load_content()
         self.title_label = ttk.Label(self, text="Edit Wall Item", font=self.styles["title_font"])
         self.title_label.pack(pady=10, fill="x")
 

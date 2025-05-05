@@ -24,6 +24,7 @@ class PopupSnapLines(PopupBase):
         self.load_content()
 
     def load_content(self):
+        super().load_content()
         # Orientation Radio Buttons
         self.orientation_var = tk.StringVar(value=self.existing_line.orientation.name if self.existing_line else Orientation.HORIZONTAL.name)
         ttk.Label(self, text="Orientation:").pack(anchor="w", padx=10, pady=(10, 0))
@@ -45,9 +46,7 @@ class PopupSnapLines(PopupBase):
             apply_primary_button_style(delete_btn)
             delete_btn.pack(pady=10)
 
-        self.transient(self.AppMain.root)
-        self.grab_set()
-        self.wait_window()
+        # No need for window management code here as it's handled in PopupBase
 
     # Save Button
     def save(self):
