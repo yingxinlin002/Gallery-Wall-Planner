@@ -40,9 +40,9 @@ class PopupNewExhibit(PopupBase):
 
     def start_from_scratch(self):
         self.parent_ui.start_from_scratch()
-        self.destroy()
+        self.on_close()
 
     def load_from_existing(self):
         self.parent_ui.load_from_existing()
-        self.destroy()
+        self.on_close()
         

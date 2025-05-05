@@ -84,9 +84,9 @@ class PopupSnapLines(PopupBase):
             self.parent_ui.update_snap_line(self.existing_line, updated_line)
         else:
             self.parent_ui.add_new_snap_line(updated_line)
-        self.destroy()
+        self.on_close()
 
     def delete(self):
         self.parent_ui.delete_snap_line(self.existing_line)
-        self.destroy()
+        self.on_close()
         

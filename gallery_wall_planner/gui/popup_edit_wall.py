@@ -108,7 +108,7 @@ class PopupEditWall(PopupBase):
 
     def delete_wall(self):
         self.btn.delete_wall()
-        self.destroy()
+        self.on_close()
 
     def submit_wall_info(self):
         new_wall = Wall(
@@ -118,7 +118,7 @@ class PopupEditWall(PopupBase):
             self.color_box.cget("bg")
         )
         self.btn.update_wall(new_wall)
-        self.destroy()
+        self.on_close()
         
 
     def pick_color(self):

@@ -281,7 +281,7 @@ def open_popup_editor(
         items[item_index].y = corrected_bl[1]
         move_item_to_canvas(item_index)
         check_all_collisions()
-        popup.destroy()
+        popup.on_close()
 
     ttk.Button(content_frame, text="Save", command=save_popup).grid(row=18, column=0, columnspan=2, pady=10)
 
