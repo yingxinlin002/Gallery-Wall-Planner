@@ -6,6 +6,7 @@ from gallery_wall_planner.models.wall import Wall
 from typing import Dict, Optional
 from gallery_wall_planner.gui.btn_wall import BTNWall
 from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
+from gallery_wall_planner.gui.btns_save import BTNSSave
 
 class ScreenSelectWallSpaceUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
@@ -73,9 +74,10 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         self.btn_back = tk.Button(bottom_frame, text="< Back to Home", command=lambda: self.AppMain.switch_screen(ScreenType.HOME), width=15, bg="#69718A", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
         self.btn_back.pack(side="left", padx=10)
 
-        # Export Layout Button (Center)
-        self.btn_export_layout = tk.Button(bottom_frame, text="Export Layout", command=self.export_layout, width=15, bg="#4CAF50", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
-        self.btn_export_layout.pack(side="left", padx=10)
+        # Save Buttons
+        self.btns_save = BTNSSave(bottom_frame, self.AppMain)
+        self.btns_save.pack(side="left", padx=10)
+        self.btns_save.load_content()
 
         # Continue Button (Right Side)
         self.btn_continue = tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
