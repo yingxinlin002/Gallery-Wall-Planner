@@ -40,6 +40,11 @@ class PopupSnapLines(PopupBase):
         apply_primary_button_style(save_btn)
         save_btn.pack(pady=10)
 
+        if self.existing_line:
+            delete_btn = ttk.Button(self, text="Delete", command=self.delete)
+            apply_primary_button_style(delete_btn)
+            delete_btn.pack(pady=10)
+
         self.transient(self.AppMain.root)
         self.grab_set()
         self.wait_window()
@@ -80,3 +85,8 @@ class PopupSnapLines(PopupBase):
         else:
             self.parent_ui.add_new_snap_line(updated_line)
         self.destroy()
+
+    def delete(self):
+        self.parent_ui.delete_snap_line(self.existing_line)
+        self.destroy()
+        

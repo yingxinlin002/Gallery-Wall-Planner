@@ -612,6 +612,12 @@ class ScreenEditorUI(ScreenBase):
         self.add_snap_line(new_line)
         self.draw_snap_lines()
 
+    def delete_snap_line(self, line: SingleLine):
+        self.AppMain.gallery.current_wall.remove_wall_line(line.id)
+        self.snap_line_buttons[line.id].destroy()
+        self.snap_line_buttons.pop(line.id)
+        self.draw_snap_lines()
+
     def open_manage_lines_popup(self):
         print("[DEBUG] open_manage_lines_popup called")
 
