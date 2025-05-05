@@ -270,12 +270,12 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                 artwork.y = y_pos_center - (artwork.height / 2)
 
                 # Debug output
-                center_x = artwork.x + (artwork.width / 2)
-                center_y = artwork.y + (artwork.height / 2)
-                print(f"Positioning {artwork.name}:")
-                print(f"  Center X (inches): {center_x:.1f}")
-                print(f"  Center Y (inches): {center_y:.1f} (from bottom: {y_pos_center:.1f})")
-                print(f"  Artwork size: {artwork.width}\" × {artwork.height}\"")
+                # center_x = artwork.x + (artwork.width / 2)
+                # center_y = artwork.y + (artwork.height / 2)
+                # print(f"Positioning {artwork.name}:")
+                # print(f"  Center X (inches): {center_x:.1f}")
+                # print(f"  Center Y (inches): {center_y:.1f} (from bottom: {y_pos_center:.1f})")
+                # print(f"  Artwork size: {artwork.width}\" × {artwork.height}\"")
 
                 # Check boundaries - now checking if entire artwork fits
                 artwork.x, artwork.y = wall_canvas.enforce_boundaries_even_spacing(
