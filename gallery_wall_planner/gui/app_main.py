@@ -42,6 +42,8 @@ class AppMain():
         # Track editor state
         self.editor_artwork_selected: Optional[Artwork] = None
 
+        self.save_file_path: Optional[str] = None
+
         self._load_or_resize()
 
     def _load_or_resize(self, event=None):
