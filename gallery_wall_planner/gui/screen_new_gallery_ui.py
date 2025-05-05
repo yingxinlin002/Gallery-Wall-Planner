@@ -5,6 +5,7 @@ from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.gui.popup_new_exhibit import PopupNewExhibit
+from gallery_wall_planner.gui.screen_lock_objects_ui import ScreenLockObjectsUI
 
 class ScreenNewGalleryUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
@@ -307,7 +308,7 @@ class ScreenNewGalleryUI(ScreenBase):
             anchor="e",
             angle=90
         )
-
+        
     def submit_wall_info(self):
         """Validate and submit the new wall information"""
         wall_name = self.wall_name_entry.get()
@@ -334,7 +335,10 @@ class ScreenNewGalleryUI(ScreenBase):
         )
 
         self.AppMain.gallery.add_wall(new_wall)
-        self.AppMain.switch_screen(ScreenType.PERMANENT_OBJECT)
+
+        # Now switch to the Lock Objects screen (ScreenLockObjectsUI)
+        self.AppMain.switch_screen(ScreenType.LOCK_OBJECTS_TO_WALL)  # Transition to Lock Objects screen
+
         
         # Navigate to PermanentObjectUI
         # from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI
