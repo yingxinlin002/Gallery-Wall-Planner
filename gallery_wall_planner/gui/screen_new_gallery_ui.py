@@ -20,74 +20,9 @@ class ScreenNewGalleryUI(ScreenBase):
         self.submit_and_next_button = None
         self.color_picker_button = None
 
-        # self.create_new_exhibit_popup()
-
-    # def create_new_exhibit_popup(self):
-    #     """Create initial popup window for new exhibit options"""
-    #     self.popup = tk.Toplevel(self.AppMain.root)
-    #     self.popup.title("New Exhibit")
-    #     self.popup.geometry("300x150")
-    #     self.center_popup(self.popup, 300, 150)
-
-    #     # Add buttons to the popup window
-    #     tk.Button(
-    #         self.popup,
-    #         text="Start from Scratch",
-    #         command=self.start_from_scratch,
-    #         width=20,
-    #         bg="#5F3FCA",
-    #         fg="white",
-    #         font=("Helvetica", 12, "bold"),
-    #         relief="raised",
-    #         padx=10,
-    #         pady=5
-    #     ).pack(pady=10)
-
-    #     tk.Button(
-    #         self.popup,
-    #         text="Load from an Existing Wall",
-    #         command=self.load_from_existing,
-    #         width=20,
-    #         bg="#5F3FCA",
-    #         fg="white",
-    #         font=("Helvetica", 12, "bold"),
-    #         relief="raised",
-    #         padx=10,
-    #         pady=5
-    #     ).pack(pady=10)
-
-    # def center_popup(self, popup, width, height):
-    #     """Center the popup window on screen"""
-    #     screen_width = popup.winfo_screenwidth()
-    #     screen_height = popup.winfo_screenheight()
-    #     x = (screen_width // 2) - (width // 2)
-    #     y = (screen_height // 2) - (height // 2)
-    #     popup.geometry(f"{width}x{height}+{x}+{y}")
-
-    def start_from_scratch(self):
-        """Handle starting a new wall from scratch"""
-        print("Starting a new wall from scratch...")
-
-    def load_from_existing(self):
-        """Handle loading from existing wall"""
-        print("Loading from existing wall...")
-        # existing_walls = global_gallery.get_walls()
-        # if not existing_walls:
-        #     messagebox.showerror("Error", "No existing walls found.")
-        # else:
-        #     # Implement logic to select from existing walls
-        #     messagebox.showinfo("Info", "Feature coming soon!")
-        # self.popup.destroy()
-
-    
 
     def load_content(self):
-        """Show the wall creation form with centered inputs"""
-        # for widget in self.AppMain.root.winfo_children():
-        #     widget.destroy()
-
-        print("Loading new gallery screen...")
-        
+        """Show the wall creation form with centered inputs"""        
         # Main container
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True, padx=20, pady=20)
@@ -334,7 +269,7 @@ class ScreenNewGalleryUI(ScreenBase):
         )
 
         self.AppMain.gallery.add_wall(new_wall)
-        self.AppMain.switch_screen(ScreenType.PERMANENT_OBJECT)
+        self.AppMain.switch_screen(ScreenType.LOCK_OBJECTS_TO_WALL)
         
         # Navigate to PermanentObjectUI
         # from gallery_wall_planner.gui.permanentObjectUI import PermanentObjectUI

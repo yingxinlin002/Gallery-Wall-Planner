@@ -12,8 +12,8 @@ from gallery_wall_planner.models.structures import WallPosition, CanvasDimension
 from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
 from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
-
-
+from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
+from typing import Dict
 
 class ScreenLockObjectsUI(ScreenBase):
     
@@ -38,6 +38,8 @@ class ScreenLockObjectsUI(ScreenBase):
 
         self.collapsible_menu = None
 
+        self.permanent_object_buttons: Dict[str, BTNWallItem] = {}
+
 
     def load_content(self):
         """This method should be overridden by child classes to load their specific content.
@@ -57,9 +59,17 @@ class ScreenLockObjectsUI(ScreenBase):
         # buttons_frame.pack(side="left", padx=20)
         # item_buttons = {}
 
-        self.collapsible_menu = CollapsibleMenu(content_frame, "Permanent Objects")
+        self.left_panel = ttk.Frame(content_frame, width=300)
+        self.left_panel.pack(side="left", fill="y", padx=10, pady=10)
+
+        self.collapsible_menu = CollapsibleMenu(self.left_panel, "Permanent Objects")
         self.collapsible_menu.load_content()
         self.collapsible_menu.pack(side="left", fill="y")
+
+        self.scroll_box = ScrollBoxVertical(self.left_panel)
+        self.scroll_box.load_content()
+        self.scroll_box.pack(side="left", fill="y")
+        
         
 
         # Make canvas non-expanding to free space below
@@ -72,64 +82,16 @@ class ScreenLockObjectsUI(ScreenBase):
             50, Padding(10, 10, 10, 10))
         self.wall_canvas = WallCanvas(self.AppMain, canvas_frame, canvas_dimensions)
         self.wall_canvas.load_content()
-        # self.canvas_width = 800
-        # self.canvas_height = 350
-        # self.canvas = tk.Canvas(canvas_frame, width=self.canvas_width, height=self.canvas_height)
-        # apply_canvas_style(self.canvas)
-        # self.canvas.pack(padx=10, pady=10)
 
-        # margin = 50
-        # self.screen_scale = min((self.canvas_width - 2 * margin) / self.wall.width, (self.canvas_height - 2 * margin) / self.wall.height)
-        # self.wall_position = WallPosition(
-        #     margin, 
-        #     margin, 
-        #     margin + self.wall.width * self.screen_scale, 
-        #     margin + self.wall.height * self.screen_scale
-        # )
-
-        # Draw wall background
-        # self.canvas.create_rectangle(self.wall_position.wall_left, self.canvas_height - self.wall_position.wall_bottom - self.wall.height*self.screen_scale,
-        #                   self.wall_position.wall_right, self.canvas_height - self.wall_position.wall_bottom,
-        #                   fill=self.wall.color, outline="black", width=2)
-
-        # # Add coordinate indicators
-        # self.canvas.create_text(self.wall_position.wall_left - 10, self.canvas_height - self.wall_position.wall_bottom + 5, text="0", anchor="e")
-        # self.canvas.create_text(self.wall_position.wall_left - 10, self.canvas_height - self.wall_position.wall_bottom - self.wall.height*self.screen_scale - 5,
-        #                 text=f"{self.wall.height}\"", anchor="e")
-        # self.canvas.create_text(self.wall_position.wall_left + 5, self.canvas_height - self.wall_position.wall_bottom + 15, text="0", anchor="n")
-        # self.canvas.create_text(self.wall_position.wall_right - 5, self.canvas_height - self.wall_position.wall_bottom + 15, text=f"{self.wall.width}\"", anchor="n")
-
-        # Create draggable items for each permanent object
-        buttons_per_row = 4
         self.wall_canvas.add_draggables(self.wall.permanent_objects_dict)
         for _, obj in self.wall_canvas.draggable_items.items():
-            #pos = obj.position
-            # Initialize position in layout_items
-            #self.layout_items[self.obstacle_names[i]] = pos if pos else {"x": 0.0, "y": 0.0}
-
-            # Create draggable item
-            # di = WallItem_Draggable(
-            #     index=i,
-            #     wall_object=obj,
-            #     parent_ui=self.wall_canvas,
-            #     name=obj.name
-            # )
-            # # self.items.append(di)
-            # self.wall_canvas.draggable_items.append(di)
-
-            # Create button for this item
-            # row = i // buttons_per_row
-            # col = i % buttons_per_row
-            # btn = ttk.Button(self.collapsible_menu.menu_frame,
-            #                  text=obj.name,
-            #                  command=lambda idx=i: self.show_item_popup(idx))
-            # apply_primary_button_style(btn)
-            # btn.grid(row=row, column=col, padx=5, pady=5)  # Use grid layout for buttons
-            # item_buttons[i] = btn
-            btn = BTNWallItem(self.collapsible_menu.menu_frame, obj)
+            btn = BTNWallItem(self.scroll_box.scrollable_frame, obj)
             btn.pack(side="top", fill="x", padx=5, pady=5)
             btn.load_content()
+            self.permanent_object_buttons[obj.wall_object.id] = btn
             
+        self.add_permanent_object_button = ttk.Button(self.left_panel, text="Add Permanent Object", command=self.add_permanent_object)
+        self.add_permanent_object_button.pack(side="top", fill="x", padx=5, pady=5)
 
         # Bottom buttons
         button_frame = ttk.Frame(self)
@@ -165,6 +127,10 @@ class ScreenLockObjectsUI(ScreenBase):
         # Positions are already saved in the wall object through the DraggableItem class
         # Now just launch the SelectWallSpaceUI with the updated wall
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
+
+    def add_permanent_object(self):
+        # Load popup
+        print("Add permanent object")
 
     # def export_then_continue(self):
     #     file_path = filedialog.asksaveasfilename(defaultextension=".json", title="Save Project")

@@ -27,8 +27,21 @@ class Gallery:
         return self.walls_dict
         
     def remove_wall(self, wall: Wall) -> None:
+        if self.current_wall == wall:
+            self.current_wall = None
         self.walls.remove(wall)
         self.walls_dict.pop(wall.id)
+
+    def update_wall(self, wall_id : str, wall : Wall) -> bool:
+
+        if wall_id in self.walls_dict:
+            old_wall = self.walls_dict.pop(wall_id)
+            self.walls.remove(old_wall)
+            self.walls.append(wall)
+            self.walls_dict[wall.id] = wall
+            self.current_wall = wall
+            return True
+        return False
 
     def get_wall_by_name(self, name: str) -> Optional[Wall]:
         """Find a wall by its name"""
