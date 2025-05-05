@@ -189,7 +189,7 @@ class ScreenEditorUI(ScreenBase):
         self.wall_canvas.load_content()
         self.wall_canvas.add_fixed_items(self.AppMain.gallery.current_wall.permanent_objects_dict)
         #TODO  Only add artwork that has been placed on the wall.
-        self.wall_canvas.add_draggables(self.AppMain.gallery.current_wall.artwork_dict)
+        self.wall_canvas.create_draggables(self.AppMain.gallery.current_wall.artwork_dict)
 
         # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
         # apply_canvas_style(self.canvas)
@@ -375,7 +375,7 @@ class ScreenEditorUI(ScreenBase):
         """Handle artwork selection from the sidebar."""
         print(f"DEBUG: select_artwork called with {artwork.name}")
         # btn.config(bg='red')
-        self.wall_canvas.add_draggable(artwork)
+        self.wall_canvas.create_draggable(artwork)
 
         # # Store the selected artwork
         # self.selected_artwork = artwork

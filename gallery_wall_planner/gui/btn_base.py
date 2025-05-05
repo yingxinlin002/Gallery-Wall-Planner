@@ -6,7 +6,7 @@ from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
 class BTNBase(tk.Frame):
     def __init__(self, parent_frame : tk.Frame, *args, **kwargs):
-        super().__init__(parent_frame, *args, **kwargs)
+        super().__init__(parent_frame, bg="white", *args, **kwargs)
         self.styles = get_ui_styles()
         self.label: tk.Label = None
         self.edit_button: tk.Button = None
@@ -20,7 +20,8 @@ class BTNBase(tk.Frame):
                font=self.styles["label_font"],
                bg="#fff",
                justify="left",
-               anchor="w")
+               anchor="w",
+                )
         self.label.pack(side="left", fill="both", padx=5, expand=True)
         self.edit_button = tk.Button(self, text=self.edit_button_text, command=self.on_edit_clicked)
         self.edit_button.pack(side="right", padx=5)

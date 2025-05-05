@@ -23,5 +23,7 @@ class ScrollBoxVertical(tk.Frame):
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollable_frame.pack(side="top", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
+
 

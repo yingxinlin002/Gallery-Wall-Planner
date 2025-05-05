@@ -3,7 +3,9 @@ from tkinter import messagebox
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.models.wall import Wall
-from typing import Optional
+from typing import Dict, Optional
+from gallery_wall_planner.gui.btn_wall import BTNWall
+from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
 
 class ScreenSelectWallSpaceUI(ScreenBase):
     def __init__(self, AppMain : AppMain, *args, **kwargs):
@@ -14,6 +16,7 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         self.btn_export_layout = None
         self.btn_continue = None
         self.btn_back = None
+        self.wall_btns : Dict[str, BTNWall] = {}
 
     def load_content(self):
         # Clear the current frame
@@ -30,22 +33,25 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         left_panel.pack(side="left", fill="y", padx=10, pady=10)
 
         # Scrollable list for wall spaces with a frame to hold both name and delete button
-        self.list_container = tk.Frame(left_panel)
-        self.list_container.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+        self.scroll_box = ScrollBoxVertical(left_panel)
+        self.scroll_box.pack(side="top", fill="both", expand=True)
+        self.scroll_box.load_content()
 
-        self.wall_listbox = tk.Listbox(self.list_container, width=25, height=10, font=("Arial", 12))
-        self.wall_listbox.pack(side="left", fill="both", expand=True)
+        self.list_container = self.scroll_box.scrollable_frame
 
-        # Add walls to the listbox
         for wall in self.walls:
-            self.wall_listbox.insert(tk.END, wall.name)
-
-        # Bind selection event to update the preview and show delete button
-        self.wall_listbox.bind("<<ListboxSelect>>", self.on_wall_selected)
+            btn = BTNWall(self.list_container, wall, self.AppMain, self)
+            btn.pack(side="top",fill="x",expand=True, padx=5, pady=5)
+            btn.load_content()
+            self.wall_btns[wall.id] = btn
 
         # Create New Wall Space Button
         self.btn_create_new_wall_space = tk.Button(left_panel, text="Create New Wall Space", command=self.create_new_wall_space, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
-        self.btn_create_new_wall_space.pack(side="bottom", pady=10)
+        self.btn_create_new_wall_space.pack(side="bottom")
+
+        # Edit permanent objects
+        self.btn_edit_permanent_objects = tk.Button(left_panel, text="Edit Permanent Objects", command=self.edit_permanent_objects, width=20, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
+        self.btn_edit_permanent_objects.pack(side="bottom")
         
         # Right Panel: Wall space preview
         right_panel = tk.Frame(content_frame, width=500, bg="#ffffff")
@@ -75,123 +81,49 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         self.btn_continue = tk.Button(bottom_frame, text="Continue >", command=self.continue_to_next, width=15, bg="#5F3FCA", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
         self.btn_continue.pack(side="right", padx=10)
 
-    def on_wall_selected(self, event=None):
-        """Handle wall selection - update preview and show delete button"""
-        self.update_wall_preview()
-        
-        # Remove any existing delete button
-        for btn in self.delete_buttons.values():
-            btn.destroy()
-        self.delete_buttons.clear()
-
-        selected_index = self.wall_listbox.curselection()
-        if selected_index:
-            wall = self.walls[selected_index[0]]
-            
-            # Create delete button
-            delete_btn = tk.Button(
-                self.list_container,
-                text="×",  # Using × symbol instead of X
-                fg="red",
-                font=("Arial", 12, "bold"),
-                bd=0,
-                command=lambda w=wall: self.delete_wall(w)
-            )
-            delete_btn.pack(side="right", padx=(0, 5))
-            
-            # Add tooltip
-            self.create_tooltip(delete_btn, f"Delete {wall.name}")
-            
-            # Store reference to button
-            self.delete_buttons[wall.name] = delete_btn
-
-    def create_tooltip(self, widget: tk.Widget, text: str):
-        """Create a simple tooltip that appears on hover"""
-        tooltip = tk.Toplevel(self.AppMain.root)
-        tooltip.withdraw()
-        tooltip.overrideredirect(True)
-        
-        label = tk.Label(tooltip, text=text, bg="lightyellow", relief="solid", borderwidth=1)
-        label.pack()
-        
-        def enter(event):
-            x, y, _, _ = widget.bbox("insert")
-            x += widget.winfo_rootx() + 25
-            y += widget.winfo_rooty() + 25
-            tooltip.geometry(f"+{x}+{y}")
-            tooltip.deiconify()
-        
-        def leave(event):
-            tooltip.withdraw()
-        
-        widget.bind("<Enter>", enter)
-        widget.bind("<Leave>", leave)
-        tooltip.bind("<Leave>", leave)
-
-    def delete_wall(self, wall):
-        """Handle wall deletion with confirmation"""
-        confirm = messagebox.askyesno(
-            "Delete Wall", 
-            f"Are you sure you want to delete '{wall.name}'?",
-            parent=self.AppMain.root
-        )
-        
-        if confirm:
-            # Remove from gallery
-            self.AppMain.gallery.remove_wall(wall)
-            
-            # Update UI
-            self.walls = self.AppMain.gallery.get_walls()
-            self.wall_listbox.delete(0, tk.END)
-            for wall in self.walls:
-                self.wall_listbox.insert(tk.END, wall.name)
-            
-            # Clear preview
-            self.preview_canvas.delete("all")
-            self.wall_details_label.config(text="Select a wall to preview")
-            
-            # Remove delete button
-            if wall.name in self.delete_buttons:
-                self.delete_buttons[wall.name].destroy()
-                del self.delete_buttons[wall.name]
 
     def create_new_wall_space(self):
         # Navigate to NewGalleryUI to create a new wall space
         self.AppMain.switch_screen(ScreenType.NEW_GALLERY)
         
+    def edit_permanent_objects(self):
+        if self.AppMain.gallery.current_wall:
+            self.AppMain.switch_screen(ScreenType.LOCK_OBJECTS_TO_WALL)
+        else:
+            messagebox.showwarning("Error", "Please select a wall space to edit permanent objects.")
 
     def export_layout(self):
         # Export the selected wall layout
-        selected_wall = self.get_selected_wall()
+        selected_wall = self.AppMain.gallery.current_wall
         if selected_wall:
-            exported_data = selected_wall.export_wall()
-            messagebox.showinfo("Export Layout", f"Layout exported successfully!\n{exported_data}")
+            # exported_data = selected_wall.export_wall()
+            messagebox.showinfo("Export Layout", f"Layout exported successfully!\n")
         else:
             messagebox.showwarning("Error", "Please select a wall space to export.")
 
     def continue_to_next(self):
-        selected_wall = self.get_selected_wall()
-        if selected_wall:
-            self.AppMain.gallery.current_wall = selected_wall
-            # Navigate to EditorUI
-            self.AppMain.switch_screen(ScreenType.EDITOR)
-        else:
-            messagebox.showwarning("Error", "Please select a wall space to continue.")
+        self.AppMain.switch_screen(ScreenType.EDITOR)
 
-    def get_selected_wall(self) -> Optional[Wall]:
-        # Get the selected wall from the listbox
-        selected_index = self.wall_listbox.curselection()
-        if selected_index:
-            return self.walls[selected_index[0]]
-        return None
+    def remove_wall_btn(self, wall_id : str):
+        if wall_id in self.wall_btns:
+            self.wall_btns[wall_id].destroy()
+            self.wall_btns.pop(wall_id)
+            self.update_wall_preview()
+        
 
     def update_wall_preview(self, event=None):
         """Update the wall preview canvas and details when a wall is selected."""
-        selected_wall = self.get_selected_wall()
-        if selected_wall:
-            # Clear the canvas
-            self.preview_canvas.delete("all")
+        selected_wall = self.AppMain.gallery.current_wall
+        # Clear the canvas
+        self.preview_canvas.delete("all")
+        self.wall_details_label.config(text="Select a wall to preview")
+        for btn in self.wall_btns.values():
+            if selected_wall and btn.wall.id == selected_wall.id:
+                btn.label.configure(bg="yellow")
+            else:
+                btn.label.configure(bg="#fff")
 
+        if selected_wall:
             # Draw the wall preview
             canvas_width = 400
             canvas_height = 300
@@ -249,3 +181,5 @@ class ScreenSelectWallSpaceUI(ScreenBase):
                     f"Color: {selected_wall.color}\n"
                     f"Permanent Objects: {obj_count}"
             )
+
+        

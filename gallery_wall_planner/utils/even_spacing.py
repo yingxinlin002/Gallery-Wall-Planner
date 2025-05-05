@@ -294,7 +294,7 @@ def apply_even_spacing(wall_canvas: WallCanvas, imported_artworks: List[Artwork]
                     draggable.update_position()
                 else:
                     # Add new draggable
-                    wall_canvas.add_draggable(artwork)
+                    wall_canvas.create_draggable(artwork)
 
                 current_x += artwork.width + spacing
             

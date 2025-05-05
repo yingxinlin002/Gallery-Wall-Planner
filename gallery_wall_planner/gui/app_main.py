@@ -56,15 +56,13 @@ class AppMain():
     def switch_screen(self, screen_type: ScreenType, wall=None, artwork=None):
         """Switch to the specified screen type"""
         print(f"Switching to screen: {screen_type.name}")
-
-        self.current_screen = screen_type
         
         # Update editor state if provided
         if wall:
             self.gallery.current_wall = wall
         if artwork:
             self.editor_artwork_selected = artwork
-        
+
         if self.frame_main:
             # Destroy all children of frame_main
             for widget in self.frame_main.winfo_children():
@@ -74,7 +72,7 @@ class AppMain():
         
         # Load the appropriate screen
         if screen_type == ScreenType.HOME:
-            self._load_home_screen()
+            self._load_home_screen()  # Home screen loading method, ensure no popups are involved
         elif screen_type == ScreenType.NEW_GALLERY:
             self._load_new_gallery_screen()
         elif screen_type == ScreenType.SELECT_WALL_SPACE:
@@ -91,10 +89,11 @@ class AppMain():
             self._load_artwork_xlsx_screen()
         elif screen_type == ScreenType.ARTWORK_SELECTION:
             pass
-                
+
         # Call load_content on the new screen if it's a UIBase instance
         if hasattr(self.frame_contents, 'load_content'):
             self.frame_contents.load_content()
+
 
     def _load_home_screen(self):
         """Load the home screen"""
