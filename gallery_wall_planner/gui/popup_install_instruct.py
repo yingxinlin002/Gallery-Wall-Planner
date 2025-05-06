@@ -100,8 +100,8 @@ class InstallInstructionPopup(tk.Toplevel):
         
         for art in self.artworks:
             # Get bottom-left position
-            bottom_left_x = art.x
-            bottom_left_y = art.y
+            bottom_left_x = art.position.x
+            bottom_left_y = art.position.y
             
             # Calculate center position
             center_x = bottom_left_x + (art.width / 2)
