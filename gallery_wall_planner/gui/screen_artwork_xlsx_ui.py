@@ -326,4 +326,7 @@ class ScreenArtworkxlsxUI(ScreenBase):
             messagebox.showinfo("Success", f"Artwork imported from:\n{file_path}")
             self.AppMain.switch_screen(ScreenType.EDITOR)
         except Exception as e:
+            import traceback
+            print(f"[ERROR] Could not import artwork: {str(e)}")
+            traceback.print_exc()  # This prints the full traceback to console
             messagebox.showerror("Error", f"Could not import artwork:\n{str(e)}")
