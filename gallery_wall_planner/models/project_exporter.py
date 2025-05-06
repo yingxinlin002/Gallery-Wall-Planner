@@ -228,7 +228,7 @@ def export_gallery_to_excel(filepath, gallery):
                     "Photo": a.image_path,
                     "NFS (Y/N)": "Y" if a.nfs else "N",
                     "_internal": str(a.__dict__)
-                } for a in wall.artworks])
+                } for a in wall.artwork])
                 artworks_df.to_excel(writer, sheet_name=f"{wall.name}_Artworks", index=False)
 
             if wall.permanent_objects:
