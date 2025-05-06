@@ -407,6 +407,19 @@ class Wall:
         """Save wall data to JSON file"""
         with open(filename, 'w') as f:
             json.dump(self.export_wall(), f, indent=2)
+
+    def export(self):
+        # Helper for project exporter
+        return {
+            "name": self.name,
+            "width": self.width,
+            "height": self.height,
+            "color": self.color,
+            "artwork": self.artwork,
+            "wall lines": self.wall_lines,
+            "permanent objects": self.permanent_objects
+        }
+
     
     @classmethod
     def load_from_file(cls, filename: str) -> Wall:
