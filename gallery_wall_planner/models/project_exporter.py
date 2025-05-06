@@ -217,7 +217,7 @@ def export_gallery_to_excel(filepath, gallery):
             }])
             wall_df.to_excel(writer, sheet_name=f"{wall.name}_Wall", index=False)
 
-            if wall.artworks:
+            if wall.artwork:
                 artworks_df = pd.DataFrame([{
                     "Name": a.name,
                     "Width": a.width,
@@ -288,7 +288,7 @@ def import_gallery_from_excel(filepath):
                     )
                     a.position = Position(pos["x"], pos["y"])
                     artworks.append(a)
-            wall.artworks = artworks
+            wall.artwork = artworks
 
             # Permanents
             perms = []
