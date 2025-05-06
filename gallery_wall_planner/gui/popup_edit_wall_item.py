@@ -161,7 +161,9 @@ class PopupEditWallItem(PopupBase):
         file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             self.image_path.set(file_path)
+            self.release_top()
             messagebox.showinfo("Success", "Image uploaded successfully!")
+            self.set_to_top()
 
     def delete(self):
         if isinstance(self.wall_object, PermanentObject):
@@ -191,21 +193,16 @@ class PopupEditWallItem(PopupBase):
             )
         wall_object.position = self.current_position
         if self.is_new and wall_object.id in self.app_main.gallery.current_wall.permanent_objects_dict:
-            self.grab_release()
-            self.attributes("-topmost", False)
+            self.release_top()
             messagebox.showerror("Error", "Wall Object already exists")
-            self.attributes("-topmost", True)
-            self.grab_set()
+            self.set_to_top()
             return
         if self.app_main.gallery.current_wall.check_object_collision(wall_object, [self.wall_object.id]):
-            self.grab_release()
-            self.attributes("-topmost", False)
+            self.release_top()
             if not messagebox.askyesno("Error", "Object collides with another object. Do you want to continue?"):
-                self.attributes("-topmost", True)
-                self.grab_set()
+                self.set_to_top()
                 return
-            self.attributes("-topmost", True)
-            self.grab_set()
+            self.set_to_top()
         if self.is_new:
             if isinstance(self.wall_object, Artwork):
                 self.app_main.gallery.current_wall.add_artwork(wall_object)

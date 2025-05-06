@@ -34,3 +34,12 @@ class PopupBase(tk.Toplevel):
             pass
         self.destroy()
         self.app_main.root.focus_set()
+
+    def set_to_top(self):
+        self.attributes("-topmost", True)
+        self.grab_set()
+
+    def release_top(self):
+        self.attributes("-topmost", False)
+        self.grab_release()
+        

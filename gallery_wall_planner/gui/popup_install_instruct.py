@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from gallery_wall_planner.gui.app_main import AppMain
+from gallery_wall_planner.gui.popup_base import PopupBase
 from tkinter import ttk, filedialog, messagebox
 import openpyxl
 from gallery_wall_planner.utils.export_helpers import (
@@ -11,34 +12,22 @@ from gallery_wall_planner.utils.export_helpers import (
 )
 
 
-def open_install_instruct_popup(root, selected_wall, artwork_items):
-    InstallInstructionPopup(root, selected_wall, artwork_items)
+class InstallInstructionPopup(PopupBase):
+    def __init__(self, app_main : AppMain):
+        super().__init__(app_main, "Installation Instructions", 400, 500)
+        self.load_content()
 
+    def load_content(self):
+        super().load_content()
 
-class InstallInstructionPopup(tk.Toplevel):
-    def __init__(self, root, selected_wall, artworks):
-        super().__init__(root)
-        self.selected_wall = selected_wall
-        self.artworks = artworks
-
-        # Make the window stay on top
-        self.attributes("-topmost", True)
-
-        self.geometry("400x500")
-        self.title("Installation Instructions")
-
-        # Make sure window stays on top while it's open
-        self.transient(root)  # Set as transient window of parent
-        self.grab_set()       # Grab all events to this window
-        # When window closes, release the grab
-        self.protocol("WM_DELETE_WINDOW", self.on_close)
-        
+        self.artworks = self.app_main.gallery.current_wall.artwork
+        self.selected_wall = self.app_main.gallery.current_wall
         # ----------------------------------
         # -------- First Piece Hung --------
         # ----------------------------------
         ttk.Label(self, text="First Piece Hung", font=("Arial", 10, "bold")).pack(anchor="w", padx=15, pady=(10, 0))
-        self.first_piece_var = tk.StringVar(value=artworks[0].name if artworks else "")
-        for art in artworks:
+        self.first_piece_var = tk.StringVar(value=self.artworks[0].name if self.artworks else "")
+        for art in self.artworks:
             ttk.Radiobutton(self, text=art.name, variable=self.first_piece_var, value=art.name).pack(anchor="w", padx=30)
 
         # ------------------------------
@@ -74,11 +63,7 @@ class InstallInstructionPopup(tk.Toplevel):
         button_frame.pack(side="bottom", pady=20)
         ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side="left", padx=10)
 
-        def on_save():
-            self.print_measurement_instructions()
-            self.save_measurement_instructions()
-
-        ttk.Button(button_frame, text="Save", command=on_save).pack(side="right", padx=10)
+        ttk.Button(button_frame, text="Save", command=self.print_and_save).pack(side="right", padx=10)
 
     def on_close(self):
         """Handle window closing"""
@@ -145,7 +130,10 @@ class InstallInstructionPopup(tk.Toplevel):
     def save_measurement_instructions(self):
         text_lines = self.generate_instruction_lines()
         if not text_lines:
+            self.release_top()
             messagebox.showerror("Error", "No instructions to save.")
+            self.set_to_top()
+            self.on_close()
             return
 
         # Get the file extension based on selected file type
@@ -170,12 +158,14 @@ class InstallInstructionPopup(tk.Toplevel):
             ("All Files", "*.*")
         ]
         
+        self.release_top()
         filepath = filedialog.asksaveasfilename(
             defaultextension=file_ext,
             initialfile=default_filename,
             filetypes=filetypes,
             title="Save Installation Instructions"
         )
+        self.set_to_top()
         
         if not filepath:
             return
@@ -191,9 +181,18 @@ class InstallInstructionPopup(tk.Toplevel):
                 save_to_text(text_lines, filepath)
             else:
                 raise ValueError("Unknown file type selected.")
+            self.release_top()
             messagebox.showinfo("Success", f"Instructions saved to {filepath}")
+            self.set_to_top()
+            self.on_close()
         except Exception as e:
+            import traceback
+            print(f"[ERROR] Failed to save instructions: {str(e)}")
+            traceback.print_exc()  # This prints the full traceback to console
+            self.release_top()
             messagebox.showerror("Error", f"Failed to save instructions:\n{e}")
+            self.set_to_top()
+            self.on_close()
 
     def generate_instruction_lines(self):
         locations = self.calculate_hang_locations()

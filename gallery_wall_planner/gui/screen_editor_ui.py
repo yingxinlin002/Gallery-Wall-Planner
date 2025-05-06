@@ -12,7 +12,7 @@ from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.wall_canvas import WallCanvas
 from gallery_wall_planner.models.structures import CanvasDimensions, Padding
-from gallery_wall_planner.gui.popup_install_instruct import open_install_instruct_popup  # NEW IMPORT INSIDE WHERE "Calculate Installation Instruction" BUTTON LIVES
+from gallery_wall_planner.gui.popup_install_instruct import InstallInstructionPopup
 from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.gui.popup_snap_lines import PopupSnapLines
 from gallery_wall_planner.models.wall_line import SingleLine, Orientation
@@ -443,11 +443,7 @@ class ScreenEditorUI(ScreenBase):
             return
         
         # Open the popup with the current wall and placed artwork
-        open_install_instruct_popup(
-            self._root(), 
-            self.AppMain.gallery.current_wall, 
-            all_artwork 
-        )
+        InstallInstructionPopup(self.AppMain)
         
     def back_to_wall_selection(self):
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
