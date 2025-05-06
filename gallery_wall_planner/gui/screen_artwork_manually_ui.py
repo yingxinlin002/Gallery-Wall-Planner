@@ -112,28 +112,23 @@ class ScreenArtworkManuallyUI(ScreenBase):
         self.artwork_canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        if len(self.AppMain.gallery.current_wall.artwork) > 0:
-            for artwork in self.AppMain.gallery.current_wall.artwork:
+        self.all_artworks = []
+        self.all_artworks.extend(self.AppMain.gallery.unplaced_artwork)
+        for wall in self.AppMain.gallery.walls:
+            self.all_artworks.extend(wall.artwork)
+
+        if len(self.all_artworks) > 0:
+            for artwork in self.all_artworks:
                 self.add_artwork_to_list(artwork)
         else:
             tk.Label(self.artwork_frame, text="No artworks added yet", fg="gray").pack(pady=20)
             
     def add_artwork_to_list(self, artwork: Artwork):
         """Add an artwork to the sidebar list"""
-        if len(self.AppMain.gallery.current_wall.artwork) == 0:
-            for widget in self.artwork_frame.winfo_children():
-                widget.destroy()
         
         frame = tk.Frame(self.artwork_frame, bg="white", bd=1, relief="groove", padx=10, pady=5)
         frame.pack(fill="x", pady=5, padx=5)
         frame.artwork = artwork  # Store reference to artwork
-        
-        # Make the frame clickable
-        frame.bind("<Button-1>", lambda e, a=artwork: self.select_artwork(a))
-        
-        # Highlight if selected
-        if hasattr(self, 'selected_artwork') and self.selected_artwork == artwork:
-            frame.config(bg="#f0f0ff")  # Light purple highlight
         
         # Artwork details
         tk.Label(frame, 
@@ -155,22 +150,6 @@ class ScreenArtworkManuallyUI(ScreenBase):
                     text=" | ".join(details), 
                     font=self.styles["small_font"], 
                     bg=frame["bg"]).pack(anchor="w")
-
-    def select_artwork(self, artwork):
-        """Handle artwork selection from the list"""
-        # Store selected artwork in AppMain
-        self.AppMain.editor_artwork_selected = artwork
-        
-        # Update highlights in sidebar
-        for widget in self.artwork_frame.winfo_children():
-            if isinstance(widget, tk.Frame):
-                if hasattr(widget, 'artwork') and widget.artwork == artwork:
-                    widget.config(bg="#f0f0ff")  # Light purple highlight
-                else:
-                    widget.config(bg="white")
-        
-        # Switch to editor screen with the selected artwork
-        self.AppMain.switch_screen(ScreenType.EDITOR)
 
     def clear_example(self, event, entry: tk.Entry, example_text):
         if entry.get() == example_text:
@@ -240,16 +219,11 @@ class ScreenArtworkManuallyUI(ScreenBase):
                     messagebox.showerror("Error", "Artwork already exists")
                     return
 
-            self.show_artwork_preview(artwork)
             self.AppMain.gallery.add_unplaced_artwork(artwork)
-            self.clear_form()
+            self.AppMain.switch_screen(ScreenType.ARTWORK_MANUAL)
 
         except ValueError as e:
             messagebox.showerror("Error", f"Invalid input: {str(e)}")
-
-    def show_artwork_preview(self, artwork):
-        self.add_artwork_to_list(artwork)
-        self.artwork_canvas.yview_moveto(1.0)
 
     def clear_form(self):
         entries = [
