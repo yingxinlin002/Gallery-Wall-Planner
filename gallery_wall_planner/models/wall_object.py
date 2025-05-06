@@ -28,7 +28,6 @@ class WallObject:
         self.width = width
         self.height = height
         self.image_path = image_path
-        self._id : str = ""
     
     @property
     def name(self) -> str:
@@ -95,7 +94,10 @@ class WallObject:
     @property
     def id(self) -> str:
         """Get the object's unique identifier"""
-        return self._id
+        return self._get_id()
+
+    def _get_id(self):
+        return get_id("wall_obj"+self.name+f"width{self.width},height{self.height}")
     
     def get_bounds(self):
         """
@@ -110,6 +112,28 @@ class WallObject:
             self.position.x + self.width,
             self.position.y + self.height
         )
+    
+    def overlaps_with(self, other: 'WallObject') -> bool:
+        """
+        Check if this wall object overlaps with another wall object
+        
+        Args:
+            other (WallObject): Another wall object to check for overlap
+            
+        Returns:
+            bool: True if the objects overlap, False otherwise
+        """
+        # Get coordinates of this object
+        ax1, ay1 = self.position.x, self.position.y
+        ax2, ay2 = ax1 + self.width, ay1 + self.height
+        
+        # Get coordinates of the other object
+        bx1, by1 = other.position.x, other.position.y
+        bx2, by2 = bx1 + other.width, by1 + other.height
+        
+        # Check for overlap using the standard rectangle overlap algorithm
+        # Two rectangles don't overlap if one is to the left, right, above, or below the other
+        return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
     
     def __str__(self):
         """String representation for debugging"""

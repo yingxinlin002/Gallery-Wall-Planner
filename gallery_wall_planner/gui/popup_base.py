@@ -2,15 +2,15 @@ import tkinter as tk
 from gallery_wall_planner.gui.app_main import AppMain
 
 class PopupBase(tk.Toplevel):
-    def __init__(self, AppMain : AppMain, Title : str, Width : int, Height : int, *args, **kwargs):
-        super().__init__(AppMain.root, *args, **kwargs)
-        self.AppMain = AppMain
+    def __init__(self, app_main : AppMain, Title : str, Width : int, Height : int, *args, **kwargs):
+        super().__init__(app_main.root, *args, **kwargs)
+        self.app_main: AppMain = app_main
         self.geometry(f"{Width}x{Height}")
         self.title(Title)
         
         # Set window properties
         self.attributes("-topmost", True)
-        self.transient(self.AppMain.root)
+        self.transient(self.app_main.root)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         
         # Configure the window to be ready for content
@@ -33,4 +33,4 @@ class PopupBase(tk.Toplevel):
             # If the window is already destroyed or grab isn't set
             pass
         self.destroy()
-        self.AppMain.root.focus_set()
+        self.app_main.root.focus_set()

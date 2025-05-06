@@ -2,6 +2,7 @@ from typing import Optional
 from gallery_wall_planner.models.structures import Position
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import get_id
+from typing import override
 
 class PermanentObject(WallObject):
     """
@@ -19,7 +20,10 @@ class PermanentObject(WallObject):
         """
         # Initialize the parent class
         super().__init__(name, width, height, image_path)
-        self._id = get_id("perm_obj"+name+f"width{self.width},height{self.height}")
+
+    @override
+    def _get_id(self):
+        return get_id("perm_obj"+self.name+f"width{self.width},height{self.height}")
         
     # All properties are inherited from WallObject
     

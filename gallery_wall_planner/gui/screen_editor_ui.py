@@ -318,15 +318,17 @@ class ScreenEditorUI(ScreenBase):
         self.artwork_scroll_box.pack(side="left", fill="both", expand=True)
 
         # Add artworks to the list
-        if hasattr(self.AppMain.gallery.current_wall, 'artwork') and self.AppMain.gallery.current_wall.artwork:
+        if len(self.AppMain.gallery.current_wall.artwork) > 0 or len(self.AppMain.gallery.unplaced_artwork) > 0:
             # TODO: Need to figure out how we're storing artwork first
-            # from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
-            # for artwork in self.AppMain.gallery.current_wall.artwork:
-            #     btn = BTNWallItem(self.artwork_scroll_box.scrollable_frame, artwork)
-            #     btn.pack(side="top", fill="x", padx=5, pady=5)
-            #     btn.load_content()
+            from gallery_wall_planner.gui.btn_wall_item import BTNWallItem, WallItemState
             for artwork in self.AppMain.gallery.current_wall.artwork:
-                self.add_artwork_item(self.artwork_scroll_box.scrollable_frame, artwork)
+                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
+            for artwork in self.AppMain.gallery.unplaced_artwork:
+                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR, state=WallItemState.ACTIVE)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
         else:
             tk.Label(self.artwork_scroll_box.scrollable_frame,
                      text="No artworks added yet",
@@ -348,6 +350,8 @@ class ScreenEditorUI(ScreenBase):
                      text="No snap lines added yet",
                      fg="gray").pack(pady=20)
 
+
+    # TODO Deprecated to be removed
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
         print(f"adding {artwork.name}")

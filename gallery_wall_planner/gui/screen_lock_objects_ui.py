@@ -85,12 +85,12 @@ class ScreenLockObjectsUI(ScreenBase):
 
         self.wall_canvas.create_draggables(self.wall.permanent_objects_dict)
         for _, obj in self.wall_canvas.draggable_items.items():
-            btn = BTNWallItem(self.scroll_box.scrollable_frame, obj)
+            btn = BTNWallItem(self.AppMain, self.scroll_box.scrollable_frame, obj.wall_object, ScreenType.LOCK_OBJECTS_TO_WALL)
             btn.pack(side="top", fill="x", padx=5, pady=5)
             btn.load_content()
             self.permanent_object_buttons[obj.wall_object.id] = btn
             
-        self.add_permanent_object_button = BTNNewWallItem(self.collapsible_menu.menu_frame, self, False)
+        self.add_permanent_object_button = BTNNewWallItem(self.AppMain, self.collapsible_menu.menu_frame, ScreenType.LOCK_OBJECTS_TO_WALL, False)
         self.add_permanent_object_button.load_content()
         self.add_permanent_object_button.pack(side="bottom", fill="x", padx=5, pady=5)
 
@@ -110,7 +110,7 @@ class ScreenLockObjectsUI(ScreenBase):
     def new_wall_item_button(self, draggable_item : 'WallItemDraggable'):
         self.AppMain.gallery.current_wall.add_permanent_object(draggable_item.wall_object)
         self.wall_canvas.add_draggable(draggable_item)
-        btn = BTNWallItem(self.scroll_box.scrollable_frame, draggable_item)
+        btn = BTNWallItem(self.AppMain, self.scroll_box.scrollable_frame, draggable_item)
         btn.pack(side="top", fill="x", padx=5, pady=5)
         btn.load_content()
         self.permanent_object_buttons[draggable_item.wall_object.id] = btn        

@@ -122,32 +122,27 @@ class WallCanvas():
         return x, y
     
     def enforce_boundaries(self, x, y, width, height):
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        if x + width > self.wall.width:
-            x = self.wall.width - width
-        if y + height > self.wall.height:
-            y = self.wall.height - height
-        return x, y
+        return self.AppMain.gallery.current_wall.enforce_boundaries(x, y, width, height)
 
     def check_all_collisions(self):
-        n = len(self.draggable_items)
-        keys = list(self.draggable_items.keys())
-        colliding = set()
-        for i in range(n):
-            for j in range(i+1, n):
-                if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
-                    colliding.add(keys[i])
-                    colliding.add(keys[j])
-            for fixed in self.fixed_items.values():
-                if self.draggable_items[keys[i]].rectangles_overlap(fixed):
-                    colliding.add(keys[i])
-
-        for key in keys:
-            self.canvas.itemconfig(self.draggable_items[key].id, outline="red" if key in colliding else "black")
-        return len(colliding) > 0
+        # n = len(self.draggable_items)
+        # keys = list(self.draggable_items.keys())
+        # colliding = set()
+        # for i in range(n):
+        #     for j in range(i+1, n):
+        #         if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
+        #             colliding.add(keys[i])
+        #             colliding.add(keys[j])
+        #     for fixed in self.fixed_items.values():
+        #         if self.draggable_items[keys[i]].rectangles_overlap(fixed):
+        #             colliding.add(keys[i])
+        colliding_ids = self.AppMain.gallery.current_wall.check_collisions()
+        for key in self.draggable_items:
+            if key in colliding_ids:    
+                self.canvas.itemconfig(self.draggable_items[key].id, outline="red")
+            else:
+                self.canvas.itemconfig(self.draggable_items[key].id, outline="black")
+        return len(colliding_ids) > 0
 
     def refresh_artworks(self):
         """Clear and redraw all artworks with their current positions"""
