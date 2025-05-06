@@ -201,6 +201,18 @@ class Artwork(WallObject):
         print(f"Imported {len(artworks)} artworks from {filename}")
         return artworks    
 
+    def export(self):
+        # Helper for exporter.py
+        return {
+            "title": self.title,
+            "width": self.width,
+            "height": self.height,
+            "hanging_point": self.hanging_point,
+            "medium": self.medium,
+            "depth": self.depth,
+            "photo": self.photo,
+            "nfs": self.nfs
+        }
 
     
     def export_artwork(self, directory: str = "") -> str:
