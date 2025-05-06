@@ -8,6 +8,7 @@ from openpyxl.drawing.image import Image
 from PIL import Image as PILImage
 from gallery_wall_planner.models.wall_object import WallObject
 from gallery_wall_planner.models.structures import get_id
+from typing import override
 
 class Artwork(WallObject):
     """
@@ -26,12 +27,15 @@ class Artwork(WallObject):
         self._price = price
         self._nfs = nfs
         self._notes = notes
-        self._id = get_id("artwork"+name+f"width{self.width},height{self.height},hanging_point{self.hanging_point}")
 
         # Ensure height is always a float
         self.height = height
         
     # name property is inherited from WallObject
+    
+    @override
+    def _get_id(self):
+        return get_id("artwork"+self.name+f"width{self.width},height{self.height},hanging_point{self.hanging_point}")
     
     @property
     def medium(self) -> str:

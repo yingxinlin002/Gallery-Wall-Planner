@@ -13,7 +13,7 @@ class Gallery:
         self.walls = []  # List of Wall objects for this specific gallery
         self.walls_dict: Dict[str, Wall] = {}
         self.current_wall: Optional[Wall] = None
-        self.unplaced_artwork = []
+        self.unplaced_artwork: List[Artwork] = []
 
     # Class methods to manage all walls
     def add_wall(self, wall: Wall) -> None:

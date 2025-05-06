@@ -66,10 +66,7 @@ class WallItem:
     def get_label_location(self, item_location: ItemLocation) -> Position:
         return Position((item_location.x1 + item_location.x2) / 2, (item_location.y1 + item_location.y2) / 2)
 
-    def rectangles_overlap(self, item2: WallItem):
+    def rectangles_overlap(self, item2: 'WallItem'):
         """Check if two draggable items overlap"""
-        ax1, ay1 = self.wall_object.position.x, self.wall_object.position.y
-        ax2, ay2 = ax1 + self.wall_object.width, ay1 + self.wall_object.height
-        bx1, by1 = item2.wall_object.position.x, item2.wall_object.position.y
-        bx2, by2 = bx1 + item2.wall_object.width, by1 + item2.wall_object.height
-        return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
+        # Use the overlaps_with method from the WallObject class
+        return self.wall_object.overlaps_with(item2.wall_object)

@@ -29,7 +29,6 @@ class Wall:
         self._artwork = []          # List of Artwork objects
         self._wall_lines = []       # List of decorative lines/markings
         self._permanent_objects: List[PermanentObject] = []  # List of PermanentObject instances
-        self._id = get_id("wall"+name+f"width{self.width},height{self.height},color{self.color}")
 
         self._permanent_objects_dict: Dict[str, PermanentObject] = {}
         self._artwork_dict: Dict[str, Artwork] = {}
@@ -44,7 +43,7 @@ class Wall:
     @property
     def id(self) -> str:
         """Get the wall id"""
-        return self._id
+        return get_id("wall"+self.name+f"width{self.width},height{self.height},color{self.color}")
 
     @property
     def name(self) -> str:
@@ -262,6 +261,14 @@ class Wall:
             self._artwork_dict[obj.id] = obj
             return True
         return False
+
+    def get_wall_item(self, id: str) -> Optional[WallObject]:
+        if id in self._permanent_objects_dict:
+            return self._permanent_objects_dict[id]
+        if id in self._artwork_dict:
+            return self._artwork_dict[id]
+        return None
+    
     @property
     def permanent_objects_dict(self) -> Dict[str, PermanentObject]:
         return self._permanent_objects_dict
@@ -429,6 +436,104 @@ class Wall:
         
         return wall
     
+    def check_collisions(self) -> List[str]:
+        """
+        Check for collisions between all wall objects (artwork and permanent objects)
+        
+        Returns:
+            List[str]: List of object IDs that are colliding with at least one other object
+        """
+        # Combine all wall objects for collision checking
+        all_objects: Dict[str, WallObject] = {}
+        all_objects.update(self._artwork_dict)        # Add all artwork
+        all_objects.update(self._permanent_objects_dict)  # Add all permanent objects
+        
+        # Set to store colliding object IDs
+        colliding_ids = set()
+        
+        # Get list of object IDs
+        object_ids = list(all_objects.keys())
+        n = len(object_ids)
+        
+        # Check each pair of objects for collisions
+        for i in range(n):
+            obj_id_i = object_ids[i]
+            obj_i = all_objects[obj_id_i]
+            
+            # Check against all other objects (avoid checking the same pair twice)
+            for j in range(i+1, n):
+                obj_id_j = object_ids[j]
+                obj_j = all_objects[obj_id_j]
+                
+                # Use the overlaps_with method from WallObject
+                if obj_i.overlaps_with(obj_j):
+                    # Add both objects to the set of colliding IDs
+                    colliding_ids.add(obj_id_i)
+                    colliding_ids.add(obj_id_j)
+        
+        # Return list of colliding object IDs
+        return list(colliding_ids)
+
+    def check_object_collision(self, obj: WallObject, ignore_ids: Optional[List[str]] = None) -> bool:
+        """
+        Check if a wall object collides with any other objects on the wall
+        
+        Args:
+            obj (WallObject): The object to check for collisions
+            ignore_ids (Optional[List[str]]): List of object IDs to ignore in collision detection
+            
+        Returns:
+            bool: True if the object collides with any other object, False otherwise
+        """
+        # Initialize empty list if None is provided
+        if ignore_ids is None:
+            ignore_ids = []
+            
+        # Add the object's own ID to the ignore list if it has one
+        if hasattr(obj, 'id') and obj.id and obj.id not in ignore_ids:
+            ignore_ids.append(obj.id)
+            
+        # Combine all wall objects for collision checking
+        all_objects: Dict[str, WallObject] = {}
+        all_objects.update(self._artwork_dict)        # Add all artwork
+        all_objects.update(self._permanent_objects_dict)  # Add all permanent objects
+        
+        # Check against each object on the wall
+        for obj_id, wall_obj in all_objects.items():
+            # Skip objects in the ignore list
+            if obj_id in ignore_ids:
+                continue
+                
+            # Check for collision
+            if obj.overlaps_with(wall_obj):
+                return True
+                
+        # No collisions found
+        return False
+        
+    def enforce_boundaries(self, x, y, width, height):
+        """
+        Ensure that an object stays within the wall boundaries
+        
+        Args:
+            x (float): X-coordinate of the object
+            y (float): Y-coordinate of the object
+            width (float): Width of the object
+            height (float): Height of the object
+            
+        Returns:
+            tuple: Adjusted (x, y) coordinates that keep the object within the wall
+        """
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        if x + width > self.width:
+            x = self.width - width
+        if y + height > self.height:
+            y = self.height - height
+        return x, y
+
     def __str__(self) -> str:
         """String representation for debugging"""
         return (f"Wall(Name: {self.name}, Size: {self.width}\" x {self.height}\", "

@@ -318,15 +318,17 @@ class ScreenEditorUI(ScreenBase):
         self.artwork_scroll_box.pack(side="left", fill="both", expand=True)
 
         # Add artworks to the list
-        if hasattr(self.AppMain.gallery.current_wall, 'artwork') and self.AppMain.gallery.current_wall.artwork:
+        if len(self.AppMain.gallery.current_wall.artwork) > 0 or len(self.AppMain.gallery.unplaced_artwork) > 0:
             # TODO: Need to figure out how we're storing artwork first
-            # from gallery_wall_planner.gui.btn_wall_item import BTNWallItem
-            # for artwork in self.AppMain.gallery.current_wall.artwork:
-            #     btn = BTNWallItem(self.artwork_scroll_box.scrollable_frame, artwork)
-            #     btn.pack(side="top", fill="x", padx=5, pady=5)
-            #     btn.load_content()
+            from gallery_wall_planner.gui.btn_wall_item import BTNWallItem, WallItemState
             for artwork in self.AppMain.gallery.current_wall.artwork:
-                self.add_artwork_item(self.artwork_scroll_box.scrollable_frame, artwork)
+                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
+            for artwork in self.AppMain.gallery.unplaced_artwork:
+                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR, state=WallItemState.ACTIVE)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
         else:
             tk.Label(self.artwork_scroll_box.scrollable_frame,
                      text="No artworks added yet",
@@ -348,84 +350,20 @@ class ScreenEditorUI(ScreenBase):
                      text="No snap lines added yet",
                      fg="gray").pack(pady=20)
 
+
+    # TODO Deprecated to be removed
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
         print(f"adding {artwork.name}")
         art_btn = ArtBtn(parent, text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")")
         art_btn.config(command=lambda: (self.select_artwork(artwork), art_btn.toggle_bg()))
         art_btn.pack(fill="x", pady=2, padx=2)
-        # frame = tk.Frame(parent, bg="white", bd=1, relief="groove", padx=5, pady=5)
-        # frame.pack(fill="x", pady=2, padx=2)
-        # frame.artwork = artwork  # Store reference to artwork
-        #
-        # # Highlight if this is the selected artwork
-        # if self.selected_artwork and self.selected_artwork == artwork:
-        #     frame.config(bg="#f0f0ff")  # Light purple background
-        #
-        # # Make the whole frame clickable
-        # # frame.bind("<Button-1>", lambda e, a=artwork: self.select_artwork(a))
-        # frame.bind("<Button-1>", lambda e: print(f"clicked {artwork.name}"))
-        #
-        # # Artwork name and dimensions
-        # tk.Label(frame,
-        #          text=f"{artwork.name} ({artwork.width}\" × {artwork.height}\")",
-        #          font=self.styles["label_font"],
-        #          bg=frame["bg"]).pack(anchor="w")
-        #
-        # self.artwork_list.append(frame)
 
     def select_artwork(self, artwork: Artwork):
         """Handle artwork selection from the sidebar."""
         print(f"DEBUG: select_artwork called with {artwork.name}")
-        # btn.config(bg='red')
         self.wall_canvas.create_draggable(artwork)
 
-        # # Store the selected artwork
-        # self.selected_artwork = artwork
-        #
-        # # Update highlights in the sidebar
-        # for item in self.artwork_list:
-        #     if hasattr(item, 'artwork') and item.artwork == artwork:
-        #         item.config(bg="#f0f0ff")  # Light purple for selected
-        #         # Also update any labels inside the frame
-        #         for child in item.winfo_children():
-        #             if isinstance(child, tk.Label):
-        #                 child.config(bg="#f0f0ff")
-        #     else:
-        #         item.config(bg="white")  # White for others
-        #         # Also update any labels inside the frame
-        #         for child in item.winfo_children():
-        #             if isinstance(child, tk.Label):
-        #                 child.config(bg="white")
-        # self.selected_artwork = artwork
-        #
-        # # Update highlights in the sidebar
-        # for item in self.artwork_list:
-        #     if item.artwork == artwork:
-        #         item.config(bg="#f0f0ff")  # Light purple for selected
-        #     else:
-        #         item.config(bg="white")  # White for others
-        #
-        # # Initialize virtual wall if it doesn't exist
-        # if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-        #     self.initialize_virtual_wall()
-        #
-        # # Add to virtual wall if not already present
-        # if not self.is_artwork_on_wall(artwork):
-        #     self.virtual_wall.add_artwork(artwork)
-        #
-        # # Highlight on virtual wall
-        # self.highlight_artwork(artwork)
-        #
-    # def is_artwork_on_wall(self, artwork):
-    #     """Check if artwork is already on the virtual wall."""
-    #     if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-    #         return False
-    #
-    #     for item in getattr(self.virtual_wall, 'items', []):
-    #         if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
-    #             return True
-    #     return False
 
     def create_collapsible_menu(self, parent, title, expanded=True):
         menu_frame = tk.Frame(parent, bg="#e0e0e0", bd=1, relief="raised")
@@ -517,74 +455,9 @@ class ScreenEditorUI(ScreenBase):
     def open_artwork_manual_ui(self):
         self.AppMain.switch_screen(ScreenType.ARTWORK_MANUAL)
 
-    def open_artwork_xlsx_ui(self):
-        self.AppMain.switch_screen(ScreenType.ARTWORK_XLSX)
-
-    # def refresh_artwork_list(self):
-    #     """Refresh both the sidebar list and virtual wall"""
-    #     self.create_artwork_list_frame()
-    #
-    #     if hasattr(self.selected_wall, 'artwork') and self.selected_wall.artwork:
-    #         if not self.virtual_wall:
-    #             self.initialize_virtual_wall()
-    #         else:
-    #             # Clear and repopulate virtual wall
-    #             for widget in self.wall_space.winfo_children():
-    #                 widget.destroy()
-    #             self.initialize_virtual_wall()
-    #
-    #         # Re-highlight selected artwork if any
-    #         if self.selected_artwork:
-    #             self.highlight_artwork(self.selected_artwork)
-    #     else:
-    #         # Clear virtual wall if no artworks
-    #         if hasattr(self, 'virtual_wall'):
-    #             for widget in self.wall_space.winfo_children():
-    #                 widget.destroy()
-    #             self.virtual_wall = None
-    #             self.selected_artwork = None
-    #
-    #         tk.Label(self.wall_space,
-    #                text="No artworks added yet",
-    #                font=self.styles["title_font"],
-    #                bg="white").pack(expand=True)
-            
-    def add_to_virtual_wall(self, artwork):
-        """Add artwork to the virtual wall when clicked"""
-        print("[DEBUG] add_to_virtual_wall called")
-        # if not hasattr(self, 'virtual_wall'):
-        #     # Initialize virtual wall if not exists
-        #     for widget in self.wall_space.winfo_children():
-        #         widget.destroy()
-        #     self.virtual_wall = VirtualWall(
-        #         self.wall_space,
-        #         self.selected_wall,
-        #         [artwork]
-        #     )
-        # else:
-        #     # Add to existing virtual wall
-        #     self.virtual_wall.add_artwork_to_wall(artwork)
 
     def add_new_snap_line_popup(self):
-        print("[DEBUG] add_new_snap_line_popup called")
-        snap_line_popup = PopupSnapLines(self.AppMain, self)
-
-        # def handle_save(new_line):
-        #     print(f"[DEBUG] Saving Snap Line line.orientation={new_line.orientation}, line.alignment={new_line.alignment}, type={type(new_line.alignment)}")
-        #     for existing in self.snap_lines:
-        #         if (existing.orientation == new_line.orientation and abs(existing.distance - new_line.distance) < 0.05):
-        #             self.show_duplicate_line_popup(new_line)
-        #             return
-        #     self.snap_lines.append(new_line)
-        #     self.selected_wall.wall_lines = self.snap_lines
-        #     self.draw_snap_lines()
-
-        # open_snap_line_popup(
-        #     self.parent,
-        #     handle_save,
-        #     wall_width=self.wall_width,
-        #     wall_height=self.wall_height
-        # )
+        PopupSnapLines(self.AppMain, self)
 
     def draw_snap_lines(self):
         self.wall_canvas.draw_snap_lines()
@@ -617,50 +490,3 @@ class ScreenEditorUI(ScreenBase):
         self.snap_line_buttons[line.id].destroy()
         self.snap_line_buttons.pop(line.id)
         self.draw_snap_lines()
-
-    def open_manage_lines_popup(self):
-        print("[DEBUG] open_manage_lines_popup called")
-
-        # popup = Toplevel(self.parent)
-        # popup.title("Manage Snap Lines")
-        # popup.geometry("400x300")
-
-        # if not self.snap_lines:
-        #     ttk.Label(popup, text="No snap lines to manage.").pack(padx=10, pady=10)
-        #     return
-
-        # canvas = tk.Canvas(popup)
-        # scrollbar = ttk.Scrollbar(popup, orient="vertical", command=canvas.yview)
-        # canvas.configure(yscrollcommand=scrollbar.set)
-
-        # scrollbar.pack(side="right", fill="y")
-        # canvas.pack(side="left", fill="both", expand=True)
-
-        # frame = ttk.Frame(canvas)
-        # canvas.create_window((0, 0), window=frame, anchor="nw")
-
-        # def on_configure(event):
-        #     canvas.configure(scrollregion=canvas.bbox("all"))
-
-        # frame.bind("<Configure>", on_configure)
-
-        # for idx, line in enumerate(self.snap_lines):
-        #     line_frame = ttk.Frame(frame)
-        #     line_frame.pack(fill="x", pady=5, padx=10)
-
-        #     orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, Orientation) else "Unknown"
-        #     alignment_str = self.get_alignment_string(line)
-        #     label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
-        #     ttk.Label(line_frame, text=label_text).pack(side="left")
-
-        #     ttk.Button(
-        #         line_frame,
-        #         text="Edit",
-        #         command=lambda i=idx: self.edit_snap_line(i, popup)
-        #     ).pack(side="right", padx=5)
-
-        #     ttk.Button(
-        #         line_frame,
-        #         text="Delete",
-        #         command=lambda i=idx: self.delete_snap_line(i, popup)
-        #     ).pack(side="right", padx=5)

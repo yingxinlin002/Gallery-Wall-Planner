@@ -235,8 +235,13 @@ class ScreenArtworkManuallyUI(ScreenBase):
                 messagebox.showerror("Error", "Artwork already exists")
                 return
 
+            for aw in self.AppMain.gallery.unplaced_artwork:
+                if aw.id == artwork.id:
+                    messagebox.showerror("Error", "Artwork already exists")
+                    return
+
             self.show_artwork_preview(artwork)
-            self.AppMain.gallery.current_wall.add_artwork(artwork)
+            self.AppMain.gallery.add_unplaced_artwork(artwork)
             self.clear_form()
 
         except ValueError as e:
