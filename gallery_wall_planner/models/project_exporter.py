@@ -227,14 +227,14 @@ def export_gallery_to_excel(filepath, gallery):
                     "Depth": a.depth,
                     "Photo": a.image_path,
                     "NFS (Y/N)": "Y" if a.nfs else "N",
-                    "_internal": str(a.__dict__)
+                    "_internal": str({k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v for k, v in a.__dict__.items()})
                 } for a in wall.artwork])
                 artworks_df.to_excel(writer, sheet_name=f"{wall.name}_Artworks", index=False)
 
             if wall.permanent_objects:
                 perms_df = pd.DataFrame([{
                     **{k: v for k, v in po.__dict__.items() if not isinstance(v, Position)},
-                    "_internal": str(po.__dict__)
+                    "_internal": str({k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v for k, v in po.__dict__.items()})
                 } for po in wall.permanent_objects])
                 perms_df.to_excel(writer, sheet_name=f"{wall.name}_Permanents", index=False)
 
@@ -286,7 +286,8 @@ def import_gallery_from_excel(filepath):
                         nfs=art_info.get("_nfs", False),
                         notes=art_info.get("_notes", "")
                     )
-                    a.position = Position(pos["x"], pos["y"])
+                    if isinstance(pos, dict) and "x" in pos and "y" in pos:
+                        a.position = Position(pos["x"], pos["y"])
                     artworks.append(a)
             wall.artwork = artworks
 
@@ -303,7 +304,8 @@ def import_gallery_from_excel(filepath):
                         height=perm_info.get("_height"),
                         image_path=perm_info.get("_image_path")
                     )
-                    p.position = Position(pos["x"], pos["y"])
+                    if isinstance(pos, dict) and "x" in pos and "y" in pos:
+                        p.position = Position(pos["x"], pos["y"])
                     perms.append(p)
             wall.permanent_objects = perms
 

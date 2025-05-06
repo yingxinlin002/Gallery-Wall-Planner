@@ -20,7 +20,17 @@ class PermanentObject(WallObject):
         """
         # Initialize the parent class
         super().__init__(name, width, height, image_path)
-
+        
+    def export(self):
+    # Helper for exporter.py
+        return {
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height
+            # Add any other relevant attributes here
+        }
+    
     @override
     def _get_id(self):
         return get_id("perm_obj"+self.name+f"width{self.width},height{self.height}")
