@@ -1,8 +1,6 @@
 import openpyxl
 from openpyxl.styles import Font
 from docx import Document
-# from reportlab.lib.pagesizes import letter
-# from reportlab.pdfgen import canvas
 
 
 def save_to_excel(lines, filename):
@@ -61,15 +59,36 @@ def save_to_pdf(lines, filename):
         lines (list of str): The lines to save.
         filename (str): The output PDF file path.
     """
-    c = canvas.Canvas(filename, pagesize=letter)
-    width, height = letter
-    y = height - 40
-
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.units import inch
+    
+    # Create a PDF document with the letter page size
+    doc = SimpleDocTemplate(filename, pagesize=letter)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Add a title
+    title_style = styles['Title']
+    story.append(Paragraph("Installation Instructions", title_style))
+    story.append(Spacer(1, 0.25 * inch))
+    
+    # Add each line as a paragraph with appropriate styling
+    normal_style = styles['Normal']
     for line in lines:
-        if y < 40:
-            c.showPage()
-            y = height - 40
-        c.drawString(40, y, line)
-        y -= 20
-
-    c.save()
+        # Check if this is a section header (all caps)
+        if line.isupper():
+            # Use heading style for section headers
+            heading_style = styles['Heading2']
+            story.append(Spacer(1, 0.2 * inch))
+            story.append(Paragraph(line, heading_style))
+            story.append(Spacer(1, 0.1 * inch))
+        else:
+            # Use normal style for regular text
+            story.append(Paragraph(line, normal_style))
+            story.append(Spacer(1, 0.1 * inch))
+    
+    # Build the PDF document
+    doc.build(story)

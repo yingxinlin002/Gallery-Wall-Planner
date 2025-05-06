@@ -2,4 +2,5 @@ openpyxl >= 3.0.9
 Pillow >= 9.0.0
 python-docx 
 pandas >= 2.1.0
+reportlab >= 4.0.4
 
