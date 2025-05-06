@@ -40,7 +40,9 @@ class BTNSSave(ttk.Frame):
                 if self.save_as_btn is None:
                     self.add_save_as_button()
         except Exception as e:
-            print(f"[ERROR] Could not browse files: {str(e.with_traceback())}")
+            import traceback
+            print(f"[ERROR] Could not browse files: {str(e)}")
+            traceback.print_exc()  # This prints the full traceback to console
             
             messagebox.showerror("Error", f"Could not browse files:\n{str(e)}")
         
