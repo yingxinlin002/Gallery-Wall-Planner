@@ -319,14 +319,13 @@ class ScreenEditorUI(ScreenBase):
 
         # Add artworks to the list
         if len(self.AppMain.gallery.current_wall.artwork) > 0 or len(self.AppMain.gallery.unplaced_artwork) > 0:
-            # TODO: Need to figure out how we're storing artwork first
             from gallery_wall_planner.gui.btn_wall_item import BTNWallItem, WallItemState
-            for artwork in self.AppMain.gallery.current_wall.artwork:
-                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR)
-                btn.pack(side="top", fill="x", padx=5, pady=5)
-                btn.load_content()
             for artwork in self.AppMain.gallery.unplaced_artwork:
                 btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR, state=WallItemState.ACTIVE)
+                btn.pack(side="top", fill="x", padx=5, pady=5)
+                btn.load_content()
+            for artwork in self.AppMain.gallery.current_wall.artwork:
+                btn = BTNWallItem(self.AppMain, self.artwork_scroll_box.scrollable_frame, artwork, ScreenType.EDITOR)
                 btn.pack(side="top", fill="x", padx=5, pady=5)
                 btn.load_content()
         else:
