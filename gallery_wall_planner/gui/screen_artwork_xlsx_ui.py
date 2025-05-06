@@ -8,6 +8,7 @@ import webbrowser
 from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
+from gallery_wall_planner.models import project_exporter
 
 
 class ScreenArtworkxlsxUI(ScreenBase):
@@ -321,6 +322,7 @@ class ScreenArtworkxlsxUI(ScreenBase):
             # TODO: Add code to parse xlsx file
             # Here you would add code to actually parse the xlsx file
             # For now, just show a success message
+            self.AppMain.gallery = project_exporter.import_gallery_from_excel(file_path)
             messagebox.showinfo("Success", f"Artwork imported from:\n{file_path}")
             self.AppMain.switch_screen(ScreenType.EDITOR)
         except Exception as e:

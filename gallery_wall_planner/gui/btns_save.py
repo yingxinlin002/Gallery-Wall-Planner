@@ -24,6 +24,7 @@ class BTNSSave(ttk.Frame):
         print("Save")
         if self.app_main.save_file_path is not None:
             print(f"[INFO] Project saved to {self.app_main.save_file_path}")
+            project_exporter.export_gallery_to_excel(self.app_main.save_file_path, self.app_main.gallery)
         else:
             self.save_as()
 
@@ -35,6 +36,7 @@ class BTNSSave(ttk.Frame):
             if file_path:
                 self.app_main.save_file_path = file_path
                 print(f"[INFO] Project saved to {file_path}")
+                project_exporter.export_gallery_to_excel(file_path, self.app_main.gallery)
                 if self.save_as_btn is None:
                     self.add_save_as_button()
         except Exception as e:
