@@ -61,12 +61,12 @@ class PopupSnapLines(PopupBase):
             messagebox.showerror("Error", "Distance cannot be negative.")
             return
 
-        if Orientation[self.orientation_var.get()] == Orientation.HORIZONTAL and distance > self.AppMain.gallery.current_wall.height:
-            messagebox.showerror("Error", f"Distance exceeds wall height ({self.AppMain.gallery.current_wall.height} inches).")
+        if Orientation[self.orientation_var.get()] == Orientation.HORIZONTAL and distance > self.app_main.gallery.current_wall.height:
+            messagebox.showerror("Error", f"Distance exceeds wall height ({self.app_main.gallery.current_wall.height} inches).")
             return
 
-        if Orientation[self.orientation_var.get()] == Orientation.VERTICAL and distance > self.AppMain.gallery.current_wall.width:
-            messagebox.showerror("Error", f"Distance exceeds wall width ({self.AppMain.gallery.current_wall.width} inches).")
+        if Orientation[self.orientation_var.get()] == Orientation.VERTICAL and distance > self.app_main.gallery.current_wall.width:
+            messagebox.showerror("Error", f"Distance exceeds wall width ({self.app_main.gallery.current_wall.width} inches).")
             return
 
         orientation_enum = Orientation[self.orientation_var.get()]

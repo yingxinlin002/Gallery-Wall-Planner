@@ -172,17 +172,7 @@ class SingleLine:
 
     @alignment.setter
     def alignment(self, value: Union[HorizontalAlignment,VerticalAlignment]):
-        if isinstance(value, (HorizontalAlignment, VerticalAlignment)):
-            if self.orientation == Orientation.HORIZONTAL:
-                if not isinstance(value, HorizontalAlignment):
-                    raise ValueError("Alignment must be a HorizontalAlignment enum for horizontal lines")
-            elif self.orientation == Orientation.VERTICAL:
-                if not isinstance(value, VerticalAlignment):
-                    raise ValueError("Alignment must be a VerticalAlignment enum for vertical lines")
-            self._alignment = value
-        else:
-            raise ValueError("Alignment must be a HorizontalAlignment or VerticalAlignment enum")
-
+        self._alignment = value
 
     @property
     def distance(self) -> float:
