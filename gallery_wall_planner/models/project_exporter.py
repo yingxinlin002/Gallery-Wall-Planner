@@ -101,9 +101,9 @@ def export_project_to_excel(filepath, wall=None, artworks=None, permanent_object
             wall_data["_internal"] = to_internal_data(wall)
             wall_data.to_excel(writer, sheet_name="Wall", index=False)
 
-        if artworks:
-            artworks_data = pd.DataFrame([to_visible_artwork_data(a) for a in artworks])
-            artworks_data["_internal"] = [to_internal_data(a) for a in artworks]
+        if artwork:
+            artworks_data = pd.DataFrame([to_visible_artwork_data(a) for a in artwork])
+            artworks_data["_internal"] = [to_internal_data(a) for a in artwork]
             artworks_data.to_excel(writer, sheet_name="Artworks", index=False)
 
         if permanent_objects:
@@ -126,8 +126,8 @@ def export_project_to_excel(filepath, wall=None, artworks=None, permanent_object
     wall_data = pd.DataFrame([to_visible_wall_data(wall)])
     wall_data["_internal"] = to_internal_data(wall)
 
-    artworks_data = pd.DataFrame([to_visible_artwork_data(a) for a in artworks])
-    artworks_data["_internal"] = [to_internal_data(a) for a in artworks]
+    artworks_data = pd.DataFrame([to_visible_artwork_data(a) for a in artwork])
+    artworks_data["_internal"] = [to_internal_data(a) for a in artwork]
 
     perms_data = pd.DataFrame([p.__dict__ for p in permanent_objects])
     perms_data["_internal"] = [to_internal_data(p) for p in permanent_objects]
