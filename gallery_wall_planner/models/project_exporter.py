@@ -198,55 +198,19 @@ def import_project_from_excel(filepath):
             p.position = Position(pos["x"], pos["y"])
             permanents.append(p)
 
+    for art in artworks:
+        if art:
+            #Add artwork to wall
+            wall.add_artwork(art)
+    for perm in permanents:
+        if perm:
+            #Add permanent object to wall
+            wall.add_permanent_object(perm)
+        
     print(f"[INFO] Project imported from Excel: {filepath}")
     return wall, artworks, permanents
 
-def export_gallery_to_excel(filepath, gallery):
-    print(f"[INFO] Starting export of gallery: {gallery.name} to {filepath}")
     
-    with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
-        # 1. Ensure at least one sheet exists
-        pd.DataFrame({"Export status": ["Initialized"]}).to_excel(writer, sheet_name="ExportInfo", index=False)
-
-        # 2. Export walls
-        for wall in gallery.walls:
-            print(f"[INFO] Processing wall: {wall.name}")
-            try:
-                # Export artworks
-                if hasattr(wall, "artwork"):
-                    artworks = [a.to_dict() for a in wall.artwork]
-                elif hasattr(wall, "artworks"):
-                    artworks = [a.to_dict() for a in wall.artwork]
-                else:
-                    print(f"[WARN] Wall '{wall.name}' has no 'artwork' or 'artworks' attribute.")
-                    artworks = []
-
-                df_artworks = pd.DataFrame(artworks)
-                if df_artworks.empty:
-                    df_artworks = pd.DataFrame([{"info": "No artworks"}])
-                df_artworks.to_excel(writer, sheet_name=f"{wall.name[:28]} - Art", index=False)
-                print(f"[OK] Artworks for wall '{wall.name}' written.")
-
-                # Export wall lines
-                lines = [l.to_dict() for l in getattr(wall, "wall_lines", [])]
-                df_lines = pd.DataFrame(lines)
-                if df_lines.empty:
-                    df_lines = pd.DataFrame([{"info": "No wall lines"}])
-                df_lines.to_excel(writer, sheet_name=f"{wall.name[:28]} - Lines", index=False)
-                print(f"[OK] Wall lines for wall '{wall.name}' written.")
-
-                # Export permanent objects
-                perms = [p.to_dict() for p in getattr(wall, "permanent_objects", [])]
-                df_perms = pd.DataFrame(perms)
-                if df_perms.empty:
-                    df_perms = pd.DataFrame([{"info": "No permanent objects"}])
-                df_perms.to_excel(writer, sheet_name=f"{wall.name[:28]} - Perm", index=False)
-                print(f"[OK] Permanent objects for wall '{wall.name}' written.")
-
-            except Exception as e:
-                print(f"[ERROR] Failed to export data for wall '{wall.name}': {e}")
-
-        print(f"[DONE] Export completed to {filepath}")
 
 
 from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
