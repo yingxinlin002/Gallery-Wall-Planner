@@ -408,7 +408,7 @@ class Wall:
         with open(filename, 'w') as f:
             json.dump(self.export_wall(), f, indent=2)
 
-    def export(self):
+    def to_dict(self):
         # Helper for project exporter
         return {
             "name": self.name,
