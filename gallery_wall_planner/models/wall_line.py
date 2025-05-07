@@ -216,8 +216,8 @@ class SingleLine:
             angle = data.get("angle", 0),
             snap_to = data.get("snap_to", False),
             movable=data.get("movable", False),
-            orientation = data.get("orientation", Orientation.HORIZONTAL),
-            alignment = data.get("alignment", HorizontalAlignment.CENTER)
+            orientation = data.get("orientation", "horizontal"),
+            alignment = data.get("alignment", "center")
             distance = data.get("distance", 0)
         )
 
