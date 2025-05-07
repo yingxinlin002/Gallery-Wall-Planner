@@ -220,14 +220,16 @@ class Artwork(WallObject):
     def from_dict(data):
         # Helper for importing for exporter.py
         return Artwork(
-            title=data.get("name", ""),
-            width=data.get("width", 0),
-            height=data.get("height", 0),
-            hanging_point=data.get("hanging point", 0),
-            medium=data.get("medium", ""),
-            depth=data.get("depth", 0),
-            photo=data.get("photo", ""),
-            nfs=(data.get("NFS (Y/N)", "").strip().upper() == "Y")
+            name = data.get("name", ""),
+            width = data.get("width", 0),
+            height = data.get("height", 0),
+            hanging_point = data.get("hanging point", 0),
+            medium = data.get("medium", ""),
+            depth = data.get("depth", 0),
+            image_path = data.get("image_path", ""),
+            nfs = (data.get("NFS (Y/N)", "").strip().upper() == "Y"),
+            notes = data.get("notes",""),
+            price = data.get("price", 0.0),
         )
 
     def export_artwork(self, directory: str = "") -> str:
