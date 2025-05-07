@@ -421,6 +421,19 @@ class Wall:
             "wall_lines": [sl.to_dict() for sl in self.wall_lines]
         }
 
+    @staticmethod
+    def from_dict(data):
+        return Wall(
+            name=data["name"],
+            width=float(data["width"]),
+            height=float(data["height"]),
+            color=data.get("color", "#FFFFFF"),  # default white if not provided
+            artwork=[],
+            wall_lines=[],
+            permanent_objects=[],
+        )
+
+
     
     @classmethod
     def load_from_file(cls, filename: str) -> Wall:
