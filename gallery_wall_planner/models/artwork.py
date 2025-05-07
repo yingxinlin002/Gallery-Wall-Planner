@@ -204,14 +204,16 @@ class Artwork(WallObject):
     def export(self):
         # Helper for exporter.py
         return {
-            "title": self.title,
+            "name": self.name,
             "width": self.width,
             "height": self.height,
             "hanging_point": self.hanging_point,
             "medium": self.medium,
             "depth": self.depth,
-            "photo": self.photo,
-            "nfs": self.nfs
+            "image_path": self.image_path,
+            "nfs": self.nfs,
+            "notes": self.notes,
+            "price": self.price
         }
 
     
