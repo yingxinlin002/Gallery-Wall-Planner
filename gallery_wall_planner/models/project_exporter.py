@@ -281,7 +281,7 @@ def import_gallery_from_excel(filepath):
                     print(f"[INFO] Placeholder sheet for wall lines on '{wall_name}', skipping.")
                     continue
                 walls.setdefault(wall_name, Wall(name=wall_name)).wall_lines = [
-                    WallLine.from_dict(row) for _, row in df.iterrows()
+                    SingleLine.from_dict(row) for _, row in df.iterrows()
                 ]
                 print(f"[OK] Loaded wall lines for wall '{wall_name}'.")
 
