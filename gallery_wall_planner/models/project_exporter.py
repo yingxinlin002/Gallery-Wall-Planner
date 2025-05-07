@@ -12,6 +12,7 @@ from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
 from .wall_line import SingleLine
+from gallery_wall_planner.models.gallery import Gallery
 
 def export_project(filepath, wall, permanent_objects, layout):
     """
