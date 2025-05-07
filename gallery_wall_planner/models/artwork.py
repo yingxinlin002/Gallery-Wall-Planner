@@ -226,7 +226,7 @@ class Artwork(WallObject):
             hanging_point = data.get("hanging point", 0),
             medium = data.get("medium", ""),
             depth = data.get("depth", 0),
-            image_path = data.get("image_path", ""),
+            image_path = data.get("image_path", None),
             nfs = (data.get("NFS (Y/N)", "").strip().upper() == "Y"),
             notes = data.get("notes",""),
             price = data.get("price", 0.0),
