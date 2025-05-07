@@ -208,18 +208,27 @@ class SingleLine:
 
     @staticmethod
     def from_dict(data):
-        # Helper for import/export in project_exporter.py import
+        orientation = Orientation(data.get("orientation", "horizontal"))
+        
+        # Determine the alignment enum type based on orientation
+        alignment_str = data.get("alignment", "center")
+        if orientation == Orientation.HORIZONTAL:
+            alignment = HorizontalAlignment(alignment_str)
+        else:
+            alignment = VerticalAlignment(alignment_str)
+    
         return SingleLine(
-            x_cord = data.get("x_cord", 0),
-            y_cord = data.get("y_cord", 0),
+            x = data.get("x_cord", 0),
+            y = data.get("y_cord", 0),
             length = data.get("length", 0),
             angle = data.get("angle", 0),
             snap_to = data.get("snap_to", False),
-            movable=data.get("movable", False),
-            orientation = data.get("orientation", "horizontal"),
-            alignment = data.get("alignment", "center")
+            moveable = data.get("moveable", False),
+            orientation = orientation,
+            alignment = alignment,
             distance = data.get("distance", 0)
         )
+
 
     
     def export_snap_line(self, directory: str = "") -> str:
