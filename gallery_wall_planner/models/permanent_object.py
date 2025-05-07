@@ -36,11 +36,11 @@ class PermanentObject(WallObject):
     def from_dict(data):
         # Helper for exporter.py import
         return PermanentObject(
-            position = data.get("position", (0,0)),
+            # position = data.get("position", (0,0)), So I don't actually know how we initialize this attribute, so for now I'll disable it. 
             width=data.get("width", 0),
             height=data.get("height", 0),
             name=data.get("name", ""),
-            image_path = data.get("image_path","")
+            image_path = data.get("image_path", None)
         )
 
     @override
