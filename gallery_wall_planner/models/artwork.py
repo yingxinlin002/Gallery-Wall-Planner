@@ -219,6 +219,9 @@ class Artwork(WallObject):
     @staticmethod
     def from_dict(data):
         # Helper for importing for exporter.py
+        image_path = data.get("image_path")
+        if not isinstance(image_path, str):
+            image_path = None
         return Artwork(
             name = data.get("name", ""),
             width = data.get("width", 0),
@@ -226,7 +229,7 @@ class Artwork(WallObject):
             hanging_point = data.get("hanging point", 0),
             medium = data.get("medium", ""),
             depth = data.get("depth", 0),
-            image_path = data.get("image_path", None),
+            image_path = image_path,
             nfs = (data.get("NFS (Y/N)", "").strip().upper() == "Y"),
             notes = data.get("notes",""),
             price = data.get("price", 0.0),
