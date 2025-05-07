@@ -201,125 +201,104 @@ def import_project_from_excel(filepath):
     return wall, artworks, permanents
 
 def export_gallery_to_excel(filepath, gallery):
+    print(f"[INFO] Starting export of gallery: {gallery.name} to {filepath}")
+    
     with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
+        # 1. Ensure at least one sheet exists
+        pd.DataFrame({"Export status": ["Initialized"]}).to_excel(writer, sheet_name="ExportInfo", index=False)
+
+        # 2. Export walls
         for wall in gallery.walls:
-            wall_export = wall.export() if hasattr(wall, "export") else {
-                k: v for k, v in wall.__dict__.items() if not callable(v) and not isinstance(v, (Artwork, PermanentObject))
-            }
-            # Remove unserializable keys
-            wall_export.pop("artwork", None)
-            wall_export.pop("permanent_objects", None)
+            print(f"[INFO] Processing wall: {wall.name}")
+            try:
+                # Export artworks
+                if hasattr(wall, "artwork"):
+                    artworks = [a.to_dict() for a in wall.artwork]
+                elif hasattr(wall, "artworks"):
+                    artworks = [a.to_dict() for a in wall.artworks]
+                else:
+                    print(f"[WARN] Wall '{wall.name}' has no 'artwork' or 'artworks' attribute.")
+                    artworks = []
 
-            wall_df = pd.DataFrame([{
-                "Wall Name": wall.name,
-                "Width (in)": wall.width,
-                "Height (in)": wall.height,
-                "_internal": json.dumps(wall_export)
-            }])
-            wall_df.to_excel(writer, sheet_name=f"{wall.name}_Wall", index=False)
+                df_artworks = pd.DataFrame(artworks)
+                if df_artworks.empty:
+                    df_artworks = pd.DataFrame([{"info": "No artworks"}])
+                df_artworks.to_excel(writer, sheet_name=f"{wall.name[:28]} - Art", index=False)
+                print(f"[OK] Artworks for wall '{wall.name}' written.")
 
-            if wall.artwork:
-                artworks_df = pd.DataFrame([{
-                    "Name": a.name,
-                    "Width": a.width,
-                    "Height": a.height,
-                    "Hanging Point": a.hanging_point,
-                    "Medium": a.medium,
-                    "Depth": a.depth,
-                    "Photo": a.image_path,
-                    "NFS (Y/N)": "Y" if a.nfs else "N",
-                    "_internal": json.dumps({
-                        k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v
-                        for k, v in a.__dict__.items()
-                        if not callable(v)
-                    })
-                } for a in wall.artwork])
-                artworks_df.to_excel(writer, sheet_name=f"{wall.name}_Artworks", index=False)
+                # Export wall lines
+                lines = [l.to_dict() for l in getattr(wall, "wall_lines", [])]
+                df_lines = pd.DataFrame(lines)
+                if df_lines.empty:
+                    df_lines = pd.DataFrame([{"info": "No wall lines"}])
+                df_lines.to_excel(writer, sheet_name=f"{wall.name[:28]} - Lines", index=False)
+                print(f"[OK] Wall lines for wall '{wall.name}' written.")
 
-            if wall.permanent_objects:
-                perms_df = pd.DataFrame([{
-                    **{k: v for k, v in po.__dict__.items() if not isinstance(v, Position)},
-                    "_internal": json.dumps({
-                        k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v
-                        for k, v in po.__dict__.items()
-                        if not callable(v)
-                    })
-                } for po in wall.permanent_objects])
-                perms_df.to_excel(writer, sheet_name=f"{wall.name}_Permanents", index=False)
+                # Export permanent objects
+                perms = [p.to_dict() for p in getattr(wall, "permanent_objects", [])]
+                df_perms = pd.DataFrame(perms)
+                if df_perms.empty:
+                    df_perms = pd.DataFrame([{"info": "No permanent objects"}])
+                df_perms.to_excel(writer, sheet_name=f"{wall.name[:28]} - Perm", index=False)
+                print(f"[OK] Permanent objects for wall '{wall.name}' written.")
+
+            except Exception as e:
+                print(f"[ERROR] Failed to export data for wall '{wall.name}': {e}")
+
+        print(f"[DONE] Export completed to {filepath}")
+
 
 from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
 
 def import_gallery_from_excel(filepath):
-    """
-    Import a Gallery object from an Excel file.
-    Args:
-        filepath (str): Path to Excel file.
-    Returns:
-        Gallery: Gallery object reconstructed from the file.
-    """
-    try:
-        data = pd.read_excel(filepath, sheet_name=None)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Excel file not found: {filepath}")
+    print(f"[INFO] Importing gallery from {filepath}")
+    xls = pd.ExcelFile(filepath)
+    gallery = Gallery(name="Imported Gallery")
 
-    walls = []
-    for sheet_name in data:
-        if sheet_name.endswith("_Wall"):
-            wall_name = sheet_name.replace("_Wall", "")
-            wall_info = json.loads(data[sheet_name]["_internal"][0])
-            wall = Wall(
-                name=wall_info.get("_name"),
-                width=wall_info.get("_width"),
-                height=wall_info.get("_height"),
-                color=wall_info.get("_color")
-            )
+    walls = {}
+    for sheet in xls.sheet_names:
+        print(f"[INFO] Reading sheet: {sheet}")
+        try:
+            df = xls.parse(sheet)
+            if df.empty:
+                print(f"[WARN] Sheet '{sheet}' is empty, skipping.")
+                continue
 
-            # Artworks
-            artworks = []
-            art_sheet = data.get(f"{wall_name}_Artworks")
-            if art_sheet is not None:
-                for _, row in art_sheet.iterrows():
-                    art_info = json.loads(row["_internal"])
-                    pos = art_info.get("_position", {"x": 0, "y": 0})
-                    a = Artwork(
-                        name=art_info.get("_name"),
-                        width=art_info.get("_width"),
-                        height=art_info.get("_height"),
-                        image_path=art_info.get("_image_path"),
-                        medium=art_info.get("_medium"),
-                        depth=art_info.get("_depth"),
-                        hanging_point=art_info.get("_hanging_point"),
-                        price=art_info.get("_price", 0.0),
-                        nfs=art_info.get("_nfs", False),
-                        notes=art_info.get("_notes", "")
-                    )
-                    if isinstance(pos, dict) and "x" in pos and "y" in pos:
-                        a.position = Position(pos["x"], pos["y"])
-                    artworks.append(a)
-            wall.artwork = artworks
+            if " - Art" in sheet:
+                wall_name = sheet.replace(" - Art", "")
+                if df.columns.tolist() == ["info"] and "No artworks" in df["info"].values:
+                    print(f"[INFO] Placeholder sheet for artworks on '{wall_name}', skipping.")
+                    continue
+                walls.setdefault(wall_name, Wall(name=wall_name)).artworks = [
+                    Artwork.from_dict(row) for _, row in df.iterrows()
+                ]
+                print(f"[OK] Loaded artworks for wall '{wall_name}'.")
 
-            # Permanents
-            perms = []
-            perm_sheet = data.get(f"{wall_name}_Permanents")
-            if perm_sheet is not None:
-                for _, row in perm_sheet.iterrows():
-                    perm_info = json.loads(row["_internal"])
-                    pos = perm_info.get("_position", {"x": 0, "y": 0})
-                    p = PermanentObject(
-                        name=perm_info.get("_name"),
-                        width=perm_info.get("_width"),
-                        height=perm_info.get("_height"),
-                        image_path=perm_info.get("_image_path")
-                    )
-                    if isinstance(pos, dict) and "x" in pos and "y" in pos:
-                        p.position = Position(pos["x"], pos["y"])
-                    perms.append(p)
-            wall.permanent_objects = perms
+            elif " - Lines" in sheet:
+                wall_name = sheet.replace(" - Lines", "")
+                if df.columns.tolist() == ["info"] and "No wall lines" in df["info"].values:
+                    print(f"[INFO] Placeholder sheet for wall lines on '{wall_name}', skipping.")
+                    continue
+                walls.setdefault(wall_name, Wall(name=wall_name)).wall_lines = [
+                    WallLine.from_dict(row) for _, row in df.iterrows()
+                ]
+                print(f"[OK] Loaded wall lines for wall '{wall_name}'.")
 
-            walls.append(wall)
+            elif " - Perm" in sheet:
+                wall_name = sheet.replace(" - Perm", "")
+                if df.columns.tolist() == ["info"] and "No permanent objects" in df["info"].values:
+                    print(f"[INFO] Placeholder sheet for permanent objects on '{wall_name}', skipping.")
+                    continue
+                walls.setdefault(wall_name, Wall(name=wall_name)).permanent_objects = [
+                    PermanentObject.from_dict(row) for _, row in df.iterrows()
+                ]
+                print(f"[OK] Loaded permanent objects for wall '{wall_name}'.")
 
-    gallery = Gallery(walls=walls)
-    print(f"[INFO] Gallery imported from Excel: {filepath}")
+        except Exception as e:
+            print(f"[ERROR] Failed to load sheet '{sheet}': {e}")
+
+    gallery.walls = list(walls.values())
+    print(f"[DONE] Finished importing gallery with {len(gallery.walls)} walls.")
     return gallery
 
 # All available methods    
