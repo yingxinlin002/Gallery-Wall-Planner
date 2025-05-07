@@ -415,7 +415,7 @@ class Wall:
             "width": self.width,
             "height": self.height,
             "color": self.color,
-            "artworks": [artwork.to_dict() for artwork in self.artworks],
+            "artworks": [artwork.to_dict() for artwork in self.artwork],
             "wall_lines": [line.to_dict() for line in self.wall_lines],
             "permanent_objects": [po.to_dict() for po in self.permanent_objects],
             "wall_lines": [sl.to_dict() for sl in self.wall_lines]
