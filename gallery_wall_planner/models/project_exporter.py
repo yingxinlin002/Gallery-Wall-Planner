@@ -14,6 +14,7 @@ from gallery_wall_planner.models.structures import Position
 from .wall_line import SingleLine
 from gallery_wall_planner.models.gallery import Gallery
 
+
 def export_project(filepath, wall, permanent_objects, layout):
     """
     Save the current project data (wall, permanent objects, layout) into a JSON file.
@@ -211,7 +212,7 @@ def import_project_from_excel(filepath):
     print(f"[INFO] Project imported from Excel: {filepath}")
     return wall, artworks, permanents
 
-def export_gallery_to_excel(gallery: Gallery, filepath: str):
+def export_gallery_to_excel(filepath: str, gallery: Gallery):
     print(f"[INFO] Exporting gallery to {filepath}")
     writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
 
