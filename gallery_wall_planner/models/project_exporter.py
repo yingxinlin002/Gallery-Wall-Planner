@@ -11,6 +11,7 @@ from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
+from .wall_line import WallLine
 
 def export_project(filepath, wall, permanent_objects, layout):
     """
@@ -53,7 +54,7 @@ def import_project(filepath):
     print(f"[INFO] Project loaded from {filepath}")
     return project_data
     
-def export_project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None):
+def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None):
     """
     Export project data to Excel. Any of wall, artworks, or permanent_objects may be None.
 
@@ -213,9 +214,9 @@ def export_gallery_to_excel(filepath, gallery):
             try:
                 # Export artworks
                 if hasattr(wall, "artwork"):
-                    artworks = [a.export() for a in wall.artwork]
+                    artworks = [a.to_dict() for a in wall.artwork]
                 elif hasattr(wall, "artworks"):
-                    artworks = [a.export() for a in wall.artwork]
+                    artworks = [a.to_dict() for a in wall.artwork]
                 else:
                     print(f"[WARN] Wall '{wall.name}' has no 'artwork' or 'artworks' attribute.")
                     artworks = []
@@ -235,7 +236,7 @@ def export_gallery_to_excel(filepath, gallery):
                 print(f"[OK] Wall lines for wall '{wall.name}' written.")
 
                 # Export permanent objects
-                perms = [p.export() for p in getattr(wall, "permanent_objects", [])]
+                perms = [p.to_dict() for p in getattr(wall, "permanent_objects", [])]
                 df_perms = pd.DataFrame(perms)
                 if df_perms.empty:
                     df_perms = pd.DataFrame([{"info": "No permanent objects"}])
