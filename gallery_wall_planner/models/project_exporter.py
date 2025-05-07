@@ -142,75 +142,101 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
 
     print(f"[INFO] Project exported to Excel at {filepath}")
 
-def import_project_from_excel(filepath):
-    """
-    Import available project data from Excel. Will skip missing sheets.
+def import_gallery_from_excel(file_path: str) -> Gallery:
+    """Import gallery data from an Excel file."""
+    print(f"[INFO] Importing gallery from: {file_path}")
+    xls = pd.ExcelFile(file_path)
+    gallery_title = "Untitled Gallery"
+    walls: Dict[str, Wall] = {}
 
-    Returns:
-        Tuple of wall, artworks, permanents. Any may be None or empty.
-    """
-    try:
-        data = pd.read_excel(filepath, sheet_name=None)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"ProjectFileNotFoundError: project excel file not found: {filepath}")
+    # First, parse the 'Walls' sheet to build walls
+    if "Walls" in xls.sheet_names:
+        df_walls = xls.parse("Walls")
+        for _, row in df_walls.iterrows():
+            name = str(row["name"]).strip()
+            width = float(row["width"])
+            height = float(row["height"])
+            color = row.get("color", "#FFFFFF")
+            if name not in walls:
+                walls[name] = Wall(name=name, width=width, height=height, color=color)
+            else:
+                print(f"[WARN] Duplicate wall name '{name}' found in Walls sheet.")
+    else:
+        print("[WARN] No 'Walls' sheet found. Will create default wall objects for sheet data.")
 
-    wall, artworks, permanents = None, [], []
+    # Now we can parse each sheet (except metadata)
+    for sheet in xls.sheet_names:
+        if sheet in ("Walls", "ExportInfo"):
+            continue  # skip metadata sheets
 
-    if "Wall" in data:
-        wall_sheet = data["Wall"]
-        wall_info = ast.literal_eval(wall_sheet["_internal"][0])
-        wall = Wall(
-            name=wall_info.get("_name"),
-            width=wall_info.get("_width"),
-            height=wall_info.get("_height"),
-            color=wall_info.get("_color")
-        )
+        print(f"[INFO] Reading sheet: {sheet}")
+        df = xls.parse(sheet)
+        if df.empty:
+            print(f"[WARN] Sheet '{sheet}' is empty. Skipping.")
+            continue
 
-    if "Artworks" in data:
-        for _, row in data["Artworks"].iterrows():
-            art_info = ast.literal_eval(row["_internal"])
-            pos = art_info.get("_position", {"x": 0, "y": 0})
-            a = Artwork(
-                name=art_info.get("_name"),
-                width=art_info.get("_width"),
-                height=art_info.get("_height"),
-                image_path=art_info.get("_image_path"),
-                medium=art_info.get("_medium"),
-                depth=art_info.get("_depth"),
-                hanging_point=art_info.get("_hanging_point"),
-                price=art_info.get("_price", 0.0),
-                nfs=art_info.get("_nfs", False),
-                notes=art_info.get("_notes", "")
-            )
-            a.position = Position(pos["x"], pos["y"])
-            artworks.append(a)
+        wall = walls.setdefault(sheet, Wall(name=sheet, width=100.0, height=100.0))
 
-    if "Permanents" in data:
-        for _, row in data["Permanents"].iterrows():
-            perm_info = ast.literal_eval(row["_internal"])
-            pos = perm_info.get("_position", {"x": 0, "y": 0})
-            p = PermanentObject(
-                name=perm_info.get("_name"),
-                width=perm_info.get("_width"),
-                height=perm_info.get("_height"),
-                image_path=perm_info.get("_image_path"),
-                orientation=perm_info.get("_orientation", "horizontal"),  # Optional new fields
-                category=perm_info.get("_category", None)
-            )
-            p.position = Position(pos["x"], pos["y"])
-            permanents.append(p)
+        for _, row in df.iterrows():
+            try:
+                dtype = str(row["type"]).strip().lower()
+                if dtype == "artwork":
+                    artwork = Artwork(
+                        name=str(row.get("name", "")).strip(),
+                        medium=str(row.get("medium", "")).strip(),
+                        width=float(row["width"]),
+                        height=float(row["height"]),
+                        depth=float(row.get("depth", 0.0)),
+                        hanging_point=float(row.get("hanging_point", 0.0)),
+                        image_path=str(row.get("image_path", "")).strip(),
+                        nfs=str(row.get("nfs", "FALSE")).strip().upper() != "FALSE",
+                    )
+                    wall.artworks.append(artwork)
 
-    for art in artworks:
-        if art:
-            #Add artwork to wall
-            wall.add_artwork(art)
-    for perm in permanents:
-        if perm:
-            #Add permanent object to wall
-            wall.add_permanent_object(perm)
-        
-    print(f"[INFO] Project imported from Excel: {filepath}")
-    return wall, artworks, permanents
+                elif dtype == "line":
+                    line = SingleLine(
+                        x=float(row["x_cord"]),
+                        y=float(row["y_cord"]),
+                        angle=float(row.get("angle", 0.0)),
+                        length=float(row.get("length", 0.0)),
+                        snap_to=str(row.get("snap_to", "FALSE")).upper() != "FALSE",
+                        moveable=str(row.get("moveable", "FALSE")).upper() != "FALSE",
+                        orientation=Orientation[row.get("orientation", "HORIZONTAL").upper()],
+                        alignment=HorizontalAlignment[row.get("alignment", "CENTER").upper()] if row.get("orientation", "HORIZONTAL").upper() == "HORIZONTAL"
+                                  else VerticalAlignment[row.get("alignment", "CENTER").upper()],
+                        distance=float(row.get("distance", 0.0))
+                    )
+                    wall.add_wall_line(line)
+
+                elif dtype == "perm":
+                    pos_str = str(row.get("position", "(0, 0)")).strip()
+                    try:
+                        x_val, y_val = ast.literal_eval(pos_str)  # safe tuple parsing
+                    except (ValueError, SyntaxError):
+                        x_val, y_val = 0.0, 0.0  # fallback if format is bad
+                
+                    perm = PermanentObject(
+                        width=float(row["width"]),
+                        height=float(row["height"]),
+                        label=str(row.get("label", "")).strip()
+                    )
+                    perm.set_position(Position(x_val, y_val))  # assign position properly
+                    wall.permanent_objects.append(perm)
+                    wall.permanent_objects.append(perm)
+
+            except Exception as e:
+                print(f"[ERROR] Failed to parse row in sheet '{sheet}': {e}")
+
+    # Read export metadata
+    if "ExportInfo" in xls.sheet_names:
+        df_info = xls.parse("ExportInfo")
+        if "Title" in df_info.columns and not df_info["Title"].empty:
+            gallery_title = str(df_info["Title"][0]).strip()
+
+    gallery = Gallery(title=gallery_title, walls=list(walls.values()))
+    print(f"[INFO] Finished importing gallery: {gallery.title} with {len(gallery.walls)} walls.")
+    return gallery
+
 
 def export_gallery_to_excel(filepath: str, gallery: Gallery):
     print(f"[INFO] Exporting gallery to {filepath}")
