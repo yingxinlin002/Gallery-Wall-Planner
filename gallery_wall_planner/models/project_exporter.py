@@ -210,7 +210,58 @@ def import_project_from_excel(filepath):
     print(f"[INFO] Project imported from Excel: {filepath}")
     return wall, artworks, permanents
 
-    
+def export_gallery_to_excel(gallery: Gallery, filepath: str):
+    print(f"[INFO] Exporting gallery to {filepath}")
+    writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
+
+    # Sheet: ExportInfo
+    pd.DataFrame([{"Export status": "Initialized"}]).to_excel(writer, index=False, sheet_name="ExportInfo")
+
+    # NEW Sheet: Walls
+    wall_rows = []
+    for wall in gallery.walls:
+        wall_rows.append({
+            "name": wall.name,
+            "width": wall.width,
+            "height": wall.height,
+            "color": wall.color
+        })
+    pd.DataFrame(wall_rows).to_excel(writer, index=False, sheet_name="Walls")
+
+    # Export each wall's elements
+    for wall in gallery.walls:
+        # Artwork
+        if wall.artworks:
+            pd.DataFrame([a.to_dict() for a in wall.artworks]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Art"
+            )
+        else:
+            pd.DataFrame([{"info": "No artworks"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Art"
+            )
+
+        # Wall Lines
+        if wall.wall_lines:
+            pd.DataFrame([l.to_dict() for l in wall.wall_lines]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Lines"
+            )
+        else:
+            pd.DataFrame([{"info": "No wall lines"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Lines"
+            )
+
+        # Permanent Objects
+        if wall.permanent_objects:
+            pd.DataFrame([p.to_dict() for p in wall.permanent_objects]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Perm"
+            )
+        else:
+            pd.DataFrame([{"info": "No permanent objects"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Perm"
+            )
+
+    writer.close()
+    print("[DONE] Finished exporting gallery.")
 
 
 from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
