@@ -193,7 +193,7 @@ class SingleLine:
         return self.orientation == other.orientation and self.alignment == other.alignment and abs(self.distance - other.distance) < 0.001
 
     def to_dict(self):
-        # Helper for import/export in project_exporter.py
+        # Helper for import/export in project_exporter.py export
         return {
             'x_cord': self.x_cord,
             'y_cord': self.y_cord,
@@ -205,6 +205,22 @@ class SingleLine:
             'alignment': self.alignment.value,      # Convert enum to string
             'distance': self.distance
         }
+
+    @staticmethod
+    def from_dict(data):
+        # Helper for import/export in project_exporter.py import
+        return SingleLine(
+            x_cord = data.get("x_cord", 0),
+            y_cord = data.get("y_cord", 0),
+            length = data.get("length", 0),
+            angle = data.get("angle", 0),
+            snap_to = data.get("snap_to", False),
+            movable=data.get("movable", False),
+            orientation = data.get("orientation", Orientation.HORIZONTAL),
+            alignment = data.get("alignment", HorizontalAlignment.CENTER)
+            distance = data.get("distance", 0)
+        )
+
     
     def export_snap_line(self, directory: str = "") -> str:
         """Export snap line to a JSON file
