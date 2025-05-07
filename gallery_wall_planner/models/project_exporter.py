@@ -233,8 +233,8 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
     # Export each wall's elements
     for wall in gallery.walls:
         # Artwork
-        if wall.artworks:
-            pd.DataFrame([a.to_dict() for a in wall.artworks]).to_excel(
+        if wall.artwork:
+            pd.DataFrame([a.to_dict() for a in wall.artwork]).to_excel(
                 writer, index=False, sheet_name=f"{wall.name} - Art"
             )
         else:
