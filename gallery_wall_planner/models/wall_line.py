@@ -192,6 +192,20 @@ class SingleLine:
         """Check if two SingleLine objects are approximately equal"""
         return self.orientation == other.orientation and self.alignment == other.alignment and abs(self.distance - other.distance) < 0.001
 
+    def to_dict(self):
+        # Helper for import/export in project_exporter.py
+        return {
+            'x_cord': self.x_cord,
+            'y_cord': self.y_cord,
+            'length': self.length,
+            'angle': self.angle,
+            'snap_to': self.snap_to,
+            'moveable': self.moveable,
+            'orientation': self.orientation.value,  # Convert enum to string
+            'alignment': self.alignment.value,      # Convert enum to string
+            'distance': self.distance
+        }
+    
     def export_snap_line(self, directory: str = "") -> str:
         """Export snap line to a JSON file
 
