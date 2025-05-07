@@ -201,7 +201,7 @@ class Artwork(WallObject):
         print(f"Imported {len(artworks)} artworks from {filename}")
         return artworks    
 
-    def export(self):
+    def to_dict(self):
         # Helper for exporter.py
         return {
             "name": self.name,
@@ -215,8 +215,21 @@ class Artwork(WallObject):
             "notes": self.notes,
             "price": self.price
         }
-
     
+    @staticmethod
+    def from_dict(data):
+        # Helper for importing for exporter.py
+        return Artwork(
+            title=data.get("name", ""),
+            width=data.get("width", 0),
+            height=data.get("height", 0),
+            hanging_point=data.get("hanging point", 0),
+            medium=data.get("medium", ""),
+            depth=data.get("depth", 0),
+            photo=data.get("photo", ""),
+            nfs=(data.get("NFS (Y/N)", "").strip().upper() == "Y")
+        )
+
     def export_artwork(self, directory: str = "") -> str:
         """ Legacy method to Export artwork to a JSON file
         
