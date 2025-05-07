@@ -24,8 +24,9 @@ class PermanentObject(WallObject):
     def export(self):
     # Helper for exporter.py
         return {
-            "x": self.x,
-            "y": self.y,
+            "name": self.name,
+            "image_path": self.image_path,
+            "position": self.position,
             "width": self.width,
             "height": self.height
             # Add any other relevant attributes here
