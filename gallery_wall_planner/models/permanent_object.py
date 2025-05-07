@@ -21,8 +21,8 @@ class PermanentObject(WallObject):
         # Initialize the parent class
         super().__init__(name, width, height, image_path)
         
-    def export(self):
-    # Helper for exporter.py
+    def to_dict(self):
+    # Helper for exporter.py export
         return {
             "name": self.name,
             "image_path": self.image_path,
@@ -31,7 +31,18 @@ class PermanentObject(WallObject):
             "height": self.height
             # Add any other relevant attributes here
         }
-    
+
+    @staticmethod
+    def from_dict(data):
+        # Helper for exporter.py import
+        return PermanentObject(
+            position = data.get("position", (0,0)),
+            width=data.get("width", 0),
+            height=data.get("height", 0),
+            name=data.get("name", ""),
+            image_path = data.get("image_path","")
+        )
+
     @override
     def _get_id(self):
         return get_id("perm_obj"+self.name+f"width{self.width},height{self.height}")
