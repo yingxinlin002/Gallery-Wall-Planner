@@ -201,19 +201,20 @@ def import_project_from_excel(filepath):
     return wall, artworks, permanents
 
 def export_gallery_to_excel(filepath, gallery):
-    """
-    Export a Gallery object to an Excel file.
-    Args:
-        filepath (str): Path to save Excel file.
-        gallery (Gallery): The gallery object containing multiple walls.
-    """
     with pd.ExcelWriter(filepath, engine="openpyxl") as writer:
         for wall in gallery.walls:
+            wall_export = wall.export() if hasattr(wall, "export") else {
+                k: v for k, v in wall.__dict__.items() if not callable(v) and not isinstance(v, (Artwork, PermanentObject))
+            }
+            # Remove unserializable keys
+            wall_export.pop("artwork", None)
+            wall_export.pop("permanent_objects", None)
+
             wall_df = pd.DataFrame([{
                 "Wall Name": wall.name,
                 "Width (in)": wall.width,
                 "Height (in)": wall.height,
-                "_internal": str(wall.export() if hasattr(wall, "export") else wall.__dict__)
+                "_internal": json.dumps(wall_export)
             }])
             wall_df.to_excel(writer, sheet_name=f"{wall.name}_Wall", index=False)
 
@@ -227,18 +228,24 @@ def export_gallery_to_excel(filepath, gallery):
                     "Depth": a.depth,
                     "Photo": a.image_path,
                     "NFS (Y/N)": "Y" if a.nfs else "N",
-                    "_internal": str({k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v for k, v in a.__dict__.items()})
+                    "_internal": json.dumps({
+                        k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v
+                        for k, v in a.__dict__.items()
+                        if not callable(v)
+                    })
                 } for a in wall.artwork])
                 artworks_df.to_excel(writer, sheet_name=f"{wall.name}_Artworks", index=False)
 
             if wall.permanent_objects:
                 perms_df = pd.DataFrame([{
                     **{k: v for k, v in po.__dict__.items() if not isinstance(v, Position)},
-                    "_internal": str({k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v for k, v in po.__dict__.items()})
+                    "_internal": json.dumps({
+                        k: {"x": v.x, "y": v.y} if isinstance(v, Position) else v
+                        for k, v in po.__dict__.items()
+                        if not callable(v)
+                    })
                 } for po in wall.permanent_objects])
                 perms_df.to_excel(writer, sheet_name=f"{wall.name}_Permanents", index=False)
-
-    print(f"[INFO] Gallery exported to Excel at {filepath}")
 
 from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
 
@@ -259,7 +266,7 @@ def import_gallery_from_excel(filepath):
     for sheet_name in data:
         if sheet_name.endswith("_Wall"):
             wall_name = sheet_name.replace("_Wall", "")
-            wall_info = ast.literal_eval(data[sheet_name]["_internal"][0])
+            wall_info = json.loads(data[sheet_name]["_internal"][0])
             wall = Wall(
                 name=wall_info.get("_name"),
                 width=wall_info.get("_width"),
@@ -272,7 +279,7 @@ def import_gallery_from_excel(filepath):
             art_sheet = data.get(f"{wall_name}_Artworks")
             if art_sheet is not None:
                 for _, row in art_sheet.iterrows():
-                    art_info = ast.literal_eval(row["_internal"])
+                    art_info = json.loads(row["_internal"])
                     pos = art_info.get("_position", {"x": 0, "y": 0})
                     a = Artwork(
                         name=art_info.get("_name"),
@@ -296,7 +303,7 @@ def import_gallery_from_excel(filepath):
             perm_sheet = data.get(f"{wall_name}_Permanents")
             if perm_sheet is not None:
                 for _, row in perm_sheet.iterrows():
-                    perm_info = ast.literal_eval(row["_internal"])
+                    perm_info = json.loads(row["_internal"])
                     pos = perm_info.get("_position", {"x": 0, "y": 0})
                     p = PermanentObject(
                         name=perm_info.get("_name"),
