@@ -228,6 +228,17 @@ def import_gallery_from_excel(filepath):
             if df.empty:
                 print(f"[WARN] Sheet '{sheet}' is empty, skipping.")
                 continue
+                # Load wall metadata first
+            if "Walls" in xls.sheet_names:
+                df_walls = xls.parse("Walls")
+                for _, row in df_walls.iterrows():
+                    name = row["name"]
+                    width = float(row["width"])
+                    height = float(row["height"])
+                    color = row.get("color", "#FFFFFF")
+                    walls[name] = Wall(name=name, width=width, height=height, color=color)
+            else:
+                print("[WARN] No 'Walls' sheet found. Walls will use default dimensions.")
 
             if " - Art" in sheet:
                 wall_name = sheet.replace(" - Art", "")
