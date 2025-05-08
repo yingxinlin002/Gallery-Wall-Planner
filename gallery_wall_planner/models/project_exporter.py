@@ -363,9 +363,6 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     else:
                         x = values[1]
                         y = values[2]
-                    else:
-                        x = values[1]
-                        y = values[2]
                     
                     width = float(values[3]) if values[3] is not None else None
                     height = float(values[4]) if values[4] is not None else None
