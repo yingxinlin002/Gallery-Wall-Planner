@@ -228,7 +228,13 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
     for wall in gallery.walls:
         # Artwork
         if wall.artwork:
-            pd.DataFrame([a.to_dict() for a in wall.artwork]).to_excel(
+            def artwork_to_export_dict(artwork):
+                d = artwork.to_dict()
+                d["x"] = getattr(artwork.position, "x", None)
+                d["y"] = getattr(artwork.position, "y", None)
+                return d
+
+            pd.DataFrame([artwork_to_export_dict(a) for a in wall.artwork]).to_excel(
                 writer, index=False, sheet_name=f"{wall.name} - Art"
             )
         else:
@@ -297,16 +303,19 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    name, width, height, hanging_point, medium, depth, image_path, nfs = row[:8]
-                    if name:
-                        artwork = Artwork(name=name, width=width, height=height,
-                                          hanging_point=hanging_point,
-                                          medium=medium or "",
-                                          depth=depth or 0.0,
-                                          image_path=image_path if isinstance(image_path, str) else None,
-                                          nfs=(str(nfs).strip().upper() == "Y"))
-                        # artwork.position(Position(x,y))
-                        wall.add_artwork(artwork)
+                    name, width, height, hanging_point, medium, depth, image_path, nfs, x, y = row[:10]
+                if name:
+                    artwork = Artwork(name=name, width=width, height=height,
+                                      hanging_point=hanging_point,
+                                      medium=medium or "",
+                                      depth=depth or 0.0,
+                                      image_path=image_path if isinstance(image_path, str) else None,
+                                      nfs=(str(nfs).strip().upper() == "Y"))
+                
+                    if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                        artwork.position = Position(x, y)
+                
+                    wall.add_artwork(artwork)
                 print(f"[INFO] Imported artwork for wall '{wall_name}'")
 
             elif " - Lines" in sheet_name:
@@ -317,12 +326,11 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    x, y, length, angle, moveable = row[:5]
-                    if x is not None:
-                        wall_line = SingleLine(x=x, y=y, length=length, angle=angle,
-                                             moveable=bool(moveable))
-                       # wall_line.x_cord(x)
-                       # wall_line.y_cord(y)
+                    x_cord, y_cord, length, angle, moveable = row[:5]
+                    if x_cord is not None and y_cord is not None:
+                        wall_line = SingleLine(x=x_cord, y=y_cord, length=length, angle=angle,
+                                               moveable=bool(moveable))
+                        wall_line.position = Position(x_cord, y_cord)
                         wall.add_wall_line(wall_line)
                         print(f"[DEBUG] Adding wall line to wall: {wall_line}")
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
@@ -343,15 +351,18 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     name = values[0]
                     
                     # Try parsing (x, y) from a single string
-                    if isinstance(values[2], str) and '(' in values[2]:
+                    x = y = None
+                    if isinstance(values[2], str) and "(" in values[2] and "," in values[2]:
                         try:
                             coord_str = values[2].strip("() ")
                             x_str, y_str = coord_str.split(",")
                             x = float(x_str.strip())
                             y = float(y_str.strip())
                         except Exception as e:
-                            print(f"[ERROR] Could not parse coordinates from '{values[2]}': {e}")
-                            continue
+                            print(f"[ERROR] Could not parse position from '{values[2]}': {e}")
+                    else:
+                        x = values[1]
+                        y = values[2]
                     else:
                         x = values[1]
                         y = values[2]
@@ -363,8 +374,9 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     if name and x is not None and y is not None:
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
                         perm = PermanentObject(name=name, width=width, height=height, image_path=safe_image_path)
-                        # perm.position(Position(x,y))
+                        perm.position = Position(x, y)
                         wall.add_permanent_object(perm)
+
                         print(f"[DEBUG] Adding permanent object to wall: {perm}")
                     
                 print(f"[INFO] Imported permanent objects for wall '{wall_name}'")
