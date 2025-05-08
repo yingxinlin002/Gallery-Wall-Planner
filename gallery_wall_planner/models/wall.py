@@ -206,19 +206,14 @@ class Wall:
         if not isinstance(obj, PermanentObject):
             raise ValueError("Can only add PermanentObject instances")
             
-        # Set default position if not specified
-        if x is None:
-            x = self.width/2 - obj.width/2  # Center horizontally
-        if y is None:
-            y = self.height - obj.height - 12  # 12" from bottom
-            
         # Validate position
-        if x < 0 or (x + obj.width) > self.width:
-            raise ValueError("Object would extend beyond wall width")
-        if y < 0 or (y + obj.height) > self.height:
-            raise ValueError("Object would extend beyond wall height")
-            
-        obj.position = Position(x, y)
+        if x is not None and y is not None:
+            if x < 0 or (x + obj.width) > self.width:
+                raise ValueError("Object would extend beyond wall width")
+            if y < 0 or (y + obj.height) > self.height:
+                raise ValueError("Object would extend beyond wall height")
+
+            obj.position = Position(x, y)
         self._permanent_objects.append(obj)
         self._permanent_objects_dict[obj.id] = obj
         return True

@@ -12,7 +12,6 @@ class ScreenType(Enum):
     HOME = auto()
     NEW_GALLERY = auto()
     SELECT_WALL_SPACE = auto()
-    PERMANENT_OBJECT = auto()
     ARTWORK_SELECTION = auto()
     EDITOR = auto()
     ARTWORK_MANUAL = auto()
@@ -61,8 +60,6 @@ class AppMain():
             self._load_new_gallery_screen()
         elif screen_type == ScreenType.SELECT_WALL_SPACE:
             self._load_select_wall_space_screen()
-        elif screen_type == ScreenType.PERMANENT_OBJECT:
-            self._load_permanent_object_screen()
         elif screen_type == ScreenType.EDITOR:
             self._load_editor_screen()
         elif screen_type == ScreenType.LOCK_OBJECTS_TO_WALL:
@@ -92,11 +89,6 @@ class AppMain():
         """Load the select wall space screen"""
         from gallery_wall_planner.gui.screen_select_wall_space_ui import ScreenSelectWallSpaceUI
         self.frame_contents = ScreenSelectWallSpaceUI(self)
-    
-    def _load_permanent_object_screen(self):
-        """Load the permanent object screen"""
-        from gallery_wall_planner.gui.screen_permanent_object_ui import ScreenPermanentObjectUI
-        self.frame_contents = ScreenPermanentObjectUI(self)
     
     def _load_editor_screen(self):
         """Load the editor screen"""
