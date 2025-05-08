@@ -261,63 +261,89 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
 
 from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
 
-def import_gallery_from_excel(filepath):
+def import_gallery_from_excel(filepath: str) -> Gallery:
     print(f"[INFO] Importing gallery from {filepath}")
-    xls = pd.ExcelFile(filepath)
-    gallery = Gallery(name="Imported Gallery")
+    wb = openpyxl.load_workbook(filepath, data_only=True)
+    gallery = Gallery("Imported Gallery")
 
-    walls = {}
-    for sheet in xls.sheet_names:
-        print(f"[INFO] Reading sheet: {sheet}")
+    wall_map = {}  # name -> Wall object
+
+    # Step 1: Load walls from "Walls" sheet
+    if "Walls" in wb.sheetnames:
+        sheet = wb["Walls"]
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            name, width, height, color = row[:4]
+            if name:
+                wall = Wall(name=name, width=width, height=height, color=color)
+                gallery.add_wall(wall)
+                wall_map[name] = wall
+                print(f"[INFO] Loaded wall: {name}")
+    else:
+        print("[ERROR] 'Walls' sheet not found.")
+        return gallery
+
+    # Step 2: Loop through each sheet and map to walls
+    for sheet_name in wb.sheetnames:
+        if sheet_name in ["Walls", "ExportInfo"]:
+            continue
+
         try:
-            df = xls.parse(sheet)
-            if df.empty:
-                print(f"[WARN] Sheet '{sheet}' is empty, skipping.")
-                continue
-                # Load wall metadata first
-            if "Walls" in xls.sheet_names:
-                df_walls = xls.parse("Walls")
-                for _, row in df_walls.iterrows():
-                    name = row["name"]
-                    width = float(row["width"])
-                    height = float(row["height"])
-                    color = row.get("color", "#FFFFFF")
-                    walls[name] = Wall(name=name, width=width, height=height, color=color)
-            else:
-                print("[WARN] No 'Walls' sheet found. Walls will use default dimensions.")
-
-            if " - Art" in sheet:
-                wall_name = sheet.replace(" - Art", "")
-                if df.columns.tolist() == ["info"] and "No artworks" in df["info"].values:
-                    print(f"[INFO] Placeholder sheet for artworks on '{wall_name}', skipping.")
+            if " - Art" in sheet_name:
+                wall_name = sheet_name.replace(" - Art", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Art sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                walls.setdefault(wall_name, Wall(name=wall_name)).artworks = [
-                    Artwork.from_dict(row) for _, row in df.iterrows()
-                ]
-                print(f"[OK] Loaded artworks for wall '{wall_name}'.")
+                sheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    name, width, height, hanging_point, medium, depth, photo, nfs = row[:8]
+                    if name:
+                        artwork = Artwork(name=name, width=width, height=height,
+                                          hanging_point=hanging_point,
+                                          medium=medium or "",
+                                          depth=depth or 0.0,
+                                          photo=photo if isinstance(photo, str) else None,
+                                          not_for_sale=(str(nfs).strip().upper() == "Y"))
+                        wall.add_artwork(artwork)
+                print(f"[INFO] Imported artwork for wall '{wall_name}'")
 
-            elif " - Lines" in sheet:
-                wall_name = sheet.replace(" - Lines", "")
-                if df.columns.tolist() == ["info"] and "No wall lines" in df["info"].values:
-                    print(f"[INFO] Placeholder sheet for wall lines on '{wall_name}', skipping.")
+            elif " - Lines" in sheet_name:
+                wall_name = sheet_name.replace(" - Lines", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Line sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                walls.setdefault(wall_name, Wall(name=wall_name)).wall_lines = [
-                    SingleLine.from_dict(row) for _, row in df.iterrows()
-                ]
-                print(f"[OK] Loaded wall lines for wall '{wall_name}'.")
+                sheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    x, y, length, angle, moveable = row[:5]
+                    if x is not None:
+                        wall_line = WallLine(x=x, y=y, length=length, angle=angle,
+                                             moveable=bool(moveable))
+                        wall.add_wall_line(wall_line)
+                print(f"[INFO] Imported wall lines for wall '{wall_name}'")
 
-            elif " - Perm" in sheet:
-                wall_name = sheet.replace(" - Perm", "")
-                if df.columns.tolist() == ["info"] and "No permanent objects" in df["info"].values:
-                    print(f"[INFO] Placeholder sheet for permanent objects on '{wall_name}', skipping.")
+            elif " - Perm" in sheet_name:
+                wall_name = sheet_name.replace(" - Perm", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Perm sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                walls.setdefault(wall_name, Wall(name=wall_name)).permanent_objects = [
-                    PermanentObject.from_dict(row) for _, row in df.iterrows()
-                ]
-                print(f"[OK] Loaded permanent objects for wall '{wall_name}'.")
+                sheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    name, x, y, width, height, image_path = row[:6]
+                    if name and x is not None:
+                        safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
+                        perm = PermanentObject(name=name, x=x, y=y,
+                                               width=width, height=height,
+                                               image_path=safe_image_path)
+                        wall.add_permanent_object(perm)
+                print(f"[INFO] Imported permanent objects for wall '{wall_name}'")
 
         except Exception as e:
-            print(f"[ERROR] Failed to load sheet '{sheet}': {e}")
+            print(f"[ERROR] Failed to load sheet '{sheet_name}': {e}")
+
+    print(f"[DONE] Finished importing gallery with {len(gallery.walls)} walls.")
+    return gallery
 
     gallery.walls = list(walls.values())
     print(f"[DONE] Finished importing gallery with {len(gallery.walls)} walls.")
