@@ -34,6 +34,9 @@ class BTNSSave(ttk.Frame):
             file_path = filedialog.asksaveasfilename(
                 filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")])
             if file_path:
+                # Ensure file_path ends with .xlsx extension
+                if not file_path.lower().endswith('.xlsx'):
+                    file_path += '.xlsx'
                 self.app_main.save_file_path = file_path
                 print(f"[INFO] Project saved to {file_path}")
                 project_exporter.export_gallery_to_excel(file_path, self.app_main.gallery)
