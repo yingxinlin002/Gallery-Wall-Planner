@@ -342,9 +342,9 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     width = values[3]
                     height = values[4]
                     image_path = values[5] if len(values) > 5 else None
-                
-                    if name and x is not None:
-                        print(f"[DEBUG] Creating permanent object with x={x}, y={y}, w={width}, h={height}, label={name}")
+                    print(f"[DEBUG] Raw perm object row: {values}")
+                    if x is not None:
+                        print(f"[DEBUG] Creating PermanentObject: name={name}, x={x}, y={y}, width={width}, height={height}")
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
                         perm = PermanentObject(name=name, x=x, y=y,
                                                width=width, height=height,
