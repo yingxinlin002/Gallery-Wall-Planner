@@ -336,19 +336,30 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     if len(values) < 5:
                         print(f"[WARN] Skipping incomplete permanent object row: {values}")
                         continue
+                
                     name = values[0]
-                    x = values[1]
-                    y = values[2]
-                    width = values[3]
-                    height = values[4]
+                    
+                    # Try parsing (x, y) from a single string
+                    if isinstance(values[2], str) and '(' in values[2]:
+                        try:
+                            coord_str = values[2].strip("() ")
+                            x_str, y_str = coord_str.split(",")
+                            x = float(x_str.strip())
+                            y = float(y_str.strip())
+                        except Exception as e:
+                            print(f"[ERROR] Could not parse coordinates from '{values[2]}': {e}")
+                            continue
+                    else:
+                        x = values[1]
+                        y = values[2]
+                    
+                    width = float(values[3]) if values[3] is not None else None
+                    height = float(values[4]) if values[4] is not None else None
                     image_path = values[5] if len(values) > 5 else None
-                    print(f"[DEBUG] Raw perm object row: {values}")
-                    if x is not None:
-                        print(f"[DEBUG] Creating PermanentObject: name={name}, x={x}, y={y}, width={width}, height={height}")
+                
+                    if name and x is not None and y is not None:
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
-                        perm = PermanentObject(name=name, x=x, y=y,
-                                               width=width, height=height,
-                                               image_path=safe_image_path)
+                        perm = PermanentObject(name=name, x=x, y=y, width=width, height=height, image_path=safe_image_path)
                         wall.add_permanent_object(perm)
                         print(f"[DEBUG] Adding permanent object to wall: {perm}")
                     
