@@ -19,6 +19,7 @@ from gallery_wall_planner.models.wall_line import SingleLine, Orientation
 from gallery_wall_planner.gui.collapsible_menu import CollapsibleMenu
 from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
 from gallery_wall_planner.gui.btn_snap_line import BTNSnapLine
+from gallery_wall_planner.gui.popup_even_spacing import PopupEvenSpacing
 from typing import Dict
 
 class ArtBtn(tk.Button):
@@ -145,11 +146,9 @@ class ScreenEditorUI(ScreenBase):
         self.add_snap_line_button.pack(pady=5, fill="x")
 
         
-        from gallery_wall_planner.utils.even_spacing import apply_even_spacing
-
         even_spacing_button = tk.Button(self.actions_frame,
                                         text="Even Spacing",
-                                        command=lambda: apply_even_spacing(self.wall_canvas, self.AppMain.gallery.current_wall.artwork),
+                                        command=lambda: PopupEvenSpacing(self.AppMain),
                                         bg=self.styles["bg_primary"],
                                         fg=self.styles["fg_white"],
                                         font=self.styles["button_font"],
@@ -402,31 +401,6 @@ class ScreenEditorUI(ScreenBase):
         else:
             content_frame.pack(fill="x")
             toggle_btn.config(text="▼")
-
-    def apply_even_spacing(self):
-        """Apply even spacing to artworks using the utility function"""
-        from gallery_wall_planner.utils.even_spacing import apply_even_spacing
-        if not hasattr(self.AppMain.gallery.current_wall, 'artwork') or not self.AppMain.gallery.current_wall.artwork:
-            messagebox.showinfo("Info", "No artworks to space")
-            return
-        
-        # Get wall dimensions from your WallCanvas or selected_wall
-        wall_width = self.AppMain.gallery.current_wall.width  # or get from canvas dimensions
-        wall_height = self.AppMain.gallery.current_wall.height
-        
-        # Apply spacing
-        updated_artworks = apply_even_spacing(
-            self.AppMain.gallery.current_wall.artwork,
-            wall_width,
-            wall_height
-        )
-        
-        # Update the wall with new positions
-        self.AppMain.gallery.current_wall.artwork = updated_artworks
-        
-        # Refresh the display
-        self.wall_canvas.refresh_artworks()
-        messagebox.showinfo("Success", "Artworks evenly spaced")
 
     def handle_installation_popup(self):
         """Handle the installation instructions popup button click"""
