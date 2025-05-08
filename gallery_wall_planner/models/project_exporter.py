@@ -304,7 +304,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                                           medium=medium or "",
                                           depth=depth or 0.0,
                                           image_path=image_path if isinstance(image_path, str) else None,
-                                          not_for_sale=(str(nfs).strip().upper() == "Y"))
+                                          nfs=(str(nfs).strip().upper() == "Y"))
                         wall.add_artwork(artwork)
                 print(f"[INFO] Imported artwork for wall '{wall_name}'")
 
