@@ -201,20 +201,40 @@ class Artwork(WallObject):
         print(f"Imported {len(artworks)} artworks from {filename}")
         return artworks    
 
-    def export(self):
+    def to_dict(self):
         # Helper for exporter.py
         return {
-            "title": self.title,
+            "name": self.name,
             "width": self.width,
             "height": self.height,
             "hanging_point": self.hanging_point,
             "medium": self.medium,
             "depth": self.depth,
-            "photo": self.photo,
-            "nfs": self.nfs
+            "image_path": self.image_path,
+            "nfs": self.nfs,
+            "notes": self.notes,
+            "price": self.price
         }
-
     
+    @staticmethod
+    def from_dict(data):
+        # Helper for importing for exporter.py
+        image_path = data.get("image_path")
+        if not isinstance(image_path, str):
+            image_path = None
+        return Artwork(
+            name = data.get("name", ""),
+            width = data.get("width", 0),
+            height = data.get("height", 0),
+            hanging_point = data.get("hanging point", 0),
+            medium = data.get("medium", ""),
+            depth = data.get("depth", 0),
+            image_path = image_path,
+            nfs = (data.get("NFS (Y/N)", "").strip().upper() == "Y"),
+            notes = data.get("notes",""),
+            price = data.get("price", 0.0),
+        )
+
     def export_artwork(self, directory: str = "") -> str:
         """ Legacy method to Export artwork to a JSON file
         

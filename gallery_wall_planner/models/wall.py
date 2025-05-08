@@ -408,17 +408,31 @@ class Wall:
         with open(filename, 'w') as f:
             json.dump(self.export_wall(), f, indent=2)
 
-    def export(self):
+    def to_dict(self):
         # Helper for project exporter
         return {
             "name": self.name,
             "width": self.width,
             "height": self.height,
             "color": self.color,
-            "artwork": self.artwork,
-            "wall lines": self.wall_lines,
-            "permanent objects": self.permanent_objects
+            "artworks": [artwork.to_dict() for artwork in self.artwork],
+            "wall_lines": [line.to_dict() for line in self.wall_lines],
+            "permanent_objects": [po.to_dict() for po in self.permanent_objects],
+            "wall_lines": [sl.to_dict() for sl in self.wall_lines]
         }
+
+    @staticmethod
+    def from_dict(data):
+        return Wall(
+            name=data["name"],
+            width=float(data["width"]),
+            height=float(data["height"]),
+            color=data.get("color", "#FFFFFF"),  # default white if not provided
+            artwork=[],
+            wall_lines=[],
+            permanent_objects=[],
+        )
+
 
     
     @classmethod
