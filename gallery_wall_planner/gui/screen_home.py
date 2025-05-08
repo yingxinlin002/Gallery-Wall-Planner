@@ -1,9 +1,11 @@
 import tkinter as tk
+from tkinter import filedialog, messagebox
 from tkinter import font
 from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from PIL import Image, ImageTk
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.screen_base import ScreenBase
+from gallery_wall_planner.models.project_exporter import import_gallery_from_excel
 
 
 class ScreenHome(ScreenBase):
@@ -15,27 +17,6 @@ class ScreenHome(ScreenBase):
         self.background_image = None
         self.content_frame = None
         self.canvas = None
-        # self._create_content()
-    #     self.bind("<Configure>", self._resize_image)
-    #     self._resize_image()  # Initial setup
-
-
-        
-    # def _resize_image(self, event=None):
-    #     # Load and resize the image to fit the canvas size
-    #     try:
-    #         img = Image.open(self.image_path)
-    #         img = img.resize((self.winfo_width(), self.winfo_height()), Image.LANCZOS)
-    #         self.image = ImageTk.PhotoImage(img)
-    #         self.delete("all")  # Clear everything on the canvas
-    #         self.create_image(0, 0, image=self.image, anchor="nw")
-            
-    #         # Recreate the content frame if it exists
-    #         if self.content_frame:
-    #             self.content_frame.destroy()
-    #         self._create_content()
-    #     except Exception as e:
-    #         print(f"Error loading background image: {e}")
     
     def load_content(self):
 
@@ -85,7 +66,7 @@ class ScreenHome(ScreenBase):
         
         tk.Button(self.content_frame, 
                   text="Load Exhibit", 
-                  command=lambda: self.AppMain.switch_screen(ScreenType.ARTWORK_XLSX),
+                  command=self.load_exhibit,
                   **button_style).pack(pady=10)
         
         quit_button_style = button_style.copy()
@@ -95,3 +76,17 @@ class ScreenHome(ScreenBase):
                   text="Quit", 
                   command= self.AppMain.quit_application, 
                   **quit_button_style).pack(pady=10)
+
+    def load_exhibit(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
+        if not file_path:
+            return
+        print(file_path)
+        try:
+            # TODO: Add error handling
+            self.AppMain.gallery = import_gallery_from_excel(file_path)
+            self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Error", str(e))
