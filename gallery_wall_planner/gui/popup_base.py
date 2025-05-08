@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox, filedialog
 from gallery_wall_planner.gui.app_main import AppMain
 
 class PopupBase(tk.Toplevel):
@@ -43,3 +44,30 @@ class PopupBase(tk.Toplevel):
         self.attributes("-topmost", False)
         self.grab_release()
         
+    def messagebox_showinfo(self, title : str, message : str):
+        self.release_top()
+        messagebox.showinfo(title, message)
+        self.set_to_top()
+
+    def messagebox_showerror(self, title : str, message : str):
+        self.release_top()
+        messagebox.showerror(title, message)
+        self.set_to_top()
+
+    def messagebox_askyesno(self, title : str, message : str) -> bool:
+        self.release_top()
+        result = messagebox.askyesno(title, message)
+        self.set_to_top()
+        return result
+
+    def messagebox_askokcancel(self, title : str, message : str) -> bool:
+        self.release_top()
+        result = messagebox.askokcancel(title, message)
+        self.set_to_top()
+        return result
+
+    def filedialog_askopenfilename(self, *args, **kwargs) -> str:
+        self.release_top()
+        result = filedialog.askopenfilename(*args, **kwargs)
+        self.set_to_top()
+        return result

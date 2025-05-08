@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox, filedialog
 
 
 from gallery_wall_planner.gui.popup_base import PopupBase
@@ -101,8 +100,8 @@ class PopupEditWallItem(PopupBase):
             self.artwork_image_label = ttk.Label(self.left_frame, text="Image:")
             self.artwork_image_label.pack(pady=5)
             
-            self.image_path = tk.StringVar(value=self.wall_object.image_path)
-            self.image_entry = ttk.Entry(self.left_frame, textvariable=self.image_path)
+            self.image_path_var = tk.StringVar(value=self.wall_object.image_path)
+            self.image_entry = ttk.Entry(self.left_frame, textvariable=self.image_path_var)
             self.image_entry.pack(pady=5)
 
             self.image_button = ttk.Button(self.left_frame, text="Browse", command=self.upload_image)
@@ -158,12 +157,10 @@ class PopupEditWallItem(PopupBase):
         self.delete_button.pack(side="right", padx=10)
 
     def upload_image(self):
-        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
+        file_path = self.filedialog_askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
         if file_path:
-            self.image_path.set(file_path)
-            self.release_top()
-            messagebox.showinfo("Success", "Image uploaded successfully!")
-            self.set_to_top()
+            self.image_path_var.set(file_path)
+            self.messagebox_showinfo("Success", "Image uploaded successfully!")
 
     def delete(self):
         if isinstance(self.wall_object, PermanentObject):
@@ -180,8 +177,8 @@ class PopupEditWallItem(PopupBase):
                 name=self.name_var.get(),
                 width=float(self.width_var.get()),
                 height=float(self.height_var.get()),
-                image_path=self.wall_object.image_path,
-                price=self.wall_object.price,
+                image_path=self.image_path_var.get(),
+                price=float(self.artwork_price_var.get()),
                 hanging_point=float(self.artwork_hanging_point_var.get())
             )
         else:
@@ -189,20 +186,15 @@ class PopupEditWallItem(PopupBase):
                 name=self.name_var.get(),
                 width=float(self.width_var.get()),
                 height=float(self.height_var.get()),
-                image_path=self.wall_object.image_path
+                image_path=self.image_path_var.get()
             )
         wall_object.position = self.current_position
         if self.is_new and wall_object.id in self.app_main.gallery.current_wall.permanent_objects_dict:
-            self.release_top()
-            messagebox.showerror("Error", "Wall Object already exists")
-            self.set_to_top()
+            self.messagebox_showerror("Error", "Wall Object already exists")
             return
         if self.app_main.gallery.current_wall.check_object_collision(wall_object, [self.wall_object.id]):
-            self.release_top()
-            if not messagebox.askyesno("Error", "Object collides with another object. Do you want to continue?"):
-                self.set_to_top()
+            if not self.messagebox_askyesno("Error", "Object collides with another object. Do you want to continue?"):
                 return
-            self.set_to_top()
         if self.is_new:
             if isinstance(self.wall_object, Artwork):
                 self.app_main.gallery.current_wall.add_artwork(wall_object)
