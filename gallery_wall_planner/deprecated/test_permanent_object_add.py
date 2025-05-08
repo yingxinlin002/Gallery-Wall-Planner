@@ -1,15 +1,12 @@
 import pytest
-import tkinter as tk
 import sys
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.screen_home import Screen_Home
-from gallery_wall_planner.gui.screen_permanent_object_ui import ScreenPermanentObjectUI
 from gallery_wall_planner.models.wall import Wall
 from tests.AppTestContext import AppTestContext
 from tests.TestingSteps import TestingSteps
