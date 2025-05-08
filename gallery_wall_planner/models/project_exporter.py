@@ -321,8 +321,8 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     if x is not None:
                         wall_line = SingleLine(x=x, y=y, length=length, angle=angle,
                                              moveable=bool(moveable))
-                        wall_line.x_cord(x)
-                        wall_line.y_cord(y)
+                       # wall_line.x_cord(x)
+                       # wall_line.y_cord(y)
                         wall.add_wall_line(wall_line)
                         print(f"[DEBUG] Adding wall line to wall: {wall_line}")
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
@@ -363,7 +363,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     if name and x is not None and y is not None:
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
                         perm = PermanentObject(name=name, width=width, height=height, image_path=safe_image_path)
-                        perm.position(Position(x,y))
+                        # perm.position(Position(x,y))
                         wall.add_permanent_object(perm)
                         print(f"[DEBUG] Adding permanent object to wall: {perm}")
                     
