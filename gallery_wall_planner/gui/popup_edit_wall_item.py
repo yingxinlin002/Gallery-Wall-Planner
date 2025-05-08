@@ -97,15 +97,15 @@ class PopupEditWallItem(PopupBase):
             self.artwork_price_entry = ttk.Entry(self.left_frame, textvariable=self.artwork_price_var)
             self.artwork_price_entry.pack(pady=5)
 
-            self.artwork_image_label = ttk.Label(self.left_frame, text="Image:")
-            self.artwork_image_label.pack(pady=5)
-            
-            self.image_path_var = tk.StringVar(value=self.wall_object.image_path)
-            self.image_entry = ttk.Entry(self.left_frame, textvariable=self.image_path_var)
-            self.image_entry.pack(pady=5)
+        self.artwork_image_label = ttk.Label(self.left_frame, text="Image:")
+        self.artwork_image_label.pack(pady=5)
 
-            self.image_button = ttk.Button(self.left_frame, text="Browse", command=self.upload_image)
-            self.image_button.pack(pady=5)
+        self.image_path_var = tk.StringVar(value=self.wall_object.image_path)
+        self.image_entry = ttk.Entry(self.left_frame, textvariable=self.image_path_var)
+        self.image_entry.pack(pady=5)
+
+        self.image_button = ttk.Button(self.left_frame, text="Browse", command=self.upload_image)
+        self.image_button.pack(pady=5)
 
 
         self.right_frame = ttk.Frame(self)
