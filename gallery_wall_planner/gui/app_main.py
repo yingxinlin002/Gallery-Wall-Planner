@@ -3,7 +3,6 @@ from enum import Enum, auto
 from typing import Optional
 
 from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork  # Import Artwork class
 
 
@@ -17,7 +16,6 @@ class ScreenType(Enum):
     ARTWORK_SELECTION = auto()
     EDITOR = auto()
     ARTWORK_MANUAL = auto()
-    ARTWORK_XLSX = auto()
 
 
 class AppMain():
@@ -38,33 +36,17 @@ class AppMain():
         self.frame_main.pack(fill=tk.BOTH, expand=True)
         self.frame_main.bind("<Configure>", self._load_or_resize)
 
-        # TODO this can possibly be replaced with gallery.current_wall
-        # Track editor state
-        self.editor_artwork_selected: Optional[Artwork] = None
-
         self.save_file_path: Optional[str] = None
 
         self._load_or_resize()
 
     def _load_or_resize(self, event=None):
-        # if self.frame_main:
-        #     # Destroy all children of frame_main
-        #     for widget in self.frame_main.winfo_children():
-        #         widget.destroy()
-        # self.root.update_idletasks()
-        # self.frame_contents = None
         self.switch_screen(self.current_screen)
 
-    def switch_screen(self, screen_type: ScreenType, wall=None, artwork=None):
+    def switch_screen(self, screen_type: ScreenType):
         """Switch to the specified screen type"""
         print(f"Switching to screen: {screen_type.name}")
         
-        # Update editor state if provided
-        if wall:
-            self.gallery.current_wall = wall
-        if artwork:
-            self.editor_artwork_selected = artwork
-
         if self.frame_main:
             # Destroy all children of frame_main
             for widget in self.frame_main.winfo_children():
@@ -87,8 +69,6 @@ class AppMain():
             self._load_lock_objects_to_wall_screen()
         elif screen_type == ScreenType.ARTWORK_MANUAL:
             self._load_artwork_manual_screen()
-        elif screen_type == ScreenType.ARTWORK_XLSX:
-            self._load_artwork_xlsx_screen()
         elif screen_type == ScreenType.ARTWORK_SELECTION:
             pass
 
@@ -123,19 +103,6 @@ class AppMain():
         from gallery_wall_planner.gui.screen_editor_ui import ScreenEditorUI
         self.frame_contents = ScreenEditorUI(self)
 
-        # # Call load_content to initialize the screen
-        # if hasattr(self.frame_contents, 'load_content'):
-        #     self.frame_contents.load_content()
-        #
-        # # Ensure the editor screen knows about the current wall and selected artwork
-        # if hasattr(self.frame_contents, 'initialize_virtual_wall'):
-        #     self.frame_contents.initialize_virtual_wall()
-        #
-        # # Highlight selected artwork if one exists
-        # if (hasattr(self.frame_contents, 'highlight_artwork') and
-        #     self.editor_artwork_selected):
-        #     self.frame_contents.highlight_artwork(self.editor_artwork_selected)
-
     def _load_lock_objects_to_wall_screen(self):
         """Load the lock objects to wall screen"""
         from gallery_wall_planner.gui.screen_lock_objects_ui import ScreenLockObjectsUI
@@ -148,7 +115,7 @@ class AppMain():
 
     def _load_artwork_xlsx_screen(self):
         """Load the artwork xlsx screen"""
-        from gallery_wall_planner.gui.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
+        from gallery_wall_planner.deprecated.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
         self.frame_contents = ScreenArtworkxlsxUI(self)
 
     def quit_application(self):
