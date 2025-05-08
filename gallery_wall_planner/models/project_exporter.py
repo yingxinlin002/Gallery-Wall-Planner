@@ -82,7 +82,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
             "Hanging Point": art.hanging_point,
             "Medium": art.medium,
             "Depth": art.depth,
-            "Photo": art.image_path,
+            "Image_Path": art.image_path,
             "NFS (Y/N)": "Y" if art.nfs else "N"
         }
 
@@ -297,13 +297,13 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    name, width, height, hanging_point, medium, depth, photo, nfs = row[:8]
+                    name, width, height, hanging_point, medium, depth, image_path, nfs = row[:8]
                     if name:
                         artwork = Artwork(name=name, width=width, height=height,
                                           hanging_point=hanging_point,
                                           medium=medium or "",
                                           depth=depth or 0.0,
-                                          photo=photo if isinstance(photo, str) else None,
+                                          image_path=image_path if isinstance(image_path, str) else None,
                                           not_for_sale=(str(nfs).strip().upper() == "Y"))
                         wall.add_artwork(artwork)
                 print(f"[INFO] Imported artwork for wall '{wall_name}'")
@@ -318,7 +318,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                 for row in sheet.iter_rows(min_row=2, values_only=True):
                     x, y, length, angle, moveable = row[:5]
                     if x is not None:
-                        wall_line = WallLine(x=x, y=y, length=length, angle=angle,
+                        wall_line = SingleLine(x=x, y=y, length=length, angle=angle,
                                              moveable=bool(moveable))
                         wall.add_wall_line(wall_line)
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
@@ -331,13 +331,24 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    name, x, y, width, height, image_path = row[:6]
+                    values = list(row)
+                    if len(values) < 5:
+                        print(f"[WARN] Skipping incomplete permanent object row: {values}")
+                        continue
+                    name = values[0]
+                    x = values[1]
+                    y = values[2]
+                    width = values[3]
+                    height = values[4]
+                    image_path = values[5] if len(values) > 5 else None
+                
                     if name and x is not None:
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
                         perm = PermanentObject(name=name, x=x, y=y,
                                                width=width, height=height,
                                                image_path=safe_image_path)
                         wall.add_permanent_object(perm)
+                    
                 print(f"[INFO] Imported permanent objects for wall '{wall_name}'")
 
         except Exception as e:
