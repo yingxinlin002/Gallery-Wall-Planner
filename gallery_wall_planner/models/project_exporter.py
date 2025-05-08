@@ -321,7 +321,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                         wall_line = SingleLine(x=x, y=y, length=length, angle=angle,
                                              moveable=bool(moveable))
                         wall.add_wall_line(wall_line)
-                        print(f"[DEBUG] Adding wall line to wall: {line}")
+                        print(f"[DEBUG] Adding wall line to wall: {wall_line}")
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
 
             elif " - Perm" in sheet_name:
@@ -344,6 +344,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     image_path = values[5] if len(values) > 5 else None
                 
                     if name and x is not None:
+                        print(f"[DEBUG] Creating permanent object with x={x}, y={y}, w={width}, h={height}, label={name}")
                         safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
                         perm = PermanentObject(name=name, x=x, y=y,
                                                width=width, height=height,
