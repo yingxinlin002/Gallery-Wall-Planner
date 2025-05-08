@@ -321,6 +321,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                         wall_line = SingleLine(x=x, y=y, length=length, angle=angle,
                                              moveable=bool(moveable))
                         wall.add_wall_line(wall_line)
+                        print(f"[DEBUG] Adding wall line to wall: {line}")
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
 
             elif " - Perm" in sheet_name:
@@ -348,8 +349,11 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                                                width=width, height=height,
                                                image_path=safe_image_path)
                         wall.add_permanent_object(perm)
+                        print(f"[DEBUG] Adding permanent object to wall: {perm}")
                     
                 print(f"[INFO] Imported permanent objects for wall '{wall_name}'")
+                print(f"[DEBUG] Total permanent objects: {len(wall.permanent_objects)}")
+
 
         except Exception as e:
             print(f"[ERROR] Failed to load sheet '{sheet_name}': {e}")
