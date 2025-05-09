@@ -119,11 +119,6 @@ class AppMain():
         from gallery_wall_planner.gui.screen_artwork_manually_ui import ScreenArtworkManuallyUI
         self.frame_contents = ScreenArtworkManuallyUI(self)
 
-    def _load_artwork_xlsx_screen(self):
-        """Load the artwork xlsx screen"""
-        from gallery_wall_planner.deprecated.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
-        self.frame_contents = ScreenArtworkxlsxUI(self)
-
     def quit_application(self):
         """Quit the application."""
         self.root.destroy()
