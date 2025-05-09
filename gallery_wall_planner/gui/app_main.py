@@ -39,6 +39,20 @@ class AppMain():
 
         self._load_or_resize()
 
+    @property
+    def save_file_path(self) -> Optional[str]:
+        """Get the current save file path"""
+        return self._save_file_path
+
+    @save_file_path.setter
+    def save_file_path(self, value: str):
+        """Set the current save file path and update window title"""
+        self._save_file_path = value
+        if value:
+            self.root.title(f"Gallery Wall Planner - {value}")
+        else:
+            self.root.title("Gallery Wall Planner")
+
     def _load_or_resize(self, event=None):
         self.switch_screen(self.current_screen)
 

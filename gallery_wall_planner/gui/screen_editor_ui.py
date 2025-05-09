@@ -57,15 +57,26 @@ class ScreenEditorUI(ScreenBase):
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
-        back_button = tk.Button(main_frame,
-                              text="< Back to Wall Selection",
-                              command=lambda: self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE),
-                              bg=self.styles["bg_secondary"],
-                              fg=self.styles["fg_white"],
-                              font=self.styles["button_font"],
-                              padx=self.styles["button_padx"],
-                              pady=self.styles["button_pady"])
-        back_button.pack(side="top", anchor="nw", padx=10, pady=10)
+        # Header frame for navigation buttons
+        header_frame = tk.Frame(main_frame)
+        header_frame.pack(fill="x", padx=10, pady=10)
+
+        # Back to Wall Selection button
+        back_button = tk.Button(header_frame,
+                                text="< Back to Wall Selection",
+                                command=lambda: self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE),
+                                bg=self.styles["bg_secondary"],
+                                fg=self.styles["fg_white"],
+                                font=self.styles["button_font"],
+                                padx=self.styles["button_padx"],
+                                pady=self.styles["button_pady"])
+        back_button.pack(side="left", anchor="w")
+
+        # Save button
+        from gallery_wall_planner.gui.btns_save import BTNSSave
+        save_buttons = BTNSSave(header_frame, self.AppMain)
+        save_buttons.load_content()
+        save_buttons.pack(side="right", anchor="e")
 
         content_frame = tk.Frame(main_frame)
         content_frame.pack(fill="both", expand=True)
