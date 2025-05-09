@@ -59,6 +59,8 @@ class AppMain():
     def switch_screen(self, screen_type: ScreenType):
         """Switch to the specified screen type"""
         print(f"Switching to screen: {screen_type.name}")
+
+        self.current_screen = screen_type
         
         if self.frame_main:
             # Destroy all children of frame_main
@@ -118,11 +120,6 @@ class AppMain():
         """Load the artwork manual screen"""
         from gallery_wall_planner.gui.screen_artwork_manually_ui import ScreenArtworkManuallyUI
         self.frame_contents = ScreenArtworkManuallyUI(self)
-
-    def _load_artwork_xlsx_screen(self):
-        """Load the artwork xlsx screen"""
-        from gallery_wall_planner.deprecated.screen_artwork_xlsx_ui import ScreenArtworkxlsxUI
-        self.frame_contents = ScreenArtworkxlsxUI(self)
 
     def quit_application(self):
         """Quit the application."""
