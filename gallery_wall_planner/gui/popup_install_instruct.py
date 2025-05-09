@@ -126,7 +126,6 @@ class InstallInstructionPopup(PopupBase):
         for line in instructions:
             print(line)
 
-
     def save_measurement_instructions(self):
         text_lines = self.generate_instruction_lines()
         if not text_lines:
@@ -210,6 +209,23 @@ class InstallInstructionPopup(PopupBase):
         first_index = names.index(first_name)
         instructions = []
 
+        # Add header with general instructions
+        instructions.append("GALLERY WALL INSTALLATION INSTRUCTIONS")
+        instructions.append("="*50)
+        instructions.append(f"Wall: {self.selected_wall.name}")
+        instructions.append(f"Total Artworks: {len(self.artworks)}")
+        instructions.append(f"Reference Point: From {wall_ref} wall, from {height_ref}")
+        instructions.append(f"Starting Piece: {first_name}")
+        instructions.append("")
+        instructions.append("GENERAL INSTALLATION TIPS:")
+        instructions.append("- Use a level to ensure each piece is straight")
+        instructions.append("- Mark all hanging points with pencil before starting")
+        instructions.append("- Consider using painter's tape to test layout before installing")
+        instructions.append("- For heavy pieces, use appropriate wall anchors")
+        instructions.append("")
+        instructions.append("MEASUREMENT INSTRUCTIONS:")
+        instructions.append("="*50)
+
         # A) Measure from wall/floor to first piece
         first = (first_name, *locations[first_name])
         x_initial = "RIGHT" if wall_ref == "left" else "LEFT"
@@ -217,7 +233,11 @@ class InstallInstructionPopup(PopupBase):
         x_dir = "LEFT" if wall_ref == "left" else "RIGHT"
         y_dir = "DOWN" if height_ref == "floor" else "UP"
         
-        instructions.append(f"Artwork {first[0]}: FROM {wall_ref.upper()} WALL measure {x_initial} {first[1]:.2f}. FROM {height_ref.upper()} measure {y_initial} {first[2]:.2f}")
+        instructions.append(f"1. STARTING POINT - {first[0]}:")
+        instructions.append(f"   • From {wall_ref.upper()} wall edge, measure {x_initial} {first[1]:.2f}\"")
+        instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {first[2]:.2f}\"")
+        instructions.append(f"   • Mark this point with a pencil - this is your starting nail position")
+        instructions.append("")
 
         # B) Forward pass (first+1 to end)
         prev_x, prev_y = first[1], first[2]
@@ -226,9 +246,17 @@ class InstallInstructionPopup(PopupBase):
             dx = abs(curr[1] - prev_x)
             dy = abs(curr[2] - prev_y)
             if curr[2] > prev_y:
-                instructions.append(f"Artwork {curr[0]}: FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_initial} {dy:.2f}")
+                instructions.append(f"{i+1}. {curr[0]}:")
+                instructions.append(f"   • From {names[i-1]}'s nail position:")
+                instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
+                instructions.append(f"     → Measure {y_initial} {dy:.2f}\"")
             else:
-                instructions.append(f"Artwork {curr[0]}: FROM {names[i-1]} measure {x_initial} {dx:.2f}, and {y_dir} {dy:.2f}")
+                instructions.append(f"{i+1}. {curr[0]}:")
+                instructions.append(f"   • From {names[i-1]}'s nail position:")
+                instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
+                instructions.append(f"     → Measure {y_dir} {dy:.2f}\"")
+            instructions.append(f"   • Mark this point for {curr[0]}'s nail")
+            instructions.append("")
             prev_x, prev_y = curr[1], curr[2]
 
         # D) Backward pass (first-1 to start)
@@ -238,12 +266,26 @@ class InstallInstructionPopup(PopupBase):
             dx = abs(curr[1] - prev_x)
             dy = abs(curr[2] - prev_y)
             if curr[2] < prev_y:
-                instructions.append(f"Artwork {curr[0]}: FROM {names[i+1]} measure {x_dir} {dx:.2f}, and {y_dir} {dy:.2f}")
+                instructions.append(f"{i+1}. {curr[0]}:")
+                instructions.append(f"   • From {names[i+1]}'s nail position:")
+                instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
+                instructions.append(f"     → Measure {y_dir} {dy:.2f}\"")
             else:
-                instructions.append(f"Artwork {curr[0]}: FROM {names[i+1]} measure {x_dir} {dx:.2f}, and {y_initial} {dy:.2f}")
+                instructions.append(f"{i+1}. {curr[0]}:")
+                instructions.append(f"   • From {names[i+1]}'s nail position:")
+                instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
+                instructions.append(f"     → Measure {y_initial} {dy:.2f}\"")
+            instructions.append(f"   • Mark this point for {curr[0]}'s nail")
+            instructions.append("")
             prev_x, prev_y = curr[1], curr[2]
 
-        # E) Final message
-        instructions.append("ALL ART SHOULD BE HUNG")
+        # Final instructions
+        instructions.append("FINAL STEPS:")
+        instructions.append("="*50)
+        instructions.append("- Double check all measurements before installing nails")
+        instructions.append("- Install all nails at marked positions")
+        instructions.append("- Hang artwork starting with your chosen first piece")
+        instructions.append("- Step back periodically to check alignment and spacing")
+        instructions.append("- Enjoy your beautifully arranged gallery wall!")
         
         return instructions
