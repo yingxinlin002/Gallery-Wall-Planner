@@ -17,6 +17,8 @@ class SnapAction():
 
 
 class WallItemDraggable(WallItem):
+
+    SNAP_TOLERANCE = 1.5
     def __init__(self, wall_object: WallObject, parent_ui: wall_canvas):
         super().__init__(wall_object, parent_ui)
         self.reference_lines = []  # Stores line IDs
@@ -80,13 +82,13 @@ class WallItemDraggable(WallItem):
             if snap_line.orientation == Orientation.VERTICAL:
                 for snap_point in snap_points_x:
                     check_distance = self.parent_ui.wall_position.wall_left + snap_line.distance * self.parent_ui.screen_scale
-                    if abs(check_distance - snap_point) < 5 and (snap_action_x.distance is None or
+                    if abs(check_distance - snap_point) < (self.SNAP_TOLERANCE * self.parent_ui.screen_scale) and (snap_action_x.distance is None or
                         abs(check_distance - snap_point) < snap_action_x.distance):
                         snap_action_x.distance = check_distance - snap_point
             if snap_line.orientation == Orientation.HORIZONTAL:
                 for snap_point in snap_points_y:
                     check_distance = self.parent_ui.wall_position.wall_bottom - snap_line.distance * self.parent_ui.screen_scale
-                    if abs(check_distance - snap_point) < 5 and (snap_action_y.distance is None or
+                    if abs(check_distance - snap_point) < (self.SNAP_TOLERANCE * self.parent_ui.screen_scale) and (snap_action_y.distance is None or
                         abs(check_distance - snap_point) < snap_action_y.distance):
                         snap_action_y.distance = check_distance - snap_point
 

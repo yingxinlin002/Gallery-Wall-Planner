@@ -59,6 +59,8 @@ class AppMain():
     def switch_screen(self, screen_type: ScreenType):
         """Switch to the specified screen type"""
         print(f"Switching to screen: {screen_type.name}")
+
+        self.current_screen = screen_type
         
         if self.frame_main:
             # Destroy all children of frame_main
