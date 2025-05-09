@@ -28,7 +28,9 @@ class BTNSSave(ttk.Frame):
                 print(f"[INFO] Project saved to {self.app_main.save_file_path}")
                 messagebox.showinfo("Success", "Project saved successfully")
             except Exception as e:
+                import traceback
                 print(f"[ERROR] Could not save project: {str(e)}")
+                traceback.print_exc()
                 messagebox.showerror("Error", f"Could not save project:\n{str(e)}")
         else:
             self.save_as()
@@ -50,7 +52,9 @@ class BTNSSave(ttk.Frame):
                     if self.save_as_btn is None:
                         self.add_save_as_button()
                 except Exception as e:
+                    import traceback
                     print(f"[ERROR] Could not save project: {str(e)}")
+                    traceback.print_exc()
                     messagebox.showerror("Error", f"Could not save project:\n{str(e)}")
         except Exception as e:
             import traceback
