@@ -55,12 +55,6 @@ class WallCanvas():
             fixed_item = WallItem(obj,self)
             fixed_item.create_canvas_item("#999999")
             self.fixed_items[obj.id] = fixed_item
-            # pos = obj.position
-            # x1 = self.wall_position.wall_left + pos.x * self.screen_scale
-            # y1 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + (pos.y + obj.height) * self.screen_scale)
-            # x2 = self.wall_position.wall_left + (pos.x + obj.width) * self.screen_scale
-            # y2 = self.canvas_dimensions.height - (self.wall_position.wall_bottom + pos.y * self.screen_scale)
-            # self.canvas.create_rectangle(x1, y1, x2, y2, fill="#999999", outline="black", width=2)
 
     def update_wall_object(self, old_id : str, wall_object : WallObject):
         if old_id in self.draggable_items:
@@ -71,8 +65,6 @@ class WallCanvas():
             temp_fixed = self.fixed_items.pop(old_id)
             temp_fixed.update(wall_object)
             self.fixed_items[wall_object.id] = temp_fixed
-
-
 
     def load_content(self):
         self.canvas = tk.Canvas(self.parent_frame, width=self.canvas_dimensions.width, height=self.canvas_dimensions.height)
@@ -125,17 +117,6 @@ class WallCanvas():
         return self.AppMain.gallery.current_wall.enforce_boundaries(x, y, width, height)
 
     def check_all_collisions(self):
-        # n = len(self.draggable_items)
-        # keys = list(self.draggable_items.keys())
-        # colliding = set()
-        # for i in range(n):
-        #     for j in range(i+1, n):
-        #         if self.draggable_items[keys[i]].rectangles_overlap(self.draggable_items[keys[j]]):
-        #             colliding.add(keys[i])
-        #             colliding.add(keys[j])
-        #     for fixed in self.fixed_items.values():
-        #         if self.draggable_items[keys[i]].rectangles_overlap(fixed):
-        #             colliding.add(keys[i])
         colliding_ids = self.AppMain.gallery.current_wall.check_collisions()
         for key in self.draggable_items:
             if key in colliding_ids:    
@@ -143,12 +124,6 @@ class WallCanvas():
             else:
                 self.canvas.itemconfig(self.draggable_items[key].id, outline="black")
         return len(colliding_ids) > 0
-
-    def refresh_artworks(self):
-        """Clear and redraw all artworks with their current positions"""
-        self.clear_artworks()  # You may need to implement this
-        for artwork in self.selected_wall.artwork:
-            self.create_draggable(artwork)
 
     def draw_snap_lines(self):
         for line in self.snap_lines:
