@@ -8,6 +8,8 @@ import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.dimensions import SheetFormatProperties
+from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.workbook.workbook import Workbook
 from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.models.permanent_object import PermanentObject
@@ -270,14 +272,14 @@ from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
 
 def import_gallery_from_excel(filepath: str) -> Gallery:
     print(f"[INFO] Importing gallery from {filepath}")
-    wb = openpyxl.load_workbook(filepath, data_only=True)
+    wb: Workbook = openpyxl.load_workbook(filepath, data_only=True)
     gallery = Gallery("Imported Gallery")
 
     wall_map = {}  # name -> Wall object
 
     # Step 1: Load walls from "Walls" sheet
     if "Walls" in wb.sheetnames:
-        sheet = wb["Walls"]
+        sheet: Worksheet = wb["Walls"]
         for row in sheet.iter_rows(min_row=2, values_only=True):
             name, width, height, color = row[:4]
             if name:
@@ -301,21 +303,21 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                 if not wall:
                     print(f"[WARN] Art sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                sheet = wb[sheet_name]
+                sheet: Worksheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
                     name, width, height, hanging_point, medium, depth, image_path, nfs, x, y = row[:10]
-                if name:
-                    artwork = Artwork(name=name, width=width, height=height,
-                                      hanging_point=hanging_point,
-                                      medium=medium or "",
-                                      depth=depth or 0.0,
-                                      image_path=image_path if isinstance(image_path, str) else None,
-                                      nfs=(str(nfs).strip().upper() == "Y"))
-                
-                    if isinstance(x, (int, float)) and isinstance(y, (int, float)):
-                        artwork.position = Position(x, y)
-                
-                    wall.add_artwork(artwork)
+                    if name:
+                        artwork = Artwork(name=name, width=width, height=height,
+                                          hanging_point=hanging_point,
+                                          medium=medium or "",
+                                          depth=depth or 0.0,
+                                          image_path=image_path if isinstance(image_path, str) else None,
+                                          nfs=(str(nfs).strip().upper() == "Y"))
+
+                        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                            artwork.position = Position(x, y)
+
+                        wall.add_artwork(artwork)
                 print(f"[INFO] Imported artwork for wall '{wall_name}'")
 
             elif " - Lines" in sheet_name:
@@ -324,7 +326,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                 if not wall:
                     print(f"[WARN] Line sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                sheet = wb[sheet_name]
+                sheet: Worksheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
                     x_cord, y_cord, length, angle, moveable = row[:5]
                     if x_cord is not None and y_cord is not None:
@@ -341,7 +343,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                 if not wall:
                     print(f"[WARN] Perm sheet found for unknown wall '{wall_name}' — skipping")
                     continue
-                sheet = wb[sheet_name]
+                sheet: Worksheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
                     values = list(row)
                     if len(values) < 5:
