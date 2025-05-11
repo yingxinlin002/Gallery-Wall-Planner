@@ -87,8 +87,8 @@ class Artwork(WallObject):
         """Set the artwork's hanging point with validation"""
         if not isinstance(value, (int, float)):
             raise ValueError("Hanging point must be a number")
-        if value < 0:
-            raise ValueError("Hanging point cannot be negative")
+        # if value < 0:
+        #     raise ValueError("Hanging point cannot be negative")
         self._hanging_point = float(value)
     
     @property
