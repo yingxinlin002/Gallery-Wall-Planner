@@ -10,7 +10,7 @@ class ScreenNewGalleryUI(ScreenBase):
         super().__init__(AppMain, *args, **kwargs)
         self.wall_width = None
         self.wall_height = None
-        self.wall_color = "white"  # Default wall color
+        self.wall_color = "white"  # Default wall color``
         self.content_frame = None
 
         self.popup = None

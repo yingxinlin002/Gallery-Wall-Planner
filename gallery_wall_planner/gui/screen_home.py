@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.gui.screen_base import ScreenBase
 from gallery_wall_planner.models.project_exporter import import_gallery_from_excel
+import traceback
 
 
 class ScreenHome(ScreenBase):
@@ -58,6 +59,12 @@ class ScreenHome(ScreenBase):
             "activebackground": "#7A5FFA"
         }
         
+        if self.check_last_project():
+            tk.Button(self.content_frame,
+                  text="Continue Last Project", 
+                  command=lambda: self.continue_last_project(), 
+                  **button_style).pack(pady=10)
+        
         # Add the buttons with consistent styling
         tk.Button(self.content_frame, 
                   text="New Exhibit", 
@@ -76,6 +83,29 @@ class ScreenHome(ScreenBase):
                   text="Quit", 
                   command= self.AppMain.quit_application, 
                   **quit_button_style).pack(pady=10)
+        
+    def check_last_project(self):
+        """Check if the last project exists and prompt to continue"""
+        import os
+        last_project_path = os.path.join(self.AppMain.user_dir, "_temp.xlsx")
+        if os.path.exists(last_project_path):
+            # If last project > 6kb
+            if os.path.getsize(last_project_path) > 6144:
+                return True
+        else:
+            return False
+        
+    def continue_last_project(self):
+        """Load the last project if it exists"""
+        import os
+        last_project_path = os.path.join(self.AppMain.user_dir, "_temp.xlsx")
+        if os.path.exists(last_project_path):
+            try:
+                self.AppMain.gallery = import_gallery_from_excel(last_project_path)
+                self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
+            except Exception as e:
+                traceback.print_exc()
+                messagebox.showerror("Error", str(e))
 
     def load_exhibit(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
@@ -88,6 +118,5 @@ class ScreenHome(ScreenBase):
             self.AppMain.save_file_path = file_path
             self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
         except Exception as e:
-            import traceback
             traceback.print_exc()
             messagebox.showerror("Error", str(e))

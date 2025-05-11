@@ -309,7 +309,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet: Worksheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    name, width, height, hanging_point, medium, depth, image_path, nfs, x, y = row[:10]
+                    name, width, height, hanging_point, medium, depth, image_path, nfs, notes, price, x, y = row[:12]
                     if name:
                         artwork = Artwork(name=name, width=width, height=height,
                                           hanging_point=hanging_point,

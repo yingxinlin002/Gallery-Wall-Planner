@@ -1,9 +1,11 @@
 import tkinter as tk
 from enum import Enum, auto
 from typing import Optional
+import os
 
 from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.models.artwork import Artwork  # Import Artwork class
+from gallery_wall_planner.models.artwork import Artwork
+from gallery_wall_planner.models.project_exporter import export_gallery_to_excel  # Import Artwork class
 
 
 class ScreenType(Enum):
@@ -19,11 +21,14 @@ class ScreenType(Enum):
 
 class AppMain():
     def __init__(self, root: tk.Tk):
+        self.user_dir = self._create_user_dir()
+
         self.gallery = Gallery()
         print("Creating main application window...")
         self.root = root
         self.root.title("Gallery Wall Planner")
         self.root.geometry("1024x768")
+        self.root.protocol("WM_DELETE_WINDOW", self.quit_application)
         self.root.configure(bg="#F0F0F0")
         print("Creating main frame...")
 
@@ -121,6 +126,23 @@ class AppMain():
         from gallery_wall_planner.gui.screen_artwork_manually_ui import ScreenArtworkManuallyUI
         self.frame_contents = ScreenArtworkManuallyUI(self)
 
+    def _create_user_dir(self):
+        """Create a user directory for saving files."""
+        if os.name == 'nt':
+            home_dir = os.path.expanduser("~")
+
+            user_dir = os.path.join(home_dir, "GalleryWallPlanner")
+            print(user_dir)
+            if not os.path.exists(user_dir):
+                os.makedirs(user_dir)
+                print(f"User directory created at: {user_dir}")
+            else:
+                print(f"User directory already exists at: {user_dir}")
+
+            return user_dir
+
     def quit_application(self):
         """Quit the application."""
+        if len(self.gallery.walls) > 0:
+            export_gallery_to_excel(os.path.join(self.user_dir, "_temp.xlsx"), self.gallery)
         self.root.destroy()
