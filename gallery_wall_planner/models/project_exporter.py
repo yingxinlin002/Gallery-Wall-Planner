@@ -16,6 +16,8 @@ from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
 from .wall_line import SingleLine
 from gallery_wall_planner.models.gallery import Gallery
+from gallery_wall_planner.models.wall_line import Orientation
+from typing import Dict
 
 
 def export_project(filepath, wall, permanent_objects, layout):
@@ -246,6 +248,8 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
 
         # Wall Lines
         if wall.wall_lines:
+            for line in wall.wall_lines:
+                print(line.to_dict())
             pd.DataFrame([l.to_dict() for l in wall.wall_lines]).to_excel(
                 writer, index=False, sheet_name=f"{wall.name} - Lines"
             )
@@ -275,7 +279,7 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
     wb: Workbook = openpyxl.load_workbook(filepath, data_only=True)
     gallery = Gallery("Imported Gallery")
 
-    wall_map = {}  # name -> Wall object
+    wall_map: Dict[str, Wall] = {}  # name -> Wall object
 
     # Step 1: Load walls from "Walls" sheet
     if "Walls" in wb.sheetnames:
@@ -328,11 +332,10 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
                     continue
                 sheet: Worksheet = wb[sheet_name]
                 for row in sheet.iter_rows(min_row=2, values_only=True):
-                    x_cord, y_cord, length, angle, moveable = row[:5]
+                    x_cord, y_cord, length, angle, snap_to, moveable, orientation, alignment, distance = row[:9]
+                    line_orientation: Orientation = Orientation.HORIZONTAL if orientation == "horizontal" else Orientation.VERTICAL
                     if x_cord is not None and y_cord is not None:
-                        wall_line = SingleLine(x=x_cord, y=y_cord, length=length, angle=angle,
-                                               moveable=bool(moveable))
-                        wall_line.position = Position(x_cord, y_cord)
+                        wall_line = SingleLine(distance=distance, orientation=line_orientation)
                         wall.add_wall_line(wall_line)
                         print(f"[DEBUG] Adding wall line to wall: {wall_line}")
                 print(f"[INFO] Imported wall lines for wall '{wall_name}'")
