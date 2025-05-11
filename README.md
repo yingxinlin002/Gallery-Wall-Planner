@@ -1,6 +1,7 @@
 # Gallery Wall Planner Tool
 
 ![Application Screenshot](GalleryPlannerSC.png)
+
 ## Overview
 
 The Gallery Wall Planner Tool is a Python-based application designed to simplify gallery art installation planning. It enables users to:
@@ -45,6 +46,10 @@ The Gallery Wall Planner Tool is a Python-based application designed to simplify
 ### Requirements
 - Python 3.7+
 - Tkinter (included with Python)
-- Additional packages:
-  ```bash
-  pip install Pillow openpyxl
+- Additional packages (see full requirements below)
+
+### Installation Steps
+1. Clone or download the repository
+2. Install required packages:
+```bash
+pip install -r requirements.txt
