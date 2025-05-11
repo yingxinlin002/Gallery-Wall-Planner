@@ -85,6 +85,7 @@ class ScreenHome(ScreenBase):
         try:
             # TODO: Add error handling
             self.AppMain.gallery = import_gallery_from_excel(file_path)
+            self.AppMain.save_file_path = file_path
             self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
         except Exception as e:
             import traceback
