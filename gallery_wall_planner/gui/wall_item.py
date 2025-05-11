@@ -27,15 +27,6 @@ class WallItem:
         self.image_id: int = None
 
     def create_canvas_item(self, fill_color:str = "lightblue"):
-        # Convert from bottom-left origin to canvas coordinates
-        # x1 = self.parent_ui.wall_position.wall_left + self.wall_object.position.x * self.parent_ui.screen_scale
-        # y1 = (
-        #             self.parent_ui.wall_position.wall_bottom + self.wall_object.position.y * self.parent_ui.screen_scale)  # Changed from (y + height)
-        # x2 = self.parent_ui.wall_position.wall_left + (
-        #             self.wall_object.position.x + self.wall_object.width) * self.parent_ui.screen_scale
-        # y2 = (
-        #             self.parent_ui.wall_position.wall_bottom + (
-        #             self.wall_object.position.y + self.wall_object.height) * self.parent_ui.screen_scale)  # Changed from just y
 
         item_location = self.get_item_location()
         self.id = self.parent_ui.canvas.create_rectangle(item_location.x1, item_location.y1, item_location.x2,

@@ -55,10 +55,6 @@ class ScreenLockObjectsUI(ScreenBase):
         content_frame = ttk.Frame(self)
         content_frame.pack(fill="both", expand=True)
 
-        # buttons_frame = ttk.Frame(header_frame)
-        # buttons_frame.pack(side="left", padx=20)
-        # item_buttons = {}
-
         self.left_panel = ttk.Frame(content_frame, width=300)
         self.left_panel.pack(side="left", fill="y", padx=10, pady=10)
 

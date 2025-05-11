@@ -81,28 +81,6 @@ class Gallery:
         self.add_unplaced_artwork(art)
         wall.remove_artwork(art)
         
-    # TODO Remove these. They can be performed by calling the wall directly
-    # def add_artwork_to_wall(self, wall_name: str, artwork: Artwork) -> bool:
-    #     wall = self.get_wall_by_name(wall_name)
-    #     if wall:
-    #         wall.add_artwork(artwork)
-    #         return True
-    #     return False
-    #
-    # def remove_artwork_from_wall(self, wall_name: str, artwork: Artwork) -> bool:
-    #     """
-    #     Remove an artwork from a specific wall
-    #     Args:
-    #         wall_name: Name of the wall to remove artwork from
-    #         artwork: Artwork object to remove
-    #     Returns:
-    #         bool: True if successful, False if wall not found or artwork not in wall
-    #     """
-    #     wall = self.get_wall_by_name(wall_name)
-    #     if wall:
-    #         return wall.remove_artwork(artwork)
-    #     return False
-
     def export_gallery(self, filename="gallery_export.xlsx"):
         wb = openpyxl.Workbook()
         ws = wb.active

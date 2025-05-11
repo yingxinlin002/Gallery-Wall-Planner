@@ -47,6 +47,3 @@ class PermanentObject(WallObject):
     def _get_id(self):
         return get_id("perm_obj"+self.name+f"width{self.width},height{self.height}")
         
-    # All properties are inherited from WallObject
-    
-    # get_bounds and __str__ are inherited from WallObject

@@ -116,7 +116,6 @@ class WallItemDraggable(WallItem):
 
 
         # Apply constrained movement
-        # self.parent_ui.canvas.move(self.id, dx, dy)
         self.parent_ui.canvas.coords(self.id, new_x1, new_y1, new_x2, new_y2)
         current_location = ItemLocation(new_x1, new_y1, new_x2, new_y2)
         new_position_x = (new_x1 - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
@@ -142,22 +141,11 @@ class WallItemDraggable(WallItem):
         new_x, new_y = self.parent_ui.enforce_boundaries(new_x, new_y, self.wall_object.width, self.wall_object.height)
 
         self.wall_object.position = Position(new_x, new_y)
-        #self.parent_ui.layout_items[self.name] = {"x": new_x, "y": new_y}
 
         self.clear_reference_lines()
-        # self.parent_ui.move_item_to_canvas(self.index)
-        # self.parent_ui.check_all_collisions()
-        #
-        # if self.update_popup_fields and self.index in popup_windows and popup_windows[self.index].winfo_exists():
-        #     self.update_popup_fields()
-
     def update_reference_lines(self):
         """Update existing reference lines instead of creating new ones"""
         coords = self.parent_ui.canvas.coords(self.id)
-        # print(f"Wall left {self.parent_ui.wall_position.wall_left}, "
-        #       f"Height {self.parent_ui.canvas_dimensions.height}, "
-        #       f"Bottom {self.parent_ui.wall_position.wall_bottom}, "
-        #       f"Coord {coords[0]}, ")
 
         # Left distance (from left wall edge)
         self.parent_ui.canvas.coords(self.reference_lines[0],
