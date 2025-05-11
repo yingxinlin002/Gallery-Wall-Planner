@@ -4,8 +4,6 @@ from gallery_wall_planner.gui.app_main import AppMain
 
 from gallery_wall_planner.models import project_exporter
 
-
-
 class BTNSSave(ttk.Frame):
     def __init__(self, parent, app_main: AppMain, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
