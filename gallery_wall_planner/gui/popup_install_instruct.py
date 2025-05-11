@@ -232,31 +232,32 @@ class InstallInstructionPopup(PopupBase):
         y_initial = "UP" if height_ref == "floor" else "DOWN"
         x_dir = "LEFT" if wall_ref == "left" else "RIGHT"
         y_dir = "DOWN" if height_ref == "floor" else "UP"
+        adjusted_y = self.selected_wall.height - first[2]
         
         instructions.append(f"1. STARTING POINT - {first[0]}:")
         instructions.append(f"   • From {wall_ref.upper()} wall edge, measure {x_initial} {first[1]:.2f}\"")
-        instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {first[2]:.2f}\"")
+        # instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {first[2]:.2f}\"")
+        instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {adjusted_y:.2f}\"")
         instructions.append(f"   • Mark this point with a pencil - this is your starting nail position")
         instructions.append("")
 
         # B) Forward pass (first+1 to end)
+        step_num = 2  # Starts at 2 because STARTING POINT is always 1
         prev_x, prev_y = first[1], first[2]
         for i in range(first_index + 1, len(names)):
             curr = (names[i], *locations[names[i]])
             dx = abs(curr[1] - prev_x)
             dy = abs(curr[2] - prev_y)
-            if curr[2] > prev_y:
-                instructions.append(f"{i+1}. {curr[0]}:")
-                instructions.append(f"   • From {names[i-1]}'s nail position:")
-                instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
-                instructions.append(f"     → Measure {y_initial} {dy:.2f}\"")
-            else:
-                instructions.append(f"{i+1}. {curr[0]}:")
-                instructions.append(f"   • From {names[i-1]}'s nail position:")
-                instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
-                instructions.append(f"     → Measure {y_dir} {dy:.2f}\"")
+            y_step_dir = "UP" if curr[2] > prev_y else "DOWN"
+
+            instructions.append(f"{step_num}. {curr[0]}:")
+            instructions.append(f"   • From {names[i-1]}'s nail position:")
+            instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
+            instructions.append(f"     → Measure {y_step_dir} {dy:.2f}\"")
             instructions.append(f"   • Mark this point for {curr[0]}'s nail")
             instructions.append("")
+            
+            step_num += 1
             prev_x, prev_y = curr[1], curr[2]
 
         # D) Backward pass (first-1 to start)
@@ -265,19 +266,18 @@ class InstallInstructionPopup(PopupBase):
             curr = (names[i], *locations[names[i]])
             dx = abs(curr[1] - prev_x)
             dy = abs(curr[2] - prev_y)
-            if curr[2] < prev_y:
-                instructions.append(f"{i+1}. {curr[0]}:")
-                instructions.append(f"   • From {names[i+1]}'s nail position:")
-                instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
-                instructions.append(f"     → Measure {y_dir} {dy:.2f}\"")
-            else:
-                instructions.append(f"{i+1}. {curr[0]}:")
-                instructions.append(f"   • From {names[i+1]}'s nail position:")
-                instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
-                instructions.append(f"     → Measure {y_initial} {dy:.2f}\"")
+            y_step_dir = "UP" if curr[2] > prev_y else "DOWN"
+
+            instructions.append(f"{step_num}. {curr[0]}:")
+            instructions.append(f"   • From {names[i+1]}'s nail position:")
+            instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
+            instructions.append(f"     → Measure {y_step_dir} {dy:.2f}\"")
             instructions.append(f"   • Mark this point for {curr[0]}'s nail")
             instructions.append("")
+            
+            step_num += 1
             prev_x, prev_y = curr[1], curr[2]
+
 
         # Final instructions
         instructions.append("FINAL STEPS:")
