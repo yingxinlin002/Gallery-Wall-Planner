@@ -100,10 +100,10 @@ class InstallInstructionPopup(PopupBase):
             
             print(f"\nArtwork: {art.name}")
             print(f"Size: {art.width}\" x {art.height}\"")
-            print(f"Bottom-left position: ({bottom_left_x:.2f}, {bottom_left_y:.2f})")
-            print(f"Top edge: {top_edge:.2f}\" from floor")
+            print(f"Bottom-left position: ({bottom_left_x:.3f}, {bottom_left_y:.3f})")
+            print(f"Top edge: {top_edge:.3f}\" from floor")
             print(f"Hanging point offset: {art.hanging_point}\" from top")
-            print(f"Calculated nail position: ({hang_x:.2f}, {hang_y:.2f})")
+            print(f"Calculated nail position: ({hang_x:.3f}, {hang_y:.3f})")
             
             # Adjust based on measurement preferences
             if self.wall_measure_var.get() == "right":
@@ -111,7 +111,7 @@ class InstallInstructionPopup(PopupBase):
             if self.height_measure_var.get() == "ceiling":
                 hang_y = wall_height - hang_y
                 
-            print(f"Final hanging point (adjusted): ({hang_x:.2f}, {hang_y:.2f})")
+            print(f"Final hanging point (adjusted): ({hang_x:.3f}, {hang_y:.3f})")
             
             unsorted_locations[art.name] = (hang_x, hang_y)
 
@@ -235,9 +235,9 @@ class InstallInstructionPopup(PopupBase):
         adjusted_y = self.selected_wall.height - first[2]
         
         instructions.append(f"1. STARTING POINT - {first[0]}:")
-        instructions.append(f"   • From {wall_ref.upper()} wall edge, measure {x_initial} {first[1]:.2f}\"")
-        # instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {first[2]:.2f}\"")
-        instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {adjusted_y:.2f}\"")
+        instructions.append(f"   • From {wall_ref.upper()} wall edge, measure {x_initial} {first[1]:.3f}\"")
+        # instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {first[2]:.3f}\"")
+        instructions.append(f"   • From {height_ref.upper()}, measure {y_initial} {adjusted_y:.3f}\"")
         instructions.append(f"   • Mark this point with a pencil - this is your starting nail position")
         instructions.append("")
 
@@ -252,8 +252,8 @@ class InstallInstructionPopup(PopupBase):
 
             instructions.append(f"{step_num}. {curr[0]}:")
             instructions.append(f"   • From {names[i-1]}'s nail position:")
-            instructions.append(f"     → Measure {x_initial} {dx:.2f}\"")
-            instructions.append(f"     → Measure {y_step_dir} {dy:.2f}\"")
+            instructions.append(f"     → Measure {x_initial} {dx:.3f}\"")
+            instructions.append(f"     → Measure {y_step_dir} {dy:.3f}\"")
             instructions.append(f"   • Mark this point for {curr[0]}'s nail")
             instructions.append("")
             
@@ -270,8 +270,8 @@ class InstallInstructionPopup(PopupBase):
 
             instructions.append(f"{step_num}. {curr[0]}:")
             instructions.append(f"   • From {names[i+1]}'s nail position:")
-            instructions.append(f"     → Measure {x_dir} {dx:.2f}\"")
-            instructions.append(f"     → Measure {y_step_dir} {dy:.2f}\"")
+            instructions.append(f"     → Measure {x_dir} {dx:.3f}\"")
+            instructions.append(f"     → Measure {y_step_dir} {dy:.3f}\"")
             instructions.append(f"   • Mark this point for {curr[0]}'s nail")
             instructions.append("")
             

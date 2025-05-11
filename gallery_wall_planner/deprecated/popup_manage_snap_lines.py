@@ -36,7 +36,7 @@ class ManageSnapLinesPopup(PopupBase):
 
             orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, Orientation) else "Unknown"
             alignment_str = self.get_alignment_string(line)
-            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
+            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.3f}\""
             ttk.Label(line_frame, text=label_text).pack(side="left")
 
             ttk.Button(

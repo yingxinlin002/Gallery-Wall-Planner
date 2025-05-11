@@ -75,11 +75,11 @@ def open_popup_editor(
 
 
 
-    # bl_var = tk.StringVar(master=popup, value=f"{bl[0]:.2f}, {bl[1]:.2f}")
-    # tl_var = tk.StringVar(master=popup, value=f"{tl[0]:.2f}, {tl[1]:.2f}")
-    # tr_var = tk.StringVar(master=popup, value=f"{tr[0]:.2f}, {tr[1]:.2f}")
-    # br_var = tk.StringVar(master=popup, value=f"{br[0]:.2f}, {br[1]:.2f}")
-    # center_var = tk.StringVar(master=popup, value=f"{center[0]:.2f}, {center[1]:.2f}")
+    # bl_var = tk.StringVar(master=popup, value=f"{bl[0]:.3f}, {bl[1]:.3f}")
+    # tl_var = tk.StringVar(master=popup, value=f"{tl[0]:.3f}, {tl[1]:.3f}")
+    # tr_var = tk.StringVar(master=popup, value=f"{tr[0]:.3f}, {tr[1]:.3f}")
+    # br_var = tk.StringVar(master=popup, value=f"{br[0]:.3f}, {br[1]:.3f}")
+    # center_var = tk.StringVar(master=popup, value=f"{center[0]:.3f}, {center[1]:.3f}")
 
     def update_popup_fields():
         if popup.winfo_exists():
@@ -96,11 +96,11 @@ def open_popup_editor(
             new_tr = (new_bl[0] + w, new_bl[1] + h)
             new_br = (new_bl[0] + w, new_bl[1])
             new_center = (new_bl[0] + w / 2, new_bl[1] + h / 2)
-            bl_var.set(f"{new_bl[0]:.2f}, {new_bl[1]:.2f}")
-            tl_var.set(f"{new_tl[0]:.2f}, {new_tl[1]:.2f}")
-            tr_var.set(f"{new_tr[0]:.2f}, {new_tr[1]:.2f}")
-            br_var.set(f"{new_br[0]:.2f}, {new_br[1]:.2f}")
-            center_var.set(f"{new_center[0]:.2f}, {new_center[1]:.2f}")
+            bl_var.set(f"{new_bl[0]:.3f}, {new_bl[1]:.3f}")
+            tl_var.set(f"{new_tl[0]:.3f}, {new_tl[1]:.3f}")
+            tr_var.set(f"{new_tr[0]:.3f}, {new_tr[1]:.3f}")
+            br_var.set(f"{new_br[0]:.3f}, {new_br[1]:.3f}")
+            center_var.set(f"{new_center[0]:.3f}, {new_center[1]:.3f}")
             popup.update_idletasks()
             popup.update()
 
@@ -233,11 +233,11 @@ def open_popup_editor(
             new_br = (new_bl[0] + w, new_bl[1])
             new_center = (new_bl[0] + w / 2, new_bl[1] + h / 2)
 
-            bl_var.set(f"{new_bl[0]:.2f}, {new_bl[1]:.2f}")
-            tl_var.set(f"{new_tl[0]:.2f}, {new_tl[1]:.2f}")
-            tr_var.set(f"{new_tr[0]:.2f}, {new_tr[1]:.2f}")
-            br_var.set(f"{new_br[0]:.2f}, {new_br[1]:.2f}")
-            center_var.set(f"{new_center[0]:.2f}, {new_center[1]:.2f}")
+            bl_var.set(f"{new_bl[0]:.3f}, {new_bl[1]:.3f}")
+            tl_var.set(f"{new_tl[0]:.3f}, {new_tl[1]:.3f}")
+            tr_var.set(f"{new_tr[0]:.3f}, {new_tr[1]:.3f}")
+            br_var.set(f"{new_br[0]:.3f}, {new_br[1]:.3f}")
+            center_var.set(f"{new_center[0]:.3f}, {new_center[1]:.3f}")
 
             layout_items[item_name] = {"x": new_bl[0], "y": new_bl[1]}
             items[item_index].x = new_bl[0]
@@ -271,10 +271,10 @@ def open_popup_editor(
         corrected_br = (corrected_bl[0] + w, corrected_bl[1])
         corrected_center = (corrected_bl[0] + w / 2, corrected_bl[1] + h / 2)
 
-        bl_var.set(f"{corrected_bl[0]:.2f}, {corrected_bl[1]:.2f}")
-        tl_var.set(f"{corrected_tl[0]:.2f}, {corrected_tl[1]:.2f}")
-        tr_var.set(f"{corrected_tr[0]:.2f}, {corrected_tr[1]:.2f}")
-        br_var.set(f"{corrected_br[0]:.2f}, {corrected_br[1]:.2f}")
+        bl_var.set(f"{corrected_bl[0]:.3f}, {corrected_bl[1]:.3f}")
+        tl_var.set(f"{corrected_tl[0]:.3f}, {corrected_tl[1]:.3f}")
+        tr_var.set(f"{corrected_tr[0]:.3f}, {corrected_tr[1]:.3f}")
+        br_var.set(f"{corrected_br[0]:.3f}, {corrected_br[1]:.3f}")
 
         layout_items[item_name] = {"x": corrected_bl[0], "y": corrected_bl[1]}
         items[item_index].x = corrected_bl[0]

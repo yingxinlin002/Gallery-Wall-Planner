@@ -268,7 +268,7 @@ class VirtualWall:
 
             orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, LineOrientation) else "Unknown"
             alignment_str = self.get_alignment_string(line)
-            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
+            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.3f}\""
             ttk.Label(line_frame, text=label_text).pack(side="left")
 
             ttk.Button(
@@ -384,7 +384,7 @@ class VirtualWall:
 
     def snap_to_lines(self, art, threshold=8):
         print("Evaluating snapping...")
-        print(f"Art position BEFORE snapping: x={art.x:.2f}, y={art.y:.2f}")
+        print(f"Art position BEFORE snapping: x={art.x:.3f}, y={art.y:.3f}")
 
         for line in self.snap_lines:
             if not line.snap_to:

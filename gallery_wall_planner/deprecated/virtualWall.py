@@ -274,7 +274,7 @@ class VirtualWall:
 
             orientation_str = line.orientation.value.capitalize() if isinstance(line.orientation, Orientation) else "Unknown"
             alignment_str = self.get_alignment_string(line)
-            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.2f}\""
+            label_text = f"{orientation_str} - {alignment_str} - {line.distance:.3f}\""
             ttk.Label(line_frame, text=label_text).pack(side="left")
 
             ttk.Button(
@@ -419,7 +419,7 @@ class VirtualWall:
 
     def snap_to_lines(self, art, threshold=8):
         print("Evaluating snapping...")
-        print(f"Art position BEFORE snapping: x={art.x:.2f}, y={art.y:.2f}")
+        print(f"Art position BEFORE snapping: x={art.x:.3f}, y={art.y:.3f}")
 
         for line in self.snap_lines:
             if not line.snap_to:
@@ -441,7 +441,7 @@ class VirtualWall:
 
                     print(f"Checking snap to HORIZONTAL-{alignment_str} at target_y={target_y}")
                     if abs(art.y + art.height - target_y) < threshold or abs(art.y - candidate_y) < threshold:
-                        print(f"Snap check: Art y={art.y:.2f}, candidate_y={candidate_y:.2f}, threshold={threshold}")
+                        print(f"Snap check: Art y={art.y:.3f}, candidate_y={candidate_y:.3f}, threshold={threshold}")
                         art.y = candidate_y
 
             elif line.orientation == Orientation.VERTICAL:
@@ -458,7 +458,7 @@ class VirtualWall:
 
                     print(f"Checking snap to VERTICAL-{alignment_str} at target_x={target_x}")
                     if abs(art.x - candidate_x) < threshold or abs(art.x + art.width - target_x) < threshold:
-                        print(f"Snap check: Art x={art.x:.2f}, candidate_x={candidate_x:.2f}, threshold={threshold}")
+                        print(f"Snap check: Art x={art.x:.3f}, candidate_x={candidate_x:.3f}, threshold={threshold}")
                         art.x = candidate_x
 
 

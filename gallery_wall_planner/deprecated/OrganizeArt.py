@@ -167,7 +167,7 @@ def launch_organize_art_ui(root):
             line_frame = ttk.Frame(scrollable_frame)
             line_frame.pack(fill="x", pady=5, padx=10)
 
-            label_text = f"{line.orientation.capitalize()} - {line.alignment.capitalize()} - {line.distance:.2f}\""
+            label_text = f"{line.orientation.capitalize()} - {line.alignment.capitalize()} - {line.distance:.3f}\""
             ttk.Label(line_frame, text=label_text).pack(side="left")
 
             def make_edit_handler(index=idx):
@@ -479,7 +479,7 @@ def launch_organize_art_ui(root):
                 pos = layout_items.get(item_name, {"x": 0.0, "y": 0.0})
                 center_x = pos["x"] + art["Width"] / 2
                 center_y = pos["y"] + art["Height"] / 2
-                f.write(f"Art Piece: {art['Name']}, Width: {art['Width']}, Height: {art['Height']}, Center: ({center_x:.2f}, {center_y:.2f})\n")
+                f.write(f"Art Piece: {art['Name']}, Width: {art['Width']}, Height: {art['Height']}, Center: ({center_x:.3f}, {center_y:.3f})\n")
         messagebox.showinfo("Saved", f"Layout saved to {os.path.basename(filename)}")
 
 
