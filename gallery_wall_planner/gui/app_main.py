@@ -4,7 +4,8 @@ from typing import Optional
 import os
 
 from gallery_wall_planner.models.gallery import Gallery
-from gallery_wall_planner.models.artwork import Artwork  # Import Artwork class
+from gallery_wall_planner.models.artwork import Artwork
+from gallery_wall_planner.models.project_exporter import export_gallery_to_excel  # Import Artwork class
 
 
 class ScreenType(Enum):
@@ -20,7 +21,7 @@ class ScreenType(Enum):
 
 class AppMain():
     def __init__(self, root: tk.Tk):
-        self._create_user_dir()
+        self.user_dir = self._create_user_dir()
 
         self.gallery = Gallery()
         print("Creating main application window...")
@@ -127,8 +128,6 @@ class AppMain():
 
     def _create_user_dir(self):
         """Create a user directory for saving files."""
-
-
         if os.name == 'nt':
             home_dir = os.path.expanduser("~")
 
@@ -140,7 +139,10 @@ class AppMain():
             else:
                 print(f"User directory already exists at: {user_dir}")
 
+            return user_dir
+
     def quit_application(self):
         """Quit the application."""
-        print("Quitting application...")
+        if len(self.gallery.walls) > 0:
+            export_gallery_to_excel(os.path.join(self.user_dir, "_temp.xlsx"), self.gallery)
         self.root.destroy()
