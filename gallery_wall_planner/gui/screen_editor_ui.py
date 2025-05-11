@@ -48,11 +48,6 @@ class ScreenEditorUI(ScreenBase):
         self.actions_frame = None
         self.snap_line_buttons: Dict[str, BTNSnapLine] = {}
 
-    def handle_installation_popup(self):
-        print("Installation popup")
-    #     # This should pass the full DraggableArt objects, not just names
-    #     open_install_instruct_popup(self._root(), self.selected_wall, self.virtual_wall.items)
-
     def load_content(self):
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True)
@@ -80,37 +75,6 @@ class ScreenEditorUI(ScreenBase):
 
         content_frame = tk.Frame(main_frame)
         content_frame.pack(fill="both", expand=True)
-
-        # self.tab_frame = tk.Frame(self.control_panel)
-        # self.tab_frame.pack(side="top", fill="x")
-        # header = tk.Frame(self.tab_frame, bg="#e0e0e0")
-        # header.pack(fill="x")
-
-        # tk.Label(header,
-        #        text="Tabs",
-        #        font=self.styles["label_font"],
-        #        bg="#e0e0e0").pack(side="left", padx=5)
-
-
-        # self.artwork_tab_btn = tk.Button(self.tab_frame,
-        #                                 text="Artwork",
-        #                                 command=self.show_artwork_tab,
-        #                                 bg=self.styles["bg_info"],
-        #                                 fg=self.styles["fg_white"],
-        #                                 font=self.styles["button_font"],
-        #                                 padx=self.styles["button_padx"],
-        #                                 pady=self.styles["button_pady"])
-        # self.artwork_tab_btn.pack(side="left", fill="x")
-
-        # self.snap_lines_tab_btn = tk.Button(self.tab_frame,
-        #                                     text="Snap Lines",
-        #                                     command=self.show_snap_lines_tab,
-        #                                     bg=self.styles["bg_info"],
-        #                                     fg=self.styles["fg_white"],
-        #                                     font=self.styles["button_font"],
-        #                                     padx=self.styles["button_padx"],
-        #                                     pady=self.styles["button_pady"])
-        # self.snap_lines_tab_btn.pack(side="left", fill="x")
 
         self.collapsible_menu = CollapsibleMenu(content_frame, "")
         self.collapsible_menu.load_content()
@@ -205,118 +169,6 @@ class ScreenEditorUI(ScreenBase):
 
         self.create_snap_lines_list_frame()
         self.wall_canvas.draw_snap_lines()
-
-        # self.canvas = tk.Canvas(self.wall_space, width=self.canvas_width, height=self.canvas_height)
-        # apply_canvas_style(self.canvas)
-        # self.canvas.pack(fill="both", expand=True, padx=10, pady=(10, 0))
-
-        # snap_button_frame = ttk.Frame(self.wall_space)
-        # snap_button_frame.pack(fill="x", padx=10, pady=(0, 10))
-
-        # add_line_btn = ttk.Button(snap_button_frame, text="Add Snap Line", command=self.add_new_snap_line)
-        # apply_primary_button_style(add_line_btn)
-        # add_line_btn.pack(side="left", padx=5)
-
-        # edit_line_btn = ttk.Button(snap_button_frame, text="Move/Delete Line", command=self.open_manage_lines_popup)
-        # apply_primary_button_style(edit_line_btn)
-        # edit_line_btn.pack(side="left", padx=5)
-
-    # def initialize_virtual_wall(self):
-    #     """Initialize the virtual wall display"""
-    #     # Clear existing wall if any
-    #     for widget in self.wall_space.winfo_children():
-    #         widget.destroy()
-    #
-    #     # Create new virtual wall
-    #     self.virtual_wall = VirtualWall(
-    #         self.wall_space,
-    #         self.AppMain.editor_wall,
-    #         on_drag_callback=self.show_measurement_lines
-    #     )
-    #
-    #     # Add existing artworks if any
-    #     if hasattr(self.AppMain.editor_wall, 'artwork'):
-    #         for artwork in self.AppMain.editor_wall.artwork:
-    #             self.virtual_wall.add_artwork(artwork)
-    #
-    #     # Highlight selected artwork if one exists
-    #     if (hasattr(self.AppMain, 'editor_artwork_selected') and
-    #         self.AppMain.editor_artwork_selected):
-    #         self.highlight_artwork(self.AppMain.editor_artwork_selected)
-
-    # def highlight_artwork(self, artwork):
-    #     """Highlight the artwork on the virtual wall"""
-    #     if not hasattr(self, 'virtual_wall') or not self.virtual_wall:
-    #         return
-    #
-    #     # Reset all highlights first
-    #     for item in self.virtual_wall.items:
-    #         self.virtual_wall.canvas.itemconfig(item.id, outline="black", width=2)
-    #
-    #     # Find and highlight the selected artwork
-    #     for item in self.virtual_wall.items:
-    #         if hasattr(item, 'art_data') and item.art_data.get("Name") == artwork.name:
-    #             self.virtual_wall.canvas.itemconfig(item.id, outline="#800080", width=4)  # Purple highlight
-    #             break
-    #
-    # def show_measurement_lines(self, item_id, x1, y1, x2, y2):
-    #     """Show measurement lines and distances while dragging"""
-    #     # Clear previous measurement lines
-    #     self.virtual_wall.canvas.delete("measurement")
-    #
-    #     # Get wall boundaries
-    #     wall_left = self.virtual_wall.margin
-    #     wall_bottom = self.virtual_wall.margin
-    #     wall_right = wall_left + self.selected_wall.width * self.virtual_wall.scale
-    #     wall_top = self.virtual_wall.canvas_height - (wall_bottom + self.selected_wall.height * self.virtual_wall.scale)
-    #
-    #     # Draw horizontal measurement lines
-    #     self.virtual_wall.canvas.create_line(
-    #         wall_left, y1, x1, y1,
-    #         fill="gray", dash=(2, 2), tags="measurement", width=1
-    #     )
-    #     self.virtual_wall.canvas.create_line(
-    #         x2, y1, wall_right, y1,
-    #         fill="gray", dash=(2, 2), tags="measurement", width=1
-    #     )
-    #
-    #     # Draw vertical measurement lines
-    #     self.virtual_wall.canvas.create_line(
-    #         x1, wall_top, x1, y1,
-    #         fill="gray", dash=(2, 2), tags="measurement", width=1
-    #     )
-    #     self.virtual_wall.canvas.create_line(
-    #         x1, y2, x1, self.virtual_wall.canvas_height - wall_bottom,
-    #         fill="gray", dash=(2, 2), tags="measurement", width=1
-    #     )
-    #
-    #     # Calculate distances in inches
-    #     left_dist = (x1 - wall_left) / self.virtual_wall.scale
-    #     right_dist = (wall_right - x2) / self.virtual_wall.scale
-    #     top_dist = (self.virtual_wall.canvas_height - y1 - wall_bottom) / self.virtual_wall.scale
-    #     bottom_dist = (y2 - wall_top) / self.virtual_wall.scale
-    #
-    #     # Display distances
-    #     self.virtual_wall.canvas.create_text(
-    #         (wall_left + x1)/2, y1-10,
-    #         text=f"{left_dist:.1f}\"",
-    #         fill="black", tags="measurement"
-    #     )
-    #     self.virtual_wall.canvas.create_text(
-    #         (x2 + wall_right)/2, y1-10,
-    #         text=f"{right_dist:.1f}\"",
-    #         fill="black", tags="measurement"
-    #     )
-    #     self.virtual_wall.canvas.create_text(
-    #         x1+10, (wall_top + y1)/2,
-    #         text=f"{top_dist:.1f}\"",
-    #         fill="black", tags="measurement"
-    #     )
-    #     self.virtual_wall.canvas.create_text(
-    #         x1+10, (y2 + self.virtual_wall.canvas_height - wall_bottom)/2,
-    #         text=f"{bottom_dist:.1f}\"",
-    #         fill="black", tags="measurement"
-    #     )
 
     def create_artwork_list_frame(self):
         """Create the frame for displaying imported artworks in the sidebar."""

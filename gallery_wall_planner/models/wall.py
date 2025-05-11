@@ -272,15 +272,6 @@ class Wall:
     def artwork_dict(self) -> Dict[str, Artwork]:
         return self._artwork_dict
     
-    # def get_permanent_objects(self) -> List[Tuple[PermanentObject, Dict[str, float]]]:
-    #     """
-    #     Get all permanent objects with their positions
-        
-    #     Returns:
-    #         list: Tuples of (PermanentObject, position_dict)
-    #     """
-    #     return [(obj, obj.position) for obj in self._permanent_objects]
-    
     def get_permanent_object_by_name(self, name: str) -> Optional[PermanentObject]:
         """
         Find a permanent object by name
