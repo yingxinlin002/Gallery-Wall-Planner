@@ -10,6 +10,7 @@ import traceback
 
 
 class ScreenHome(ScreenBase):
+    """Home screen of the application. It provides options to create a new gallery, load an existing one, or continue the last project."""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         import os
@@ -20,7 +21,6 @@ class ScreenHome(ScreenBase):
         self.canvas = None
     
     def load_content(self):
-
         """Create the content that goes on top of the background"""
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill="both", expand=True)
@@ -108,6 +108,7 @@ class ScreenHome(ScreenBase):
                 messagebox.showerror("Error", str(e))
 
     def load_exhibit(self):
+        """Load an existing exhibit from an Excel file"""
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
         if not file_path:
             return

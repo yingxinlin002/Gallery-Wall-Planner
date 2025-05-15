@@ -23,6 +23,7 @@ from gallery_wall_planner.gui.popup_even_spacing import PopupEvenSpacing
 from typing import Dict
 
 class ArtBtn(tk.Button):
+    """Button for artwork in the sidebar."""
     def toggle_bg(self, on: bool = True):
         if on:
             self.configure(background="red")
@@ -30,6 +31,7 @@ class ArtBtn(tk.Button):
             self.configure(background="green")
 
 class ScreenEditorUI(ScreenBase):
+    """Screen for editing the wall. This screen allows the user to place and lock objects on the wall."""
     def __init__(self, AppMain: AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.styles = get_ui_styles()
@@ -49,6 +51,7 @@ class ScreenEditorUI(ScreenBase):
         self.snap_line_buttons: Dict[str, BTNSnapLine] = {}
 
     def load_content(self):
+        """Load the content of the screen."""
         main_frame = tk.Frame(self)
         main_frame.pack(fill="both", expand=True)
 
@@ -196,6 +199,7 @@ class ScreenEditorUI(ScreenBase):
                      fg="gray").pack(pady=20)
 
     def create_snap_lines_list_frame(self):
+        """Create the frame for displaying snap lines in the sidebar."""
         print("create_snap_lines_list_frame")
         self.snap_lines_scroll_box = ScrollBoxVertical(self.snap_lines_tab_frame)
         self.snap_lines_scroll_box.load_content()
@@ -211,8 +215,6 @@ class ScreenEditorUI(ScreenBase):
                      text="No snap lines added yet",
                      fg="gray").pack(pady=20)
 
-
-    # TODO Deprecated to be removed
     def add_artwork_item(self, parent, artwork: Artwork):
         """Create a clickable artwork item in the sidebar"""
         print(f"adding {artwork.name}")
@@ -225,8 +227,8 @@ class ScreenEditorUI(ScreenBase):
         print(f"DEBUG: select_artwork called with {artwork.name}")
         self.wall_canvas.create_draggable(artwork)
 
-
     def create_collapsible_menu(self, parent, title, expanded=True):
+        """Create a collapsible menu in the sidebar."""
         menu_frame = tk.Frame(parent, bg="#e0e0e0", bd=1, relief="raised")
         menu_frame.pack(fill="x", pady=2)
 
@@ -256,6 +258,7 @@ class ScreenEditorUI(ScreenBase):
         return content_frame
 
     def toggle_menu(self, menu_frame, toggle_btn, content_frame):
+        """Toggle the visibility of the collapsible menu."""
         self.artwork_tab_frame.pack_forget()
         self.snap_lines_tab_frame.pack_forget()
         if content_frame.winfo_ismapped():
@@ -282,24 +285,29 @@ class ScreenEditorUI(ScreenBase):
         InstallInstructionPopup(self.AppMain)
         
     def back_to_wall_selection(self):
+        """Navigate back to the wall selection screen."""
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)
 
     def open_artwork_manual_ui(self):
+        """Open the manual artwork input screen."""
         self.AppMain.switch_screen(ScreenType.ARTWORK_MANUAL)
 
-
     def add_new_snap_line_popup(self):
+        """Open the popup for adding a new snap line."""
         PopupSnapLines(self.AppMain, self)
 
     def draw_snap_lines(self):
+        """Draw the snap lines on the wall canvas."""
         self.wall_canvas.draw_snap_lines()
 
     def add_new_snap_line(self, line: SingleLine):
+        """Add a new snap line to the wall and the sidebar."""
         self.add_snap_line(line)
         self.AppMain.gallery.current_wall.add_wall_line(line)
         self.draw_snap_lines()
 
     def add_snap_line(self, line: SingleLine):
+        """Add a snap line to the sidebar."""
         if len(self.AppMain.gallery.current_wall.wall_lines) == 0:
             for widget in self.snap_lines_scroll_box.scrollable_frame.winfo_children():
                 widget.destroy()
@@ -310,6 +318,7 @@ class ScreenEditorUI(ScreenBase):
         self.snap_line_buttons[line.id] = btn
 
     def update_snap_line(self, old_line: SingleLine, new_line: SingleLine):
+        """Update an existing snap line in the sidebar and the wall."""
         print("[DEBUG] update_snap_line called")
         self.AppMain.gallery.current_wall.update_wall_line(old_line.id, new_line)
         self.snap_line_buttons[old_line.id].destroy()
@@ -318,6 +327,7 @@ class ScreenEditorUI(ScreenBase):
         self.draw_snap_lines()
 
     def delete_snap_line(self, line: SingleLine):
+        """Delete a snap line from the sidebar and the wall."""
         self.AppMain.gallery.current_wall.remove_wall_line(line.id)
         self.snap_line_buttons[line.id].destroy()
         self.snap_line_buttons.pop(line.id)

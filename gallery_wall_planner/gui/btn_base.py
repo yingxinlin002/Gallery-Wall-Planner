@@ -15,6 +15,7 @@ class BTNBase(tk.Frame):
 
         
     def load_content(self):
+        """Load the content of the button"""
         self.label = tk.Label(self,
                text=self.item_text,
                font=self.styles["label_font"],

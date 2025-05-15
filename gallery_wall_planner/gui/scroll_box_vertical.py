@@ -3,13 +3,12 @@ import tkinter as tk
 
 
 class ScrollBoxVertical(tk.Frame):
-
+    """A vertical scroll box that contains a scrollable frame. This is used to display a list of items in a scrollable area."""
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         
-        
-
     def load_content(self):
+        """Load the content of the scroll box"""
         self.canvas = tk.Canvas(self, bg="white")
         self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = tk.Frame(self.canvas, bg="white")

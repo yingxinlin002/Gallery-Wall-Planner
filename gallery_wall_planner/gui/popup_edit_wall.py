@@ -7,6 +7,7 @@ from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.models.wall import Wall
 
 class PopupEditWall(PopupBase):
+    """Popup window for editing wall properties"""
     def __init__(self, AppMain : AppMain, btn : BTNWall, *args, **kwargs):
         super().__init__(AppMain, "Edit Wall", 300, 400, *args, **kwargs)
         self.btn = btn
@@ -108,10 +109,12 @@ class PopupEditWall(PopupBase):
         self.delete_button.pack(pady=(20, 0))
 
     def delete_wall(self):
+        """Delete the wall"""
         self.btn.delete_wall()
         self.on_close()
 
     def submit_wall_info(self):
+        """Submit the wall information"""
         new_wall = Wall(
             self.wall_name_entry.get(),
             float(self.wall_width_entry.get()),
@@ -123,6 +126,7 @@ class PopupEditWall(PopupBase):
         
 
     def pick_color(self):
+        """Open color picker dialog and set the selected color to the color box"""
         color = colorchooser.askcolor()[1]
         if color:
             self.color_box.config(bg=color)

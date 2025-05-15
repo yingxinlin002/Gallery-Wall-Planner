@@ -97,6 +97,7 @@ class WallObject:
         return self._get_id()
 
     def _get_id(self):
+        """Generate a unique ID for the object based on its properties."""
         return get_id("wall_obj"+self.name+f"width{self.width},height{self.height}")
     
     def get_bounds(self):

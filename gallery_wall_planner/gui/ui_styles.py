@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 
 def get_ui_styles():
+    """Returns a dictionary of UI styles for the application."""
     return {
         "title_font": ("Arial", 24),
         "label_font": ("Arial", 12),
@@ -20,6 +21,7 @@ def get_ui_styles():
     }
 
 def init_styles(root):
+    """Initialize the styles for the application."""
     style = ttk.Style(master=root)
     style.theme_use("clam")
     style.configure("TLabel", font=("Arial", 12))
@@ -27,6 +29,7 @@ def init_styles(root):
     style.configure("Header.TLabel", font=("Arial", 20, "bold"))
 
 def apply_primary_button_style(widget):
+    """Apply primary button style to a widget."""
     styles = get_ui_styles()
     style = ttk.Style()
     style.configure("Primary.TButton",
@@ -35,6 +38,7 @@ def apply_primary_button_style(widget):
     widget.config(style="Primary.TButton", width=styles["button_width"])
 
 def apply_previous_button_style(widget):
+    """Apply previous button style to a widget."""
     styles = get_ui_styles()
     style = ttk.Style()
     style.configure("Previous.TButton",
@@ -44,10 +48,12 @@ def apply_previous_button_style(widget):
     widget.config(style="Previous.TButton", width=styles["button_width"])
 
 def apply_header_label_style(widget):
+    """Apply header label style to a widget."""
     styles = get_ui_styles()
     widget.config(
         font=styles["title_font"]
     )
 
 def apply_canvas_style(widget):
+    """Apply canvas style to a widget."""
     widget.config(bg="white", highlightthickness=0)

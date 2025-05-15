@@ -6,6 +6,7 @@ from gallery_wall_planner.gui.app_main import AppMain, ScreenType
 from gallery_wall_planner.gui.screen_base import ScreenBase
 
 class ScreenNewGalleryUI(ScreenBase):
+    """Screen for creating a new gallery wall. It allows the user to input wall dimensions and color."""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.wall_width = None

@@ -13,7 +13,7 @@ from gallery_wall_planner.gui.ui_styles import apply_primary_button_style
 
 
 class PopupSnapLines(PopupBase):
-    
+    """Popup window for adding or editing snap lines"""
     def __init__(self, AppMain : AppMain, parent_ui: 'Screen_EditorUI', existing_line: Optional[SingleLine] = None, *args, **kwargs):
         super().__init__(AppMain, "Add Snap Line" if existing_line is None else "Edit Snap Line", 300, 320, *args, **kwargs)
         from gallery_wall_planner.gui.screen_editor_ui import ScreenEditorUI
@@ -24,6 +24,7 @@ class PopupSnapLines(PopupBase):
         self.load_content()
 
     def load_content(self):
+        """Load the content of the popup window"""
         super().load_content()
         # Orientation Radio Buttons
         self.orientation_var = tk.StringVar(value=self.existing_line.orientation.name if self.existing_line else Orientation.HORIZONTAL.name)
@@ -50,6 +51,7 @@ class PopupSnapLines(PopupBase):
 
     # Save Button
     def save(self):
+        """Save the snap line"""
         try:
             distance = float(self.distance_var.get())
         except ValueError:
@@ -86,6 +88,7 @@ class PopupSnapLines(PopupBase):
         self.on_close()
 
     def delete(self):
+        """Delete the snap line"""
         self.parent_ui.delete_snap_line(self.existing_line)
         self.on_close()
         

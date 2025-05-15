@@ -9,6 +9,7 @@ from gallery_wall_planner.gui.scroll_box_vertical import ScrollBoxVertical
 from gallery_wall_planner.gui.btns_save import BTNSSave
 
 class ScreenSelectWallSpaceUI(ScreenBase):
+    """Screen for selecting a wall space in the gallery."""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.walls = AppMain.gallery.get_walls()
@@ -20,7 +21,7 @@ class ScreenSelectWallSpaceUI(ScreenBase):
         self.wall_btns : Dict[str, BTNWall] = {}
 
     def load_content(self):
-        # Clear the current frame
+        """Load the content of the screen."""
 
         # Add a title
         tk.Label(self, text="Select Wall Space", font=("Arial", 24)).pack(pady=20, anchor="w")
@@ -85,17 +86,19 @@ class ScreenSelectWallSpaceUI(ScreenBase):
 
 
     def create_new_wall_space(self):
+        """Create a new wall space."""
         # Navigate to NewGalleryUI to create a new wall space
         self.AppMain.switch_screen(ScreenType.NEW_GALLERY)
         
     def edit_permanent_objects(self):
+        """Edit permanent objects on the selected wall space."""
         if self.AppMain.gallery.current_wall:
             self.AppMain.switch_screen(ScreenType.LOCK_OBJECTS_TO_WALL)
         else:
             messagebox.showwarning("Error", "Please select a wall space to edit permanent objects.")
 
     def export_layout(self):
-        # Export the selected wall layout
+        """Export the selected wall layout."""
         selected_wall = self.AppMain.gallery.current_wall
         if selected_wall:
             # exported_data = selected_wall.export_wall()
@@ -104,9 +107,11 @@ class ScreenSelectWallSpaceUI(ScreenBase):
             messagebox.showwarning("Error", "Please select a wall space to export.")
 
     def continue_to_next(self):
+        """Continue to the next screen."""
         self.AppMain.switch_screen(ScreenType.EDITOR)
 
     def remove_wall_btn(self, wall_id : str):
+        """Remove a wall button from the list."""
         if wall_id in self.wall_btns:
             self.wall_btns[wall_id].destroy()
             self.wall_btns.pop(wall_id)

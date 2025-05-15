@@ -16,7 +16,7 @@ from gallery_wall_planner.gui.btn_new_wall_item import BTNNewWallItem
 from typing import Dict
 
 class ScreenLockObjectsUI(ScreenBase):
-    
+    """Screen for locking objects to the wall. This screen allows the user to place and lock objects on the wall."""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.obstacle_names = [f"Obstacle{i+1}" for i in range(len(self.AppMain.gallery.current_wall.permanent_objects_dict))]
@@ -104,6 +104,7 @@ class ScreenLockObjectsUI(ScreenBase):
         self.next_button.pack(side="right", padx=10)
 
     def new_wall_item_button(self, draggable_item : 'WallItemDraggable'):
+        """Create a new wall item button"""
         self.AppMain.gallery.current_wall.add_permanent_object(draggable_item.wall_object)
         self.wall_canvas.add_draggable(draggable_item)
         btn = BTNWallItem(self.AppMain, self.scroll_box.scrollable_frame, draggable_item)
@@ -112,6 +113,7 @@ class ScreenLockObjectsUI(ScreenBase):
         self.permanent_object_buttons[draggable_item.wall_object.id] = btn        
 
     def save_and_continue(self):
+        """Save the current wall layout and continue to the next screen"""
         if self.wall_canvas.check_all_collisions():
             popup = Toplevel(self.AppMain.root)
             popup.title("Collision Detected")
@@ -128,6 +130,7 @@ class ScreenLockObjectsUI(ScreenBase):
             self.continue_to_next()
 
     def continue_to_next(self):
+        """Continue to the next screen"""
         # Positions are already saved in the wall object through the DraggableItem class
         # Now just launch the SelectWallSpaceUI with the updated wall
         self.AppMain.switch_screen(ScreenType.SELECT_WALL_SPACE)

@@ -31,10 +31,9 @@ class Artwork(WallObject):
         # Ensure height is always a float
         self.height = height
         
-    # name property is inherited from WallObject
-    
     @override
     def _get_id(self):
+        """Override the _get_id method to provide a unique identifier for the artwork"""
         return get_id("artwork"+self.name+f"width{self.width},height{self.height},hanging_point{self.hanging_point}")
     
     @property
@@ -132,7 +131,6 @@ class Artwork(WallObject):
         self._notes = value
 
     def __str__(self):
-        #return all info about the artwork
         return f"Name: {self.name}\nMedium: {self.medium}\nHeight: {self.height}\nWidth: {self.width}\nDepth: {self.depth}\nHanging Point: {self.hanging_point}\nPrice: {self.price}\nNFS: {self.nfs}\nImage Path: {self.image_path}\nNotes: {self.notes}"
 
 
@@ -202,7 +200,7 @@ class Artwork(WallObject):
         return artworks    
 
     def to_dict(self):
-        # Helper for exporter.py
+        """Convert the Artwork object to a dictionary representation"""
         return {
             "name": self.name,
             "width": self.width,
@@ -218,7 +216,7 @@ class Artwork(WallObject):
     
     @staticmethod
     def from_dict(data):
-        # Helper for importing for exporter.py
+        """Create an Artwork object from a dictionary representation"""
         image_path = data.get("image_path")
         if not isinstance(image_path, str):
             image_path = None

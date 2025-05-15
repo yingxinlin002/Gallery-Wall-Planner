@@ -10,6 +10,7 @@ from gallery_wall_planner.gui.ui_styles import get_ui_styles
 from gallery_wall_planner.models.artwork import Artwork
 
 class ScreenArtworkManuallyUI(ScreenBase):
+    """Screen for adding artwork manually"""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain, *args, **kwargs)
         self.styles = get_ui_styles()
@@ -17,6 +18,7 @@ class ScreenArtworkManuallyUI(ScreenBase):
 
     @override
     def load_content(self):
+        """Load the content of the screen"""
         main_container = tk.PanedWindow(self, orient=tk.HORIZONTAL)
         main_container.pack(fill=tk.BOTH, expand=True)
 
@@ -152,22 +154,26 @@ class ScreenArtworkManuallyUI(ScreenBase):
                     bg=frame["bg"]).pack(anchor="w")
 
     def clear_example(self, event, entry: tk.Entry, example_text):
+        """Clear the example text when the entry is focused"""
         if entry.get() == example_text:
             entry.delete(0, tk.END)
             entry.config(fg="black")
 
     def restore_example(self, event, entry: tk.Entry, example_text):
+        """Restore the example text if the entry is empty"""
         if not entry.get():
             entry.insert(0, example_text)
             entry.config(fg="grey")
 
     def upload_image(self):
+        """Open a file dialog to select an image file"""
         file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             self.image_path.set(file_path)
             messagebox.showinfo("Success", "Image uploaded successfully!")
 
     def create_artwork(self):
+        """Create an artwork object and add it to the gallery"""
         name = self.name_entry.get()
         medium = self.medium_entry.get()
         width = self.width_entry.get()
@@ -226,6 +232,7 @@ class ScreenArtworkManuallyUI(ScreenBase):
             messagebox.showerror("Error", f"Invalid input: {str(e)}")
 
     def clear_form(self):
+        """Clear the form fields"""
         entries = [
             (self.name_entry, "e.g., Starry Night"),
             (self.medium_entry, "e.g., Oil on canvas"),

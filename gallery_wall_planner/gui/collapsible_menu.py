@@ -3,6 +3,7 @@ from gallery_wall_planner.gui.ui_styles import get_ui_styles
 
 
 class CollapsibleMenu(tk.Frame):
+    """A collapsible menu for the sidebar"""
     def __init__(self, parent, title, *args, **kwargs):
         super().__init__(parent,  *args, **kwargs)
         self.parent_ui = parent
@@ -20,7 +21,8 @@ class CollapsibleMenu(tk.Frame):
 
 
     def load_content(self):
-        # Control panel with initial width
+        """Load the content of the sidebar"""
+
         self.content_frame = tk.Frame(self,
                                     width=self.sidebar_width,
                                     bg="#f0f0f0")

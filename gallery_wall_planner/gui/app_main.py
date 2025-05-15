@@ -20,6 +20,7 @@ class ScreenType(Enum):
 
 
 class AppMain():
+    """Main application class for the Gallery Wall Planner."""
     def __init__(self, root: tk.Tk):
         self.user_dir = self._create_user_dir()
 
@@ -59,6 +60,7 @@ class AppMain():
             self.root.title("Gallery Wall Planner")
 
     def _load_or_resize(self, event=None):
+        """Load or resize the current screen based on the event"""
         self.switch_screen(self.current_screen)
 
     def switch_screen(self, screen_type: ScreenType):

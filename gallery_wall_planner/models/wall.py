@@ -395,7 +395,7 @@ class Wall:
             json.dump(self.export_wall(), f, indent=2)
 
     def to_dict(self):
-        # Helper for project exporter
+        """Convert wall object to dictionary format for JSON serialization"""
         return {
             "name": self.name,
             "width": self.width,
@@ -409,6 +409,7 @@ class Wall:
 
     @staticmethod
     def from_dict(data):
+        """Create a Wall object from a dictionary"""
         return Wall(
             name=data["name"],
             width=float(data["width"]),

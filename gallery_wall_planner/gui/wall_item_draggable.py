@@ -10,6 +10,7 @@ from gallery_wall_planner.gui.wall_item import WallItem, ItemLocation
 from gallery_wall_planner.models.wall_line import Orientation, HorizontalAlignment, VerticalAlignment, SingleLine
 
 class SnapAction():
+    """Class to represent a snap action for wall items"""
     def __init__(self, orientation: Orientation):
         self.orientation: Orientation = orientation
         self.distance: int = None
@@ -17,7 +18,7 @@ class SnapAction():
 
 
 class WallItemDraggable(WallItem):
-
+    """Class representing a draggable wall item (artwork, permanent object) on the wall canvas."""
     SNAP_TOLERANCE = 1.5
     def __init__(self, wall_object: WallObject, parent_ui: wall_canvas):
         super().__init__(wall_object, parent_ui)
@@ -26,6 +27,7 @@ class WallItemDraggable(WallItem):
         self._drag_data : Position = Position(0, 0)
 
     def create_canvas_item(self):
+        """Create the wall item on the canvas"""
         # Convert from bottom-left origin to canvas coordinates
         super().create_canvas_item()
         self.parent_ui.canvas.tag_bind(self.id, "<ButtonPress-1>", self.on_start)
@@ -42,6 +44,7 @@ class WallItemDraggable(WallItem):
 
 
     def on_start(self, event):
+        """Initialize drag data and create reference lines"""
         self._drag_data.x = event.x
         self._drag_data.y = event.y
         # Initialize reference lines (but don't show yet)
@@ -59,6 +62,7 @@ class WallItemDraggable(WallItem):
         ]
 
     def on_drag(self, event):
+        """Handle dragging of the wall item"""
         # Calculate proposed movement
         dx = event.x - self._drag_data.x
         dy = event.y - self._drag_data.y
@@ -134,6 +138,7 @@ class WallItemDraggable(WallItem):
         self.parent_ui.check_all_collisions()
 
     def on_drop(self, event):
+        """Handle dropping of the wall item"""
         coords = self.parent_ui.canvas.coords(self.id)
         # Convert from canvas coordinates back to bottom-left origin
         new_x = (coords[0] - self.parent_ui.wall_position.wall_left) / self.parent_ui.screen_scale
@@ -143,6 +148,7 @@ class WallItemDraggable(WallItem):
         self.wall_object.position = Position(new_x, new_y)
 
         self.clear_reference_lines()
+
     def update_reference_lines(self):
         """Update existing reference lines instead of creating new ones"""
         coords = self.parent_ui.canvas.coords(self.id)

@@ -5,6 +5,7 @@ from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.models import project_exporter
 
 class BTNSSave(ttk.Frame):
+    """Button class for saving the project"""
     def __init__(self, parent, app_main: AppMain, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.save_btn = None
@@ -12,6 +13,7 @@ class BTNSSave(ttk.Frame):
         self.app_main: AppMain = app_main
 
     def load_content(self):
+        """Load the content of the button save"""
         self.save_btn = tk.Button(self, text="Save", command=self.save, width=15, bg="#4CAF50", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
         self.save_btn.pack(pady=10, side="left")
 
@@ -19,6 +21,7 @@ class BTNSSave(ttk.Frame):
             self.add_save_as_button()
 
     def save(self):
+        """Save the project to the specified file path"""
         print("Save")
         if self.app_main.save_file_path is not None:
             try:
@@ -34,6 +37,7 @@ class BTNSSave(ttk.Frame):
             self.save_as()
 
     def save_as(self):
+        """Save the project to a new file path"""
         print("Save As")
         try:
             file_path = filedialog.asksaveasfilename(
@@ -61,6 +65,7 @@ class BTNSSave(ttk.Frame):
             messagebox.showerror("Error", f"Could not browse files:\n{str(e)}")
         
     def add_save_as_button(self):
+        """Add the save as button to the UI"""
         self.save_as_btn = tk.Button(self, text="Save As", command=self.save_as, width=15, bg="#4CAF50", fg="white", font=("Helvetica", 12, "bold"), relief="raised", padx=10, pady=5)
         self.save_as_btn.pack(pady=10, side="right")
         
