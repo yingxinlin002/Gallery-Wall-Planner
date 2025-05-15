@@ -6,6 +6,7 @@ from gallery_wall_planner.gui.app_main import AppMain
 from tkinter import messagebox
 
 class BTNWall(BTNBase):
+    """Button class for walls"""
     def __init__(self, parent_frame : tk.Frame, wall : Wall, app_main : AppMain, parent_ui : 'ScreenSelectWallSpaceUI', *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
         self.app_main: AppMain = app_main
@@ -32,6 +33,7 @@ class BTNWall(BTNBase):
 
 
     def update_wall(self, wall : Wall):
+        """Update the wall with the new wall object"""
         if self.app_main.gallery.update_wall(self.wall.id, wall):
             self.wall = wall
             self.label.configure(text=self.wall.name)
@@ -40,6 +42,7 @@ class BTNWall(BTNBase):
             messagebox.showerror("Error", "Failed to update wall")
 
     def delete_wall(self):
+        """Delete the wall"""
         self.app_main.gallery.remove_wall(self.wall)
         self.parent_ui.remove_wall_btn(self.wall.id)
         self.parent_ui.update_wall_preview()

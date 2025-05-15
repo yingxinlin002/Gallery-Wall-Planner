@@ -19,7 +19,7 @@ class WallItemState(Enum):
     INACTIVE = 3
 
 class BTNWallItem(BTNBase):
-    
+    """Button class for wall items (artwork, permanent objects)"""
     def __init__(self, 
                  app_main : AppMain,
                  parent_frame : tk.Frame, 
@@ -36,6 +36,7 @@ class BTNWallItem(BTNBase):
     
     @override
     def load_content(self):
+        """Load the content of the button wall item"""
         if self.state == WallItemState.ACTIVE or self.state == WallItemState.PLACED:
             if self.state == WallItemState.ACTIVE:
                 self.edit_button_text = "Add to Wall"

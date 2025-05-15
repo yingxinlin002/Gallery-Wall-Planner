@@ -3,6 +3,7 @@ import tkinter as tk
 from gallery_wall_planner.gui.app_main import AppMain
 
 class ScreenBase(tk.Canvas):
+    """Base class for all screens in the application."""
     def __init__(self, AppMain : AppMain, *args, **kwargs):
         super().__init__(AppMain.frame_main, *args, **kwargs)
         self.AppMain = AppMain

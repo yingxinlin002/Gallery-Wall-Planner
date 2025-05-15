@@ -14,6 +14,7 @@ from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
 from gallery_wall_planner.models.permanent_object import PermanentObject
 from gallery_wall_planner.models.structures import Position
+from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
 from .wall_line import SingleLine
 from gallery_wall_planner.models.gallery import Gallery
 from gallery_wall_planner.models.wall_line import Orientation
@@ -72,6 +73,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
         permanent_objects (list of PermanentObject): Permanent objects
     """
     def to_visible_wall_data(wall):
+        """Convert wall data to a visible format for Excel export."""
         return {
             "Wall Name": wall.name,
             "Width (in)": wall.width,
@@ -79,6 +81,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
         }
 
     def to_visible_artwork_data(art):
+        """Convert artwork data to a visible format for Excel export."""
         return {
             "Name": art.name,
             "Width": art.width,
@@ -91,6 +94,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
         }
 
     def to_internal_data(obj):
+        """Convert object data to a safe format for Excel export."""
         try:
             d = obj.export()
         except AttributeError:
@@ -122,7 +126,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
     print(f"[INFO] Project exported to Excel at {filepath}")
 
     def to_internal_data(obj):
-        # PRepares the _internal data for export
+        """Convert object data to a safe format for Excel export."""
         safe = {}
         for k, v in obj.__dict__.items():
             if isinstance(v, Position):
@@ -148,6 +152,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
     print(f"[INFO] Project exported to Excel at {filepath}")
 
     def import_gallery_from_excel(filepath):
+        """Import a gallery from an Excel file."""
         print(f"[INFO] Importing gallery from {filepath}")
         xls = pd.ExcelFile(filepath)
         gallery = Gallery(name="Imported Gallery")
@@ -211,6 +216,7 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
 
 
 def export_gallery_to_excel(filepath: str, gallery: Gallery):
+    """Export the gallery to an Excel file."""
     print(f"[INFO] Exporting gallery to {filepath}")
     writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
 
@@ -271,10 +277,8 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
     writer.close()
     print("[DONE] Finished exporting gallery.")
 
-
-from gallery_wall_planner.models.gallery import Gallery  # assuming this exists
-
 def import_gallery_from_excel(filepath: str) -> Gallery:
+    """Import a gallery from an Excel file."""
     print(f"[INFO] Importing gallery from {filepath}")
     wb: Workbook = openpyxl.load_workbook(filepath, data_only=True)
     gallery = Gallery("Imported Gallery")

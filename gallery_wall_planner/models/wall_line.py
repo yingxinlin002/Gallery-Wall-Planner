@@ -9,21 +9,25 @@ from typing import Union, Optional, List
 from models.structures import get_id
 
 class HorizontalAlignment(Enum):
+    """Enum representing horizontal alignment options."""
     TOP = "top"
     CENTER = "center"
     BOTTOM = "bottom"
 
 class VerticalAlignment(Enum):
+    """Enum representing vertical alignment options."""
     LEFT = "left"
     CENTER = "center"
     RIGHT = "right"
 
 class Orientation(Enum):
+    """Enum representing the orientation of the line."""
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
 
     @classmethod
     def alignment_options(cls, orientation: Orientation) -> Union[List[HorizontalAlignment], List[VerticalAlignment]]:
+        """Get alignment options based on orientation."""
         if orientation == Orientation.HORIZONTAL:
             return [HorizontalAlignment.TOP, HorizontalAlignment.CENTER, HorizontalAlignment.BOTTOM]
         elif orientation == Orientation.VERTICAL:
@@ -35,6 +39,7 @@ class Orientation(Enum):
 
 
 class SingleLine:
+    """Class representing a single line on the wall."""
     def __init__(
         self,
         x: float = 0,
@@ -193,7 +198,7 @@ class SingleLine:
         return self.orientation == other.orientation and self.alignment == other.alignment and abs(self.distance - other.distance) < 0.001
 
     def to_dict(self):
-        # Helper for import/export in project_exporter.py export
+        """Convert the SingleLine object to a dictionary representation"""
         return {
             'x_cord': self.x_cord,
             'y_cord': self.y_cord,
@@ -208,6 +213,7 @@ class SingleLine:
 
     @staticmethod
     def from_dict(data):
+        """Create a SingleLine object from a dictionary"""
         orientation = Orientation(data.get("orientation", "horizontal"))
         
         # Determine the alignment enum type based on orientation

@@ -33,6 +33,7 @@ class BTNNewWallItem(BTNBase):
 
     @override
     def load_content(self):
+        """Load the content of the button wall item"""
         self.label = tk.Label(self,
                text=self.item_text,
                font=self.styles["label_font"],

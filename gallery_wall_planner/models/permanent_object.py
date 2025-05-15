@@ -34,7 +34,7 @@ class PermanentObject(WallObject):
 
     @staticmethod
     def from_dict(data):
-        # Helper for exporter.py import
+        """Create a PermanentObject from a dictionary"""
         return PermanentObject(
             # position = data.get("position", (0,0)), So I don't actually know how we initialize this attribute, so for now I'll disable it. 
             width=data.get("width", 0),
@@ -45,5 +45,6 @@ class PermanentObject(WallObject):
 
     @override
     def _get_id(self):
+        """Generate a unique ID for the object based on its properties."""
         return get_id("perm_obj"+self.name+f"width{self.width},height{self.height}")
         

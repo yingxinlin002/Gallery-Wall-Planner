@@ -13,11 +13,13 @@ from gallery_wall_planner.utils.export_helpers import (
 
 
 class InstallInstructionPopup(PopupBase):
+    """Popup window for installation instructions"""
     def __init__(self, app_main : AppMain):
         super().__init__(app_main, "Installation Instructions", 400, 500)
         self.load_content()
 
     def load_content(self):
+        """Load the content of the popup window"""
         super().load_content()
 
         self.artworks = self.app_main.gallery.current_wall.artwork
@@ -71,10 +73,12 @@ class InstallInstructionPopup(PopupBase):
         self.destroy()
         
     def print_and_save(self):
+        """Print and save the installation instructions"""
         self.print_measurement_instructions()
         self.save_measurement_instructions()
 
     def calculate_hang_locations(self):
+        """Calculate the hanging locations for each artwork"""
         unsorted_locations = {}
         wall_width = self.selected_wall.width
         wall_height = self.selected_wall.height
@@ -122,11 +126,13 @@ class InstallInstructionPopup(PopupBase):
         return dict(sorted_items)
     
     def print_measurement_instructions(self):
+        """Print the measurement instructions to the console"""
         instructions = self.generate_instruction_lines()
         for line in instructions:
             print(line)
 
     def save_measurement_instructions(self):
+        """Save the measurement instructions to a file"""
         text_lines = self.generate_instruction_lines()
         if not text_lines:
             self.release_top()
@@ -194,6 +200,7 @@ class InstallInstructionPopup(PopupBase):
             self.on_close()
 
     def generate_instruction_lines(self):
+        """Generate the instruction lines for the installation"""
         locations = self.calculate_hang_locations()
         if not locations:
             return []

@@ -12,6 +12,7 @@ from gallery_wall_planner.models.wall_object import WallObject
 from typing import Union, Optional
 
 class PopupEditWallItem(PopupBase):
+    """Popup window for editing wall items (artwork, permanent objects)"""
     def __init__(self, 
             app_main : AppMain, 
             wall_object : Union[Artwork, PermanentObject, None], 
@@ -54,6 +55,7 @@ class PopupEditWallItem(PopupBase):
         self.load_content()
         
     def load_content(self):
+        """Load the content of the popup window"""
         super().load_content()
         self.title_label = ttk.Label(self, text="Edit Wall Item", font=self.styles["title_font"])
         self.title_label.pack(pady=10, fill="x")
@@ -157,12 +159,14 @@ class PopupEditWallItem(PopupBase):
         self.delete_button.pack(side="right", padx=10)
 
     def upload_image(self):
+        """Upload an image for the wall item"""
         file_path = self.filedialog_askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             self.image_path_var.set(file_path)
             self.messagebox_showinfo("Success", "Image uploaded successfully!")
 
     def delete(self):
+        """Delete the wall item"""
         if isinstance(self.wall_object, PermanentObject):
             self.app_main.gallery.current_wall.remove_permanent_object(self.wall_object)
         elif isinstance(self.wall_object, Artwork):
@@ -171,6 +175,7 @@ class PopupEditWallItem(PopupBase):
         self.on_close()
 
     def save(self):
+        """Save the wall item"""
         self.update_position()
         if isinstance(self.wall_object, Artwork):
             wall_object = Artwork(
@@ -206,6 +211,7 @@ class PopupEditWallItem(PopupBase):
         self.on_close()
 
     def update_position(self):
+        """Update the position of the wall item based on the selected measure from and distances"""
         self.current_position = Position(0,0)
         self.current_width = float(self.width_var.get())
         self.current_height = float(self.height_var.get())

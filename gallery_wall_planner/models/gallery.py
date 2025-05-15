@@ -5,8 +5,7 @@ from gallery_wall_planner.models.wall import Wall
 from gallery_wall_planner.models.artwork import Artwork
 
 class Gallery:
-    # Class-level list to store all walls (replaces shared_state.walls)
-    #_all_walls: List['Wall'] = [] TODO do we need this
+    """Class representing a gallery with multiple walls and artworks."""
     
     def __init__(self, name: str = "Gallery"):
         self.name = name  # Exhibit title
@@ -74,7 +73,7 @@ class Gallery:
 
     def unplace_art(self, art: Artwork, wall_name: str):
         """
-        Args: self, The artwork object to unplace, the name of the wall to remove the art from
+        Args: self, The artwork object to un-place, the name of the wall to remove the art from
         Returns: None
         """
         wall = self.get_wall_by_name(wall_name)
@@ -82,6 +81,9 @@ class Gallery:
         wall.remove_artwork(art)
         
     def export_gallery(self, filename="gallery_export.xlsx"):
+        """
+        Export the gallery to an Excel file.
+        """
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Artworks"
@@ -169,6 +171,7 @@ class Gallery:
         
     @classmethod
     def import_gallery(cls, filename="gallery_export.xlsx"):
+        """Import a gallery from an Excel file."""
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:

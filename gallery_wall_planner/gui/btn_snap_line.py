@@ -7,6 +7,7 @@ from gallery_wall_planner.gui.app_main import AppMain
 from gallery_wall_planner.gui.popup_snap_lines import PopupSnapLines
 
 class BTNSnapLine(BTNBase):
+    """Button for a snap line in the wall canvas."""
     def __init__(self, parent_frame : tk.Frame, snap_line : SingleLine, AppMain : AppMain, parent_ui: 'ScreenEditorUI', *args, **kwargs):
         super().__init__(parent_frame, *args, **kwargs)
         self.snap_line: SingleLine = snap_line 

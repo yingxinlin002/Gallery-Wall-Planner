@@ -6,6 +6,7 @@ import os
 from gallery_wall_planner.models.structures import Position
 
 class ItemLocation:
+    """Class to represent the location of an item on the wall"""
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
         self.x1 = x1
         self.y1 = y1
@@ -16,6 +17,8 @@ class ItemLocation:
         return f"ItemLocation(x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"
 
 class WallItem:
+    """Class representing a wall item (artwork, permanent object) on the wall canvas."""
+
     def __init__(self, wall_object: WallObject, parent_ui):
         self.wall_object: WallObject = wall_object
         from gallery_wall_planner.gui.wall_canvas import WallCanvas
@@ -27,7 +30,7 @@ class WallItem:
         self.image_id: int = None
 
     def create_canvas_item(self, fill_color:str = "lightblue"):
-
+        """Create the wall item on the canvas"""
         item_location = self.get_item_location()
         self.id = self.parent_ui.canvas.create_rectangle(item_location.x1, item_location.y1, item_location.x2,
                                                          item_location.y2, fill=fill_color, outline="black", width=2)
@@ -42,6 +45,7 @@ class WallItem:
                                                              font=("Arial", 10))
 
     def get_item_location(self) -> ItemLocation:
+        """Get the item's location on the wall canvas"""
         x1 = self.parent_ui.wall_position.wall_left + self.wall_object.position.x * self.parent_ui.screen_scale
         y1 = self.parent_ui.wall_position.wall_top + self.wall_object.position.y * self.parent_ui.screen_scale
         x2 = self.parent_ui.wall_position.wall_left + (self.wall_object.position.x + self.wall_object.width) * self.parent_ui.screen_scale
@@ -49,12 +53,14 @@ class WallItem:
         return ItemLocation(x1, y1, x2, y2)
 
     def update(self, wall_object: WallObject):
+        """Update the wall item with new wall object properties"""
         self.wall_object = wall_object
         self.parent_ui.canvas.delete(self.id)
         self.parent_ui.canvas.delete(self.label_id)
         self.create_canvas_item()
 
     def get_label_location(self, item_location: ItemLocation) -> Position:
+        """Get the label location for the item"""
         return Position((item_location.x1 + item_location.x2) / 2, (item_location.y1 + item_location.y2) / 2)
 
     def rectangles_overlap(self, item2: 'WallItem'):

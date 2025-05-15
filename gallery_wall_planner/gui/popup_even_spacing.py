@@ -9,6 +9,8 @@ from gallery_wall_planner.models.artwork import Artwork
 
 
 class PopupEvenSpacing(PopupBase):
+    """Popup window for applying even spacing to selected artworks"""
+    # Constants
     DEFAULT_Y_POSITION = 62  # Default height in inches
     MIN_SPACING = 0.5  # Minimum spacing between artworks in inches
     def __init__(self, app_main: AppMain, *args, **kwargs):
@@ -17,6 +19,7 @@ class PopupEvenSpacing(PopupBase):
         self.selected_artworks: List[Artwork] = []
     
     def load_content(self):
+        """Load the content of the popup window"""
         super().load_content()
         # Main container
         main_frame = ttk.Frame(self)
