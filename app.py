@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
 from werkzeug.utils import secure_filename
-from gallery.models.exhibit import db  # Import db from your models
+from gallery.models.exhibit import db
 from gallery.models.wall import Wall
-from gallery.models.exhibit import Gallery, Wall
+from gallery.models.exhibit import Gallery
+from gallery.models import db
 from gallery.models.project_exporter import export_gallery_to_excel, import_gallery_from_excel
 from flask_wtf import CSRFProtect
 
@@ -14,6 +14,7 @@ app.secret_key = "supersecretkey"  # Required for flashing messages
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+
 migrate = Migrate(app, db)
 csrf = CSRFProtect(app)
 
@@ -58,7 +59,7 @@ def new_gallery():
         color = request.form.get('wall_color')
         # Assume you have a gallery object or create one
         gallery = Gallery.query.first()  # Or however you want to select
-        wall = Wall(name=name, width=width, height=height, color=color, gallery=gallery)
+        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery.id)
         db.session.add(wall)
         db.session.commit()
         return redirect(url_for('select_wall_space'))
@@ -75,7 +76,7 @@ def submit_wall():
         gallery = Gallery(name="Default Gallery")
         db.session.add(gallery)
         db.session.commit()
-    wall = Wall(name=name, width=width, height=height, color=color, gallery=gallery)
+    wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery.id)
     db.session.add(wall)
     db.session.commit()
     session["current_wall_id"] = wall.id
@@ -89,8 +90,46 @@ def edit_permanent_objects():
         flash("No wall selected", "error")
         return redirect(url_for('select_wall_space'))
     
-    return render_template('lock_objects.html', 
-                         permanent_objects=wall.permanent_objects)
+    return render_template('lock_objects.html', wall=wall)
+
+@app.route('/lock_objects/<int:wall_id>')
+def lock_objects(wall_id):
+    wall = Wall.query.get_or_404(wall_id)
+    return render_template('lock_objects.html', wall=wall)
+
+@app.route('/add-permanent-object', methods=['POST'])
+def add_permanent_object():
+    wall_id = request.form.get('wall_id')
+    name = request.form.get('name')
+    width = float(request.form.get('width', 0))
+    height = float(request.form.get('height', 0))
+    x = float(request.form.get('x', 0))
+    y = float(request.form.get('y', 0))
+    image_path = request.form.get('image_path')
+    from gallery.models.permanent_object import PermanentObject
+    obj = PermanentObject(
+        name=name,
+        width=width,
+        height=height,
+        x=x,
+        y=y,
+        image_path=image_path,
+        wall_id=wall_id
+    )
+    db.session.add(obj)
+    db.session.commit()
+    flash("Permanent object added successfully", "success")
+    return redirect(url_for('lock_objects', wall_id=wall_id))
+
+@app.route('/delete_permanent_object/<int:obj_id>', methods=['POST'])
+def delete_permanent_object(obj_id):
+    from gallery.models.permanent_object import PermanentObject
+    obj = PermanentObject.query.get_or_404(obj_id)
+    wall_id = obj.wall_id
+    db.session.delete(obj)
+    db.session.commit()
+    flash("Permanent object deleted.", "success")
+    return redirect(url_for('lock_objects', wall_id=wall_id))
 
 @app.route('/select-wall-space', methods=['GET'])
 def select_wall_space():
@@ -121,13 +160,6 @@ def create_wall():
         session["current_wall_id"] = wall.id
         return redirect(url_for('select_wall_space'))
     return render_template('new_gallery.html')
-
-
-@app.route('/add_wall_object', methods=['POST'])
-def add_wall_object():
-    # Implement logic to add a new permanent object to the wall
-    # For now, just redirect back
-    return redirect(url_for('edit_permanent_objects'))
 
 @app.route('/save_and_continue', methods=['POST'])
 def save_and_continue():
@@ -174,6 +206,7 @@ def load_exhibit():
 
 @app.route("/quit")
 def quit_app():
+    gallery = Gallery.query.first()  # Retrieve the gallery object
     export_gallery_to_excel(TEMP_FILE, gallery)
     return send_file(TEMP_FILE, as_attachment=True, download_name="gallery_export.xlsx")
 

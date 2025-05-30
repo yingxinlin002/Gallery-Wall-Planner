@@ -1,12 +1,23 @@
 from typing import Optional
-from gallery.models.structures import Position
+from .structures import Position
+from .base import db
 
-class WallObject:
+class WallObject(db.Model):
     """
     Base class for objects that can be placed on a wall (artwork, permanent objects)
-    
     This class contains common properties and methods shared between Artwork and PermanentObject classes.
     """
+    __tablename__ = 'wall_objects'
+    __abstract__ = True  # This makes it a base class for inheritance
+    
+    id = db.Column(db.String(32), primary_key=True)
+    name = db.Column(db.String(128), nullable=False)
+    width = db.Column(db.Float, nullable=False)
+    height = db.Column(db.Float, nullable=False)
+    image_path = db.Column(db.String(256))
+    x_position = db.Column(db.Float, default=0.0)  # X coordinate on wall
+    y_position = db.Column(db.Float, default=0.0)  # Y coordinate on wall
+    
     def __init__(self, name: str, width: float, height: float, image_path: Optional[str] = None):
         """
         Initialize a wall object with basic properties
@@ -17,89 +28,31 @@ class WallObject:
             height (float): Height in inches
             image_path (str, optional): Path to reference image. Defaults to None.
         """
-        self._name = None
-        self._width = None
-        self._height = None
-        self._image_path = None
-        self._position = Position(0, 0)  # Default position
-        
-        # Set properties with validation
         self.name = name
         self.width = width
         self.height = height
         self.image_path = image_path
+        self.id = self._get_id()
     
-    @property
-    def name(self) -> str:
-        """Get the object's name"""
-        return self._name
-    
-    @name.setter
-    def name(self, value: str):
-        """Set the object's name with validation"""
-        if not isinstance(value, str) or not value.strip():
-            raise ValueError("Name must be a non-empty string")
-        self._name = value
-    
-    @property
-    def width(self) -> float:
-        """Get the object's width"""
-        return self._width
-    
-    @width.setter
-    def width(self, value: float):
-        """Set the object's width with validation"""
-        if not isinstance(value, (int, float)):
-            raise ValueError("Width must be a number")
-        if value <= 0:
-            raise ValueError("Width must be positive")
-        self._width = float(value)
-    
-    @property
-    def height(self) -> float:
-        """Get the object's height"""
-        return self._height
-    
-    @height.setter
-    def height(self, value: float):
-        """Set the object's height with validation"""
-        if not isinstance(value, (int, float)):
-            raise ValueError("Height must be a number")
-        if value <= 0:
-            raise ValueError("Height must be positive")
-        self._height = float(value)
-    
-    @property
-    def image_path(self) -> Optional[str]:
-        """Get the object's image path"""
-        return self._image_path
-    
-    @image_path.setter
-    def image_path(self, value: Optional[str]):
-        """Set the object's image path with validation"""
-        if value is not None and not isinstance(value, str):
-            raise ValueError("Image path must be a string or None")
-        self._image_path = value
-    
+    def _get_id(self) -> str:
+        """Generate a unique ID for this object"""
+        from .structures import get_id
+        return get_id(f"wall_obj_{self.name}_width{self.width}_height{self.height}")
+
     @property
     def position(self) -> Position:
-        """Get the object's current position"""
-        return self._position
+        """Get the object's current position as a Position object"""
+        return Position(self.x_position, self.y_position)
     
     @position.setter
     def position(self, value: Position):
-        """Set the object's position"""
-        self._position = value
+        """Set the object's position from a Position object"""
+        if not isinstance(value, Position):
+            raise ValueError("Position must be a Position object")
+        self.x_position = value.x
+        self.y_position = value.y
 
-    @property
-    def id(self) -> str:
-        """Get the object's unique identifier"""
-        return self._get_id()
-
-    def _get_id(self):
-        return get_id("wall_obj"+self.name+f"width{self.width},height{self.height}")
-    
-    def get_bounds(self):
+    def get_bounds(self) -> tuple:
         """
         Returns the object's bounding coordinates (x1, y1, x2, y2)
         
@@ -107,10 +60,10 @@ class WallObject:
             tuple: (left, bottom, right, top) coordinates in inches
         """
         return (
-            self.position.x,
-            self.position.y,
-            self.position.x + self.width,
-            self.position.y + self.height
+            self.x_position,
+            self.y_position,
+            self.x_position + self.width,
+            self.y_position + self.height
         )
     
     def overlaps_with(self, other: 'WallObject') -> bool:
@@ -123,19 +76,36 @@ class WallObject:
         Returns:
             bool: True if the objects overlap, False otherwise
         """
-        # Get coordinates of this object
-        ax1, ay1 = self.position.x, self.position.y
-        ax2, ay2 = ax1 + self.width, ay1 + self.height
+        # Get bounds of both objects
+        ax1, ay1, ax2, ay2 = self.get_bounds()
+        bx1, by1, bx2, by2 = other.get_bounds()
         
-        # Get coordinates of the other object
-        bx1, by1 = other.position.x, other.position.y
-        bx2, by2 = bx1 + other.width, by1 + other.height
-        
-        # Check for overlap using the standard rectangle overlap algorithm
-        # Two rectangles don't overlap if one is to the left, right, above, or below the other
+        # Check for overlap
         return not (ax2 <= bx1 or bx2 <= ax1 or ay2 <= by1 or by2 <= ay1)
     
-    def __str__(self):
+    def to_dict(self) -> dict:
+        """Convert object to dictionary for serialization"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'width': self.width,
+            'height': self.height,
+            'image_path': self.image_path,
+            'position': {'x': self.x_position, 'y': self.y_position}
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'WallObject':
+        """Create object from dictionary"""
+        return cls(
+            name=data['name'],
+            width=float(data['width']),
+            height=float(data['height']),
+            image_path=data.get('image_path')
+        )
+
+    def __repr__(self):
         """String representation for debugging"""
-        pos_str = f"at ({self.position.x}, {self.position.y})"
-        return f"{self.__class__.__name__}: {self.name} ({self.width}\" x {self.height}\") {pos_str}"
+        return (f"<{self.__class__.__name__} {self.name} "
+                f"({self.width}x{self.height}) at "
+                f"({self.x_position},{self.y_position})>")

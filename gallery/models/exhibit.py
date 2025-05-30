@@ -1,127 +1,101 @@
-from flask_sqlalchemy import SQLAlchemy
 import openpyxl
 from openpyxl.styles import Font, PatternFill
-from typing import List, Optional, Union, Dict, Any
-
-db = SQLAlchemy()
+from typing import List, Optional
+from .base import db
+from .artwork import Artwork
 
 class Gallery(db.Model):
     __tablename__ = 'galleries'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    walls = db.relationship('Wall', backref='gallery', lazy=True)
-
-class Wall(db.Model):
-    __tablename__ = 'walls'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    width = db.Column(db.Float, nullable=False)
-    height = db.Column(db.Float, nullable=False)
-    color = db.Column(db.String(32))
-    gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'), nullable=False)
-    artworks = db.relationship('Artwork', backref='wall', lazy=True)
-
-class Artwork(db.Model):
-    __tablename__ = 'artworks'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(128), nullable=False)
-    medium = db.Column(db.String(128))
-    width = db.Column(db.Float)
-    height = db.Column(db.Float)
-    depth = db.Column(db.Float)
-    price = db.Column(db.Float)
-    nfs = db.Column(db.Boolean, default=False)
-    notes = db.Column(db.Text)
-    wall_id = db.Column(db.Integer, db.ForeignKey('walls.id'))
-
-class GalleryOld:
-    # Class-level list to store all walls (replaces shared_state.walls)
-    #_all_walls: List['Wall'] = [] TODO do we need this
     
-    def __init__(self, name: str = "Gallery"):
-        self.name = name  # Exhibit title
-        self.walls = []  # List of Wall objects for this specific gallery
-        self.walls_dict: Dict[str, Wall] = {}
-        self.current_wall: Optional[Wall] = None
-        self.unplaced_artwork: List[Artwork] = []
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128))
+    
+    # Relationships
+    walls = db.relationship('Wall', backref='gallery', lazy=True, cascade='all, delete-orphan')
+    unplaced_artworks = db.relationship('Artwork', 
+                                      primaryjoin='and_(Artwork.wall_id==None, Artwork.gallery_id==Gallery.id)',
+                                      backref='gallery',
+                                      lazy=True)
 
-    # Class methods to manage all walls
-    def add_wall(self, wall: Wall) -> None:
-        self.walls.append(wall)
-        self.walls_dict[wall.id] = wall
-        self.current_wall = wall
-        
-    def get_walls(self) -> List[Wall]:
+    def __init__(self, name: str = "Gallery"):
+        self.name = name
+
+    def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
+        """Add a new wall to the gallery"""
+        from .wall import Wall
+        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=self.id)
+        db.session.add(wall)
+        return wall
+
+    def get_walls(self) -> list["Wall"]:
+        """Get all walls in this gallery"""
         return self.walls
 
-    def get_walls_dict(self) -> Dict[str, Wall]:
-        return self.walls_dict
-        
-    def remove_wall(self, wall: Wall) -> None:
-        if self.current_wall == wall:
-            self.current_wall = None
-        self.walls.remove(wall)
-        self.walls_dict.pop(wall.id)
+    def get_wall_by_name(self, name: str) -> "Wall | None":
+        """Find a wall by its name"""
+        from .wall import Wall
+        return Wall.query.filter_by(name=name, gallery_id=self.id).first()
 
-    def update_wall(self, wall_id : str, wall : Wall) -> bool:
-
-        if wall_id in self.walls_dict:
-            old_wall = self.walls_dict.pop(wall_id)
-            self.walls.remove(old_wall)
-            self.walls.append(wall)
-            self.walls_dict[wall.id] = wall
-            self.current_wall = wall
+    def remove_wall(self, wall_id: int) -> bool:
+        """Remove a wall from the gallery"""
+        wall = Wall.query.get(wall_id)
+        if wall and wall.gallery_id == self.id:
+            db.session.delete(wall)
             return True
         return False
 
-    def get_wall_by_name(self, name: str) -> Optional[Wall]:
-        """Find a wall by its name"""
-        for wall in self.walls:
-            if wall.name == name:
-                return wall
-        return None
-        
-    def add_unplaced_artwork(self, artwork: Artwork):
-        self.unplaced_artwork.append(artwork)
-        
-    def get_art_by_name(self, name: str):
-        for art in self.unplaced_artwork:
-            if art.name == name:
-                return art
-                
-    def remove_artwork(self, artwork: Artwork):
-        self.unplaced_artwork.remove(artwork)
-        
-    def place_art(self, art_name: str, wall_name: str):
-        """
-        Args: self, The name of the art to place, the name of the wall to place art upon
-        Returns: None
-        """
-        art = self.get_art_by_name(art_name)
-        wall = self.get_wall_by_name(wall_name)
-        wall.add_artwork(art)
-        self.remove_artwork(art)
+    def add_unplaced_artwork(self, title: str, medium: str = "", width: float = 0, 
+                            height: float = 0, depth: float = 0, price: float = 0,
+                            nfs: bool = False, notes: str = "") -> Artwork:
+        """Add artwork that isn't placed on any wall"""
+        artwork = Artwork(
+            title=title,
+            medium=medium,
+            width=width,
+            height=height,
+            depth=depth,
+            price=price,
+            nfs=nfs,
+            notes=notes,
+            gallery_id=self.id
+        )
+        db.session.add(artwork)
+        return artwork
 
-    def unplace_art(self, art: Artwork, wall_name: str):
-        """
-        Args: self, The artwork object to unplace, the name of the wall to remove the art from
-        Returns: None
-        """
-        wall = self.get_wall_by_name(wall_name)
-        self.add_unplaced_artwork(art)
-        wall.remove_artwork(art)
+    def get_unplaced_artworks(self) -> List[Artwork]:
+        """Get all artworks not placed on any wall"""
+        return self.unplaced_artworks
+
+    def place_artwork(self, artwork_id: int, wall_id: int) -> bool:
+        """Move artwork from unplaced to a specific wall"""
+        artwork = Artwork.query.get(artwork_id)
+        wall = Wall.query.get(wall_id)
         
-    def export_gallery(self, filename="gallery_export.xlsx"):
+        if artwork and wall and artwork.gallery_id == self.id and wall.gallery_id == self.id:
+            artwork.wall_id = wall_id
+            return True
+        return False
+
+    def unplace_artwork(self, artwork_id: int) -> bool:
+        """Remove artwork from a wall and make it unplaced"""
+        artwork = Artwork.query.get(artwork_id)
+        if artwork and artwork.gallery_id == self.id:
+            artwork.wall_id = None
+            return True
+        return False
+
+    def export_to_excel(self, filename: str = "gallery_export.xlsx") -> str:
+        """Export gallery data to Excel file"""
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Artworks"
 
-        # Add wall information first
+        # Add wall information
         for wall in self.walls:
-            ws.append([wall.name, wall.width, wall.height, getattr(wall, "color", "")])
-        ws.append([])  # Empty row before exhibit title
+            ws.append([wall.name, wall.width, wall.height, wall.color])
+        ws.append([])  # Empty row before gallery title
 
-        # Exhibit title
+        # Gallery title
         ws.append([self.name])
         title_row = ws.max_row
         ws.merge_cells(start_row=title_row, start_column=1, end_row=title_row, end_column=10)
@@ -131,23 +105,23 @@ class GalleryOld:
         
         ws.append([])  # Empty row before headers
         
+        # Column headers
         headers = ["ID", "Name", "Photo", "Medium", "Width", "Height", "Depth", "Value", "NFS", "Notes"]
         colors = ["ADD8E6", "90EE90", "ADD8E6", "FFFF99", "FFFF99", "FFFF99", "FFFF99", "FA8072", "D8BFD8", "FFFFFF"]
-        #Loop to apply header styles
+        
         header_row = ws.max_row + 1
         for col_num, (header, color) in enumerate(zip(headers, colors), start=1):
             cell = ws.cell(row=header_row, column=col_num, value=header)
             cell.font = Font(bold=True)
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
-        #Counter for artwork ID's
+
+        # Add placed artworks
         art_counter = 0
-        #Loop thru walls
         for wall in self.walls:
-            #Loop thru artwork inside the walls
-            for artwork in wall.artwork:
+            for artwork in wall.artworks:
                 art_counter += 1
                 ws.append([
-                    getattr(artwork, "id", art_counter),
+                    artwork.id or art_counter,
                     artwork.title,
                     "",
                     artwork.medium,
@@ -158,15 +132,8 @@ class GalleryOld:
                     artwork.nfs,
                     artwork.notes
                 ])
-        #Apply artwork data
-        for col in ws.iter_cols(min_row=header_row, max_row=ws.max_row):
-            max_length = max((len(str(cell.value)) if cell.value else 0) for cell in col)
-            ws.column_dimensions[col[0].column_letter].width = max_length + 2
 
-        wb.save(filename)
-        print(f"Gallery exported to {filename}")
-
-        # Unplaced Artworks marker
+        # Add unplaced artworks section
         ws.append([])
         ws.append(["Unplaced Artwork"])
         ws.merge_cells(start_row=ws.max_row, start_column=1, end_row=ws.max_row, end_column=10)
@@ -181,11 +148,11 @@ class GalleryOld:
             cell.font = Font(bold=True)
             cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
 
-        # Append unplaced artworks
-        for artwork in self.unplaced_artwork:
+        # Add unplaced artworks
+        for artwork in self.unplaced_artworks:
             art_counter += 1
             ws.append([
-                getattr(artwork, "id", art_counter),
+                artwork.id or art_counter,
                 artwork.title,
                 "",
                 artwork.medium,
@@ -196,33 +163,42 @@ class GalleryOld:
                 artwork.nfs,
                 artwork.notes
             ])
-        
+
+        # Auto-adjust column widths
+        for col in ws.columns:
+            max_length = max(len(str(cell.value)) if cell.value else 0 for cell in col)
+            adjusted_width = (max_length + 2) * 1.2
+            ws.column_dimensions[col[0].column_letter].width = adjusted_width
+
+        wb.save(filename)
+        return filename
+
     @classmethod
-    def import_gallery(cls, filename="gallery_export.xlsx"):
+    def import_from_excel(cls, filename: str = "gallery_export.xlsx") -> 'Gallery':
+        """Import gallery data from Excel file"""
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:
-            raise FileNotFoundError(f"GallerExcelNotFoundError: gallery excel file with specific name or path not found: {filename}")
+            raise FileNotFoundError(f"Excel file not found: {filename}")
+
         ws = wb["Artworks"]
-        #Initialize row and gallery
-        row_idx = 1
         gallery = cls()
 
         # Read wall information
+        row_idx = 1
         while ws.cell(row=row_idx, column=1).value:
             wall_name = ws.cell(row=row_idx, column=1).value
-            wall_width = ws.cell(row=row_idx, column=2).value
-            wall_height = ws.cell(row=row_idx, column=3).value
-            wall_color = ws.cell(row=row_idx, column=4).value
-            imported_wall = Wall(name=wall_name, width=wall_width, height=wall_height, color=wall_color)
-            gallery.walls.append(imported_wall)
+            wall_width = float(ws.cell(row=row_idx, column=2).value)
+            wall_height = float(ws.cell(row=row_idx, column=3).value)
+            wall_color = ws.cell(row=row_idx, column=4).value or "White"
+            gallery.add_wall(name=wall_name, width=wall_width, height=wall_height, color=wall_color)
             row_idx += 1
         
-        row_idx += 1  # Skip empty row before exhibit title
-        gallery.name = ws.cell(row=row_idx, column=1).value or "Imported Exhibit" #Dynamically get gallery name
-        
+        # Skip empty rows and get gallery name
+        row_idx += 1
+        gallery.name = ws.cell(row=row_idx, column=1).value or "Imported Gallery"
         row_idx += 2  # Skip empty row and headers
-        
+
         reading_unplaced = False
         current_wall = gallery.walls[-1] if gallery.walls else None
 
@@ -232,28 +208,30 @@ class GalleryOld:
             if row[0] == "Unplaced Artwork":
                 reading_unplaced = True
                 continue
-            if row[0] == "ID":  # Header row (reappears before unplaced)
+            if row[0] == "ID":  # Skip header rows
                 continue
 
-            # Unpack artwork row
+            # Create artwork from row data
             art_id, title, _, medium, width, height, depth, price, nfs, notes = row
-            artwork = Artwork(
-                title=title or "",
-                medium=medium or "",
-                width=width or 0,
-                height=height or 0,
-                depth=depth or 0,
-                price=price or 0,
-                nfs=bool(nfs),
-                notes=notes or ""
-            )
-            setattr(artwork, "id", art_id)
+            artwork_data = {
+                'title': title or "",
+                'medium': medium or "",
+                'width': float(width or 0),
+                'height': float(height or 0),
+                'depth': float(depth or 0),
+                'price': float(price or 0),
+                'nfs': bool(nfs),
+                'notes': notes or "",
+                'gallery_id': gallery.id
+            }
 
             if reading_unplaced:
-                gallery.unplaced_artwork.append(artwork)
+                gallery.add_unplaced_artwork(**artwork_data)
             elif current_wall:
-                current_wall.artwork.append(artwork)
+                artwork = Artwork(**artwork_data, wall_id=current_wall.id)
+                db.session.add(artwork)
 
-        print(f"Gallery '{gallery.name}' imported successfully with {sum(len(w.artwork) for w in gallery.walls)} artworks.")
-        print(f"Unplaced artworks: {len(gallery.unplaced_artwork)}")
         return gallery
+
+    def __repr__(self):
+        return f"<Gallery {self.name} ({len(self.walls)} walls, {len(self.unplaced_artworks)} unplaced artworks)>"

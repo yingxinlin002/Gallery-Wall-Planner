@@ -1,15 +1,13 @@
 from __future__ import annotations
-from flask_sqlalchemy import SQLAlchemy
 from typing import List, Dict, Optional
-from .structures import Position
-
-db = SQLAlchemy()
+from .base import db
 
 class Wall(db.Model):
     __tablename__ = 'wall'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
+    gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
     width = db.Column(db.Float)
     height = db.Column(db.Float)
     color = db.Column(db.String(32))
@@ -17,12 +15,14 @@ class Wall(db.Model):
     # Relationships
     permanent_objects = db.relationship('PermanentObject', backref='wall', lazy=True, cascade='all, delete-orphan')
     artworks = db.relationship('Artwork', backref='wall', lazy=True, cascade='all, delete-orphan')
-
-    def __init__(self, name: str, width: float, height: float, color: str = "White"):
+    snap_lines = db.relationship('SingleLine', backref='wall', lazy=True, cascade='all, delete-orphan')
+    
+    def __init__(self, name: str, width: float, height: float, color: str = "White", gallery_id: Optional[int] = None):
         self.name = name
         self.width = width
         self.height = height
         self.color = color
+        self.gallery_id = gallery_id
 
     def add_permanent_object(self, name: str, width: float, height: float, 
                            x: float = 0, y: float = 0, image_path: Optional[str] = None):

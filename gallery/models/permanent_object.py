@@ -1,9 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
 from typing import Optional, Dict
+from .wall_object import WallObject
+from .base import db
 
-db = SQLAlchemy()
-
-class PermanentObject(db.Model):
+class PermanentObject(WallObject):
     __tablename__ = 'permanent_object'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -12,7 +11,7 @@ class PermanentObject(db.Model):
     height = db.Column(db.Float)
     x = db.Column(db.Float, default=0.0)
     y = db.Column(db.Float, default=0.0)
-    image_path = db.Column(db.String(256)), 
+    image_path = db.Column(db.String(256))
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'))
 
     def __init__(self, name: str, width: float, height: float, 

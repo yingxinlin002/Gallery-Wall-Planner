@@ -3,65 +3,435 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Place Fixtures</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .left-panel {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .canvas-container {
+            background-color: white;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            height: calc(100vh - 200px);
+        }
+        #wall-canvas {
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            width: 100%;
+            height: 100%;
+        }
+        .wall-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .wall-item:hover {
+            background-color: #dee2e6;
+        }
+        .wall-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .footer-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .collapsible {
+            background-color: #6c757d;
+            color: white;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1rem;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .collapsible:hover {
+            background-color: #5a6268;
+        }
+        .collapsible-content {
+            padding: 0 10px;
+            display: none;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            border-radius: 0 0 4px 4px;
+        }
+        .active, .collapsible:hover {
+            background-color: #5a6268;
+        }
+        .item-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .position-controls {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid py-3">
         <!-- Header -->
-        <header class="header">
-            <h1>Place Fixtures</h1>
-        </header>
+        <div class="header">
+            <h1><i class="bi bi-pin-angle"></i> Place Fixtures</h1>
+        </div>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Left Panel with Collapsible Menu -->
-            <div class="left-panel">
-                <div class="collapsible-menu">
-                    <button class="collapsible">Permanent Objects</button>
+        <div class="row g-3">
+            <!-- Left Panel -->
+            <div class="col-md-3">
+                <div class="left-panel">
+                    <button class="collapsible">
+                        <i class="bi bi-collection"></i> Permanent Objects
+                    </button>
                     <div class="collapsible-content">
-                        <div class="scroll-box">
-                            {% for obj in permanent_objects %}
-                                <div class="wall-item">
-                                    {{ obj.name }}
+                        <div class="scroll-box mb-3">
+                            {% for obj in wall.permanent_objects %}
+                            <div class="wall-item" draggable="true" data-id="{{ obj.id }}">
+                                <span>{{ obj.name }}</span>
+                                <div class="wall-item-actions">
+                                    <button class="btn btn-sm btn-outline-primary edit-btn" data-id="{{ obj.id }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="{{ obj.id }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
+                            </div>
                             {% endfor %}
                         </div>
-                        <form action="{{ url_for('add_wall_object') }}" method="post">
-                            <button type="submit" class="btn">+ Add New Fixture</button>
-                        </form>
+                        <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#newItemModal">
+                            <i class="bi bi-plus"></i> Add New Fixture
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Canvas Area -->
-            <div class="canvas-area">
-                <canvas id="wall-canvas" width="800" height="600">
-                    Your browser does not support the canvas element.
-                </canvas>
+            <div class="col-md-9">
+                <div class="canvas-container">
+                    <canvas id="wall-canvas"></canvas>
+                </div>
             </div>
         </div>
 
         <!-- Footer Buttons -->
         <div class="footer-buttons">
-            <a href="{{ url_for('home') }}" class="btn secondary">← Back to Home</a>
-            <form action="{{ url_for('save_and_continue') }}" method="post" style="display: inline;">
-                <button type="submit" class="btn primary">Save and Next →</button>
-            </form>
+            <a href="{{ url_for('select_wall_space') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Wall Selection
+            </a>
+            <button id="save-btn" class="btn btn-primary">
+                Save and Next <i class="bi bi-arrow-right"></i>
+            </button>
         </div>
     </div>
 
+    <!-- New Item Modal -->
+    <div class="modal fade" id="newItemModal" tabindex="-1" aria-labelledby="newItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newItemModalLabel">Add New Fixture</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="newItemForm" action="{{ url_for('add_permanent_object') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="wall_id" value="{{ wall.id }}">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="itemName" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="itemName" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="itemWidth" class="form-label">Width (inches)</label>
+                                    <input type="number" class="form-control" id="itemWidth" name="width" min="0" step="0.1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="itemHeight" class="form-label">Height (inches)</label>
+                                    <input type="number" class="form-control" id="itemHeight" name="height" min="0" step="0.1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="itemImage" class="form-label">Image</label>
+                                    <input type="file" class="form-control" id="itemImage" name="image">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="position-controls">
+                                    <h6>Position</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Measure From</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_from" id="measureEdges" value="edges" checked>
+                                            <label class="form-check-label" for="measureEdges">Edges</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_from" id="measureCenter" value="center">
+                                            <label class="form-check-label" for="measureCenter">Center</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Horizontal Alignment</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_horizontal" id="measureLeft" value="left" checked>
+                                            <label class="form-check-label" for="measureLeft">Left</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_horizontal" id="measureRight" value="right">
+                                            <label class="form-check-label" for="measureRight">Right</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Vertical Alignment</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_vertical" id="measureTop" value="top" checked>
+                                            <label class="form-check-label" for="measureTop">Top</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="measure_vertical" id="measureBottom" value="bottom">
+                                            <label class="form-check-label" for="measureBottom">Bottom</label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="horizontalDistance" class="form-label">Horizontal Distance (inches)</label>
+                                        <input type="number" class="form-control" id="horizontalDistance" name="horizontal_distance" min="0" step="0.1" value="0">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="verticalDistance" class="form-label">Vertical Distance (inches)</label>
+                                        <input type="number" class="form-control" id="verticalDistance" name="vertical_distance" min="0" step="0.1" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Fixture</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Item Modal -->
+    <div class="modal fade" id="editItemModal" tabindex="-1" aria-hidden="true">
+        <!-- Similar structure to newItemModal, will be populated via JavaScript -->
+    </div>
+
+    <!-- Collision Warning Modal -->
+    <div class="modal fade" id="collisionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Collision Detected</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>The program has identified an impossible layout. Would you like to keep editing?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Editing</button>
+                    <button type="button" class="btn btn-primary" id="continueAnywayBtn">Continue Anyway</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script>
-        // Optional: JavaScript to handle collapsible menu
-        document.querySelectorAll(".collapsible").forEach(button => {
-            button.addEventListener("click", () => {
-                button.classList.toggle("active");
+        // Initialize canvas and wall dimensions
+        const canvas = document.getElementById('wall-canvas');
+        const ctx = canvas.getContext('2d');
+        const wallWidth = {{ wall.width }};
+        const wallHeight = {{ wall.height }};
+        const wallColor = '{{ wall.color }}';
+        
+        // Set canvas dimensions
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const scale = Math.min(
+                container.clientWidth / wallWidth,
+                container.clientHeight / wallHeight
+            );
+            
+            canvas.width = wallWidth * scale;
+            canvas.height = wallHeight * scale;
+            drawWall();
+            drawObjects();
+        }
+        
+        // Draw the wall background
+        function drawWall() {
+            ctx.fillStyle = wallColor || '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid or other wall features if needed
+            ctx.strokeStyle = '#cccccc';
+            ctx.lineWidth = 1;
+            
+            const gridSize = 12; // 12 inches per grid square
+            const scale = canvas.width / wallWidth;
+            
+            for (let x = 0; x <= wallWidth; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x * scale, 0);
+                ctx.lineTo(x * scale, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y <= wallHeight; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * scale);
+                ctx.lineTo(canvas.width, y * scale);
+                ctx.stroke();
+            }
+        }
+        
+        // Draw all permanent objects
+        function drawObjects() {
+            const scale = canvas.width / wallWidth;
+            
+            {% for obj in wall.permanent_objects %}
+                ctx.fillStyle = 'rgba(100, 149, 237, 0.7)';
+                ctx.strokeStyle = 'rgba(0, 0, 139, 0.9)';
+                ctx.lineWidth = 2;
+                
+                const x = {{ obj.x }} * scale;
+                const y = {{ obj.y }} * scale;
+                const width = {{ obj.width }} * scale;
+                const height = {{ obj.height }} * scale;
+                
+                ctx.fillRect(x, y, width, height);
+                ctx.strokeRect(x, y, width, height);
+                
+                // Draw object name
+                ctx.fillStyle = '#000000';
+                ctx.font = '12px Arial';
+                ctx.fillText('{{ obj.name }}', x + 5, y + 15);
+            {% endfor %}
+        }
+        
+        // Initialize collapsible menu
+        document.querySelectorAll('.collapsible').forEach(button => {
+            button.addEventListener('click', () => {
+                button.classList.toggle('active');
                 const content = button.nextElementSibling;
-                content.style.display = content.style.display === "block" ? "none" : "block";
+                content.style.display = content.style.display === 'block' ? 'none' : 'block';
             });
         });
-
-        // TODO: JavaScript to render wall objects on the canvas based on data passed from Flask
+        
+        // Make objects draggable
+        interact('.wall-item').draggable({
+            inertia: true,
+            modifiers: [
+                interact.modifiers.restrictRect({
+                    restriction: 'parent',
+                    endOnly: true
+                })
+            ],
+            autoScroll: true,
+            listeners: {
+                move: dragMoveListener
+            }
+        });
+        
+        function dragMoveListener(event) {
+            const target = event.target;
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+            
+            target.style.transform = `translate(${x}px, ${y}px)`;
+            target.setAttribute('data-x', x);
+            target.setAttribute('data-y', y);
+        }
+        
+        // Handle save button click
+        document.getElementById('save-btn').addEventListener('click', () => {
+            // Check for collisions (simplified example)
+            const hasCollisions = false; // Replace with actual collision detection
+            
+            if (hasCollisions) {
+                const collisionModal = new bootstrap.Modal(document.getElementById('collisionModal'));
+                collisionModal.show();
+            } else {
+                window.location.href = "{{ url_for('editor') }}";
+            }
+        });
+        
+        // Handle continue anyway button
+        document.getElementById('continueAnywayBtn').addEventListener('click', () => {
+            window.location.href = "{{ url_for('editor') }}";
+        });
+        
+        // Handle edit buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.getAttribute('data-id');
+                // In a real app, you would fetch the item data and populate the edit modal
+                const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+                editModal.show();
+            });
+        });
+        
+        // Handle delete buttons
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const itemId = btn.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this item?')) {
+                    fetch(`/delete_permanent_object/${itemId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    }).then(response => {
+                        if (response.ok) {
+                            window.location.reload();
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Initialize canvas on load
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
     </script>
 </body>
 </html>
