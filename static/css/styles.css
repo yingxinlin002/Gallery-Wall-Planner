@@ -107,3 +107,14 @@ body {
     padding: 5px;
     border-top: 1px solid #ccc;
 }
+
+/* Dimension label styles */
+.dimension-label {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 10;
+}

@@ -138,27 +138,28 @@
                     <h2 class="form-title">Enter Artwork Manually</h2>
                     <p class="text-muted">Please enter artwork details:</p>
                     
-                    <form id="artworkForm">
+                    <form id="artworkForm" enctype="multipart/form-data" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Required Fields -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Name*</label>
-                            <input type="text" class="form-control placeholder" id="name" value="e.g., Starry Night">
+                            <input type="text" class="form-control placeholder" id="name" name="name" value="e.g., Starry Night">
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col">
                                 <label for="width" class="form-label">Width* (inches)</label>
-                                <input type="number" class="form-control placeholder" id="width" value="e.g., 24.5" step="0.1">
+                                <input type="number" class="form-control placeholder" id="width" name="width" value="e.g., 24.5" step="0.1">
                             </div>
                             <div class="col">
                                 <label for="height" class="form-label">Height* (inches)</label>
-                                <input type="number" class="form-control placeholder" id="height" value="e.g., 36.0" step="0.1">
+                                <input type="number" class="form-control placeholder" id="height" name="height" value="e.g., 36.0" step="0.1">
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="hanging" class="form-label">Hanging Point* (inches from top)</label>
-                            <input type="number" class="form-control placeholder" id="hanging" value="e.g., 12.0" step="0.1">
+                            <input type="number" class="form-control placeholder" id="hanging" name="hanging" value="e.g., 12.0" step="0.1">
                         </div>
                         
                         <!-- Toggle Button for Optional Fields -->
@@ -170,21 +171,21 @@
                         <div id="optionalFields" style="display: none;">
                             <div class="mb-3">
                                 <label for="medium" class="form-label">Medium</label>
-                                <input type="text" class="form-control placeholder" id="medium" value="e.g., Oil on canvas">
+                                <input type="text" class="form-control placeholder" id="medium" name="medium" value="e.g., Oil on canvas">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="depth" class="form-label">Depth (inches)</label>
-                                <input type="number" class="form-control placeholder" id="depth" value="e.g., 2.0" step="0.1">
+                                <input type="number" class="form-control placeholder" id="depth" name="depth" value="e.g., 2.0" step="0.1">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="price" class="form-label">Price (USD)</label>
-                                <input type="number" class="form-control placeholder" id="price" value="e.g., 2500.00" step="0.01">
+                                <input type="number" class="form-control placeholder" id="price" name="price" value="e.g., 2500.00" step="0.01">
                             </div>
                             
                             <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="nfs">
+                                <input type="checkbox" class="form-check-input" id="nfs" name="nfs">
                                 <label class="form-check-label" for="nfs">Not For Sale</label>
                             </div>
                             
@@ -192,7 +193,7 @@
                                 <label class="form-label">Image</label>
                                 <div>
                                     <label for="imageUpload" class="file-upload-label">Browse</label>
-                                    <input type="file" class="file-upload" id="imageUpload" accept="image/*">
+                                    <input type="file" class="file-upload" id="imageUpload" name="imageUpload" accept="image/*">
                                     <span class="file-name" id="fileName">No file selected</span>
                                 </div>
                             </div>
@@ -238,136 +239,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Initialize placeholder handling
-        document.querySelectorAll('.placeholder').forEach(input => {
-            const placeholder = input.value;
-            
-            input.addEventListener('focus', function() {
-                if (this.value === placeholder) {
-                    this.value = '';
-                    this.classList.remove('placeholder');
-                }
-            });
-            
-            input.addEventListener('blur', function() {
-                if (this.value === '') {
-                    this.value = placeholder;
-                    this.classList.add('placeholder');
-                }
-            });
-        });
-        
-        // File upload handling
-        document.getElementById('imageUpload').addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
-            document.getElementById('fileName').textContent = fileName;
-        });
-        
-        // Toggle optional fields
-        function toggleOptionalFields() {
-            const optionalFields = document.getElementById('optionalFields');
-            const toggleBtn = document.getElementById('toggleOptionalBtn');
-            
-            if (optionalFields.style.display === 'none' || optionalFields.style.display === '') {
-                optionalFields.style.display = 'block';
-                toggleBtn.textContent = '- Additional Options';
-            } else {
-                optionalFields.style.display = 'none';
-                toggleBtn.textContent = '+ Additional Options';
-            }
-        }
-        
-        // Validate and create artwork
-        function createArtwork() {
-            // Get form values
-            const name = document.getElementById('name').value;
-            const width = document.getElementById('width').value;
-            const height = document.getElementById('height').value;
-            const hanging = document.getElementById('hanging').value;
-            
-            const medium = document.getElementById('medium').value;
-            const depth = document.getElementById('depth').value;
-            const price = document.getElementById('price').value;
-            const nfs = document.getElementById('nfs').checked;
-            const imageFile = document.getElementById('imageUpload').files[0];
-            
-            // Check required fields
-            const requiredFields = [
-                { field: name, name: 'Name', example: 'e.g., Starry Night' },
-                { field: width, name: 'Width', example: 'e.g., 24.5' },
-                { field: height, name: 'Height', example: 'e.g., 36.0' },
-                { field: hanging, name: 'Hanging Point', example: 'e.g., 12.0' }
-            ];
-            
-            for (const field of requiredFields) {
-                if (!field.field || field.field === field.example) {
-                    alert(`Please fill in ${field.name}`);
-                    return;
-                }
-            }
-            
-            // Convert to proper types
-            const artworkData = {
-                name: name === 'e.g., Starry Night' ? '' : name,
-                width: parseFloat(width),
-                height: parseFloat(height),
-                hanging_point: parseFloat(hanging),
-                medium: medium === 'e.g., Oil on canvas' ? '' : medium,
-                depth: depth === 'e.g., 2.0' ? 0 : parseFloat(depth),
-                price: price === 'e.g., 2500.00' ? 0 : parseFloat(price),
-                nfs: nfs,
-                image_path: imageFile ? imageFile.name : ''
-            };
-            
-            // Validate numbers
-            if (isNaN(artworkData.width) || isNaN(artworkData.height) || isNaN(artworkData.hanging_point)) {
-                alert('Please enter valid numbers for dimensions');
-                return;
-            }
-            
-            // Send to server (in a real app, this would be an AJAX call)
-            console.log('Artwork data:', artworkData);
-            
-            // Add to artwork list (in a real app, this would come from server response)
-            addArtworkToList(artworkData);
-            
-            // Show success message
-            alert('Artwork created successfully!');
-            
-            // Reset form (optional)
-            // document.getElementById('artworkForm').reset();
-        }
-        
-        // Add artwork to the list
-        function addArtworkToList(artwork) {
-            const artworkList = document.getElementById('artworkList');
-            
-            // Remove "no artworks" message if present
-            if (artworkList.querySelector('.text-muted')) {
-                artworkList.innerHTML = '';
-            }
-            
-            // Create new artwork item
-            const item = document.createElement('div');
-            item.className = 'artwork-item';
-            
-            let details = '';
-            if (artwork.medium) details += `${artwork.medium} | `;
-            if (artwork.price > 0) details += `$${artwork.price.toFixed(2)} | `;
-            if (artwork.nfs) details += 'NFS';
-            
-            item.innerHTML = `
-                <div class="artwork-name">${artwork.name} (${artwork.width}" × ${artwork.height}")</div>
-                <div class="artwork-details">${details}</div>
-            `;
-            
-            artworkList.prepend(item);
-        }
-        
-        // Navigate back to editor
-        function goBackToEditor() {
-            window.location.href = "{{ url_for('editor') }}";
-        }
+        // Pass the editor URL to JS
+        window.goBackToEditorUrl = "{{ url_for('editor') }}";
     </script>
+    <script src="{{ url_for('static', filename='js/artwork_manually.js') }}"></script>
 </body>
 </html>

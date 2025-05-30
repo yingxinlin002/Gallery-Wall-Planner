@@ -8,23 +8,23 @@ from openpyxl.drawing.image import Image
 from gallery.models import db
 
 class Artwork(WallObject):
-    __tablename__ = 'artwork'
+    __tablename__ = 'artworks'
     
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128))
-    medium = db.Column(db.String(128))
-    width = db.Column(db.Float)
-    height = db.Column(db.Float)
+    name = db.Column(db.String(100), nullable=False)
+    width = db.Column(db.Float, nullable=False)
+    height = db.Column(db.Float, nullable=False)
+    hanging_point = db.Column(db.Float, nullable=False)
+    medium = db.Column(db.String(100))
     depth = db.Column(db.Float)
-    hanging_point = db.Column(db.Float)
     price = db.Column(db.Float)
     nfs = db.Column(db.Boolean, default=False)
-    image_path = db.Column(db.String(256))
-    notes = db.Column(db.Text)
+    image_path = db.Column(db.String(200))
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'))
     gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
-    x = db.Column(db.Float, default=0.0)  # Position on wall
-    y = db.Column(db.Float, default=0.0)  # Position on wall
+    x_position = db.Column(db.Float)
+    y_position = db.Column(db.Float)
+    
 
     def __init__(self, name: str = "", medium: str = "", width: float = 0.0, height: float = 0.0,
                  depth: float = 0.0, hanging_point: float = 0.0, price: float = 0.0,
@@ -41,19 +41,19 @@ class Artwork(WallObject):
         self.image_path = image_path
         self.notes = notes
         self.wall_id = wall_id
-        self.x = x
-        self.y = y
+        self.x_position = x
+        self.y_position = y
 
     @property
     def position(self) -> Position:
-        return Position(self.x, self.y)
+        return Position(self.x_position, self.y_position)
     
     @position.setter
     def position(self, value: Position):
         if not isinstance(value, Position):
             raise ValueError("Position must be a Position object")
-        self.x = value.x
-        self.y = value.y
+        self.x_position = value.x
+        self.y_position = value.y
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -69,7 +69,7 @@ class Artwork(WallObject):
             'image_path': self.image_path,
             'notes': self.notes,
             'wall_id': self.wall_id,
-            'position': {'x': self.x, 'y': self.y}
+            'position': {'x': self.x_position, 'y': self.y_position}
         }
 
     @classmethod

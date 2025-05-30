@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from flask_migrate import Migrate
 import os
 from werkzeug.utils import secure_filename
@@ -8,6 +8,7 @@ from gallery.models.exhibit import Gallery
 from gallery.models import db
 from gallery.models.project_exporter import export_gallery_to_excel, import_gallery_from_excel
 from flask_wtf import CSRFProtect
+from gallery.models.artwork import Artwork
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"  # Required for flashing messages
@@ -169,23 +170,74 @@ def save_and_continue():
 @app.route('/editor')
 def editor():
     wall = get_current_wall()
-    # For demo, pass empty lists for artwork and wall_lines
+    # Unplaced artworks: those not assigned to any wall
+    unplaced_artwork = Artwork.query.filter_by(wall_id=None).all()
     return render_template(
         'editor.html',
         current_wall=wall,
-        unplaced_artwork=[],
+        unplaced_artwork=unplaced_artwork,
         current_wall_artwork=getattr(wall, "artworks", []),
         wall_lines=getattr(wall, "snap_lines", [])
     )
 
 @app.route('/artwork-manual', methods=['GET', 'POST'])
+@app.route('/artwork-manual', methods=['GET', 'POST'])
 def artwork_manual():
-    if request.method == 'POST':
-        # Parse form and add artwork to current wall or gallery
-        pass
-    # For demo, show all artworks in gallery
     wall = get_current_wall()
-    artworks = getattr(wall, "artworks", []) if wall else []
+    
+    if request.method == 'POST':
+        try:
+            # Helper function to safely convert form values to float
+            def get_float(form, field, default=0.0):
+                value = form.get(field)
+                return float(value) if value else default
+
+            # Create new artwork
+            artwork = Artwork(
+                name=request.form.get('name', '').strip(),
+                width=get_float(request.form, 'width'),
+                height=get_float(request.form, 'height'),
+                hanging_point=get_float(request.form, 'hanging'),
+                medium=request.form.get('medium', '').strip(),
+                depth=get_float(request.form, 'depth'),
+                price=get_float(request.form, 'price'),
+                nfs=bool(request.form.get('nfs')),
+                wall_id=wall.id if wall else None
+            )
+            
+            # Handle file upload
+            if 'imageUpload' in request.files:
+                file = request.files['imageUpload']
+                if file and file.filename != '':
+                    filename = secure_filename(file.filename)
+                    upload_dir = os.path.join(app.static_folder, 'uploads')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    upload_path = os.path.join(upload_dir, filename)
+                    file.save(upload_path)
+                    artwork.image_path = os.path.join('static', 'uploads', filename)
+            
+            db.session.add(artwork)
+            db.session.commit()
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'success': True,
+                    'artwork': artwork.to_dict()
+                })
+            return redirect(url_for('artwork_manual'))
+            
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error creating artwork: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'error': str(e)}), 400
+            flash(f"Error creating artwork: {str(e)}")
+            return redirect(url_for('artwork_manual'))
+    
+    artworks = Artwork.query.filter_by(wall_id=None).all()
+    if wall:
+        artworks += wall.artworks
+        
     return render_template('artwork_manually.html', artworks=artworks)
 
 @app.route("/load", methods=["POST"])
@@ -217,6 +269,31 @@ def delete_wall(wall_id):
     db.session.commit()
     flash(f'Wall "{wall.name}" deleted.', "success")
     return redirect(url_for('select_wall_space'))
+
+@app.route('/update_object_position/<int:obj_id>', methods=['POST'])
+def update_object_position(obj_id):
+    from gallery.models.permanent_object import PermanentObject
+    obj = PermanentObject.query.get_or_404(obj_id)
+    data = request.get_json()
+    obj.x = data['x']
+    obj.y = data['y']
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/save_and_continue_permanent_objects', methods=['POST'])
+def save_and_continue_permanent_objects():
+    # You can add any save logic here if needed
+    return redirect(url_for('select_wall_space'))
+
+@app.route('/update_artwork_position/<int:artwork_id>', methods=['POST'])
+def update_artwork_position(artwork_id):
+    artwork = Artwork.query.get_or_404(artwork_id)
+    data = request.get_json()
+    artwork.x_position = data.get('x_position', artwork.x_position)
+    artwork.y_position = data.get('y_position', artwork.y_position)
+    artwork.wall_id = data.get('wall_id', artwork.wall_id)
+    db.session.commit()
+    return jsonify({'success': True})
 
 if __name__ == "__main__":
     app.run(debug=True)

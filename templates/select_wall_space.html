@@ -63,8 +63,8 @@
 
                         <!-- Permanent objects -->
                         {% for obj in current_wall.permanent_objects %}
-                            {% set ox = x0 + obj.position.x * ratio %}
-                            {% set oy = y0 + obj.position.y * ratio %}
+                            {% set ox = x0 + obj.x * ratio %}
+                            {% set oy = y0 + obj.y * ratio %}
                             {% set ow = obj.width * ratio %}
                             {% set oh = obj.height * ratio %}
                             <rect x="{{ ox }}" y="{{ oy }}" width="{{ ow }}" height="{{ oh }}"

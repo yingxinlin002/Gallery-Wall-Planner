@@ -33,6 +33,7 @@
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             height: calc(100vh - 200px);
+            position: relative;
         }
         #wall-canvas {
             background-color: #f1f1f1;
@@ -101,6 +102,23 @@
             border-radius: 5px;
             margin-top: 15px;
         }
+        .dimension-label {
+            position: absolute;
+            color: #333;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 5px;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+        .width-label {
+            top: 5px;
+            left: 5px;
+        }
+        .height-label {
+            top: 5px;
+            right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -143,8 +161,26 @@
 
             <!-- Canvas Area -->
             <div class="col-md-9">
-                <div class="canvas-container">
+                <div class="canvas-container" style="position: relative;">
                     <canvas id="wall-canvas"></canvas>
+                    <div id="dimension-labels" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                        <div class="dimension-label width-label"></div>
+                        <div class="dimension-label height-label"></div>
+                    </div>
+                    <div id="canvas-objects-layer" style="position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%;">
+                        {% for obj in wall.permanent_objects %}
+                            <div class="canvas-object"
+                                 id="object-{{ obj.id }}"
+                                 data-x="{{ obj.x }}"
+                                 data-y="{{ obj.y }}"
+                                 data-width="{{ obj.width }}"
+                                 data-height="{{ obj.height }}"
+                                 style="position: absolute; pointer-events: auto; background: rgba(100,149,237,0.7); border: 2px solid #003;"
+                            >
+                                {{ obj.name }}
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -154,9 +190,12 @@
             <a href="{{ url_for('select_wall_space') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to Wall Selection
             </a>
-            <button id="save-btn" class="btn btn-primary">
-                Save and Next <i class="bi bi-arrow-right"></i>
-            </button>
+            <form action="{{ url_for('save_and_continue_permanent_objects') }}" method="post" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary">
+                    Save and Next <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
         </div>
     </div>
 
@@ -272,166 +311,23 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <!-- Pass server-side variables to JS -->
     <script>
-        // Initialize canvas and wall dimensions
-        const canvas = document.getElementById('wall-canvas');
-        const ctx = canvas.getContext('2d');
-        const wallWidth = {{ wall.width }};
-        const wallHeight = {{ wall.height }};
-        const wallColor = '{{ wall.color }}';
-        
-        // Set canvas dimensions
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            const scale = Math.min(
-                container.clientWidth / wallWidth,
-                container.clientHeight / wallHeight
-            );
-            
-            canvas.width = wallWidth * scale;
-            canvas.height = wallHeight * scale;
-            drawWall();
-            drawObjects();
-        }
-        
-        // Draw the wall background
-        function drawWall() {
-            ctx.fillStyle = wallColor || '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw grid or other wall features if needed
-            ctx.strokeStyle = '#cccccc';
-            ctx.lineWidth = 1;
-            
-            const gridSize = 12; // 12 inches per grid square
-            const scale = canvas.width / wallWidth;
-            
-            for (let x = 0; x <= wallWidth; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x * scale, 0);
-                ctx.lineTo(x * scale, canvas.height);
-                ctx.stroke();
-            }
-            
-            for (let y = 0; y <= wallHeight; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y * scale);
-                ctx.lineTo(canvas.width, y * scale);
-                ctx.stroke();
-            }
-        }
-        
-        // Draw all permanent objects
-        function drawObjects() {
-            const scale = canvas.width / wallWidth;
-            
-            {% for obj in wall.permanent_objects %}
-                ctx.fillStyle = 'rgba(100, 149, 237, 0.7)';
-                ctx.strokeStyle = 'rgba(0, 0, 139, 0.9)';
-                ctx.lineWidth = 2;
-                
-                const x = {{ obj.x }} * scale;
-                const y = {{ obj.y }} * scale;
-                const width = {{ obj.width }} * scale;
-                const height = {{ obj.height }} * scale;
-                
-                ctx.fillRect(x, y, width, height);
-                ctx.strokeRect(x, y, width, height);
-                
-                // Draw object name
-                ctx.fillStyle = '#000000';
-                ctx.font = '12px Arial';
-                ctx.fillText('{{ obj.name }}', x + 5, y + 15);
-            {% endfor %}
-        }
-        
-        // Initialize collapsible menu
-        document.querySelectorAll('.collapsible').forEach(button => {
-            button.addEventListener('click', () => {
-                button.classList.toggle('active');
-                const content = button.nextElementSibling;
-                content.style.display = content.style.display === 'block' ? 'none' : 'block';
-            });
+        window.wallWidth = {{ wall.width }};
+        window.wallHeight = {{ wall.height }};
+        window.wallColor = "{{ wall.color }}";
+        window.csrfToken = "{{ csrf_token() }}";
+        window.editorUrl = "{{ url_for('editor') }}";
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            positionCanvasObjects();
+            makeObjectsDraggable(); // This must run after new objects are in the DOM
+            updateDimensionLabels();
         });
-        
-        // Make objects draggable
-        interact('.wall-item').draggable({
-            inertia: true,
-            modifiers: [
-                interact.modifiers.restrictRect({
-                    restriction: 'parent',
-                    endOnly: true
-                })
-            ],
-            autoScroll: true,
-            listeners: {
-                move: dragMoveListener
-            }
-        });
-        
-        function dragMoveListener(event) {
-            const target = event.target;
-            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-            
-            target.style.transform = `translate(${x}px, ${y}px)`;
-            target.setAttribute('data-x', x);
-            target.setAttribute('data-y', y);
-        }
-        
-        // Handle save button click
-        document.getElementById('save-btn').addEventListener('click', () => {
-            // Check for collisions (simplified example)
-            const hasCollisions = false; // Replace with actual collision detection
-            
-            if (hasCollisions) {
-                const collisionModal = new bootstrap.Modal(document.getElementById('collisionModal'));
-                collisionModal.show();
-            } else {
-                window.location.href = "{{ url_for('editor') }}";
-            }
-        });
-        
-        // Handle continue anyway button
-        document.getElementById('continueAnywayBtn').addEventListener('click', () => {
-            window.location.href = "{{ url_for('editor') }}";
-        });
-        
-        // Handle edit buttons
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const itemId = btn.getAttribute('data-id');
-                // In a real app, you would fetch the item data and populate the edit modal
-                const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-                editModal.show();
-            });
-        });
-        
-        // Handle delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const itemId = btn.getAttribute('data-id');
-                if (confirm('Are you sure you want to delete this item?')) {
-                    fetch(`/delete_permanent_object/${itemId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        }
-                    }).then(response => {
-                        if (response.ok) {
-                            window.location.reload();
-                        }
-                    });
-                }
-            });
-        });
-        
-        // Initialize canvas on load
-        window.addEventListener('load', resizeCanvas);
-        window.addEventListener('resize', resizeCanvas);
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="{{ url_for('static', filename='js/lock_objects.js') }}"></script>
+    <!-- Bootstrap JS bundle (required for modals) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
