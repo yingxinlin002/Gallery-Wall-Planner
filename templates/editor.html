@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Wall Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #5F3FCA;
+            --secondary-color: #69718A;
+            --info-color: #17a2b8;
+            --bg-color: #F0F0F0;
+            --sidebar-bg: #e0e0e0;
+            --white: #ffffff;
+            --black: #000000;
+            --gray: #808080;
+            --light-gray: #f8f9fa;
+            --dark-gray: #343a40;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--black);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-frame {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Header Styles */
+        .header-frame {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--white);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .back-btn {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .back-btn:hover {
+            background-color: #4d5462;
+        }
+
+        .save-buttons {
+            display: flex;
+        }
+
+        .primary-btn {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .primary-btn:hover {
+            background-color: #4a30a0;
+        }
+
+        .secondary-btn {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .secondary-btn:hover {
+            background-color: #4d5462;
+        }
+
+        .info-btn {
+            background-color: var(--info-color);
+            color: var(--white);
+        }
+
+        .info-btn:hover {
+            background-color: #138496;
+        }
+
+        /* Content Frame */
+        .content-frame {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #ccc;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        .menu-section {
+            margin-bottom: 5px;
+            background-color: var(--white);
+        }
+
+        .menu-header {
+            padding: 10px 15px;
+            background-color: var(--sidebar-bg);
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .menu-header i {
+            margin-right: 8px;
+        }
+
+        .menu-content {
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: block;
+        }
+
+        .scroll-box {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .artwork-item, .snap-line-item {
+            margin-bottom: 5px;
+        }
+
+        .artwork-btn, .snap-line-btn {
+            width: 100%;
+            text-align: left;
+            padding: 8px 10px;
+            background-color: var(--white);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .artwork-btn:hover, .snap-line-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .gray-text {
+            color: var(--gray);
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Actions Frame */
+        .actions-frame {
+            margin-top: auto;
+            background-color: var(--white);
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+
+        .actions-header {
+            padding: 10px;
+            font-weight: bold;
+            background-color: var(--sidebar-bg);
+            margin-bottom: 10px;
+        }
+
+        .actions-frame .btn {
+            width: 100%;
+            margin-bottom: 10px;
+            margin-left: 0;
+        }
+
+        /* Wall Space */
+        .wall-space {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--white);
+            overflow: hidden;
+        }
+
+        .wall-header {
+            padding: 15px;
+            background-color: var(--light-gray);
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .wall-header h2 {
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .buttons-frame {
+            display: flex;
+        }
+
+        /* Canvas Area */
+        .wall-canvas {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background-color: var(--white);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Draggable Artwork */
+        .artwork-draggable {
+            position: absolute;
+            border: 2px solid var(--primary-color);
+            background-color: rgba(95, 63, 202, 0.2);
+            cursor: move;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--black);
+        }
+
+        /* Snap Lines */
+        .snap-line {
+            position: absolute;
+            background-color: rgba(0, 0, 255, 0.5);
+            z-index: 10;
+        }
+
+        .horizontal-line {
+            width: 100%;
+            height: 2px;
+        }
+
+        .vertical-line {
+            width: 2px;
+            height: 100%;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-footer .btn {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-frame">
+        <!-- Header -->
+        <div class="header-frame">
+            <button class="btn back-btn" onclick="window.location.href='{{ url_for('select_wall') }}'">
+                <i class="fas fa-arrow-left"></i> Back to Wall Selection
+            </button>
+            <div class="save-buttons">
+                <button class="btn primary-btn" onclick="saveGallery()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn secondary-btn" onclick="saveGalleryAs()">
+                    <i class="fas fa-save"></i> Save As
+                </button>
+            </div>
+        </div>
+
+        <div class="content-frame">
+            <!-- Sidebar -->
+            <div class="sidebar" id="sidebar">
+                <!-- Artwork Tab -->
+                <div class="menu-section expanded">
+                    <div class="menu-header" onclick="toggleMenu(this)">
+                        <i class="fas fa-paint-brush"></i> Imported Artwork
+                    </div>
+                    <div class="menu-content scroll-box" id="artwork-list">
+                        {% for artwork in unplaced_artwork %}
+                        <div class="artwork-item">
+                            <button class="btn artwork-btn" 
+                                    onclick="selectArtwork('{{ artwork.id }}')"
+                                    data-artwork-id="{{ artwork.id }}">
+                                {{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% for artwork in current_wall_artwork %}
+                        <div class="artwork-item">
+                            <button class="btn artwork-btn" 
+                                    onclick="selectArtwork('{{ artwork.id }}')"
+                                    data-artwork-id="{{ artwork.id }}">
+                                {{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% if not unplaced_artwork and not current_wall_artwork %}
+                        <p class="gray-text">No artworks added yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Snap Lines Tab -->
+                <div class="menu-section">
+                    <div class="menu-header" onclick="toggleMenu(this)">
+                        <i class="fas fa-ruler"></i> Snap Lines
+                    </div>
+                    <div class="menu-content scroll-box" id="snap-lines-list" style="display: none;">
+                        {% for line in wall_lines %}
+                        <div class="snap-line-item">
+                            <button class="btn snap-line-btn" 
+                                    onclick="editSnapLine('{{ line.id }}')"
+                                    data-line-id="{{ line.id }}">
+                                {{ line.name }} ({{ line.position }}% {{ line.orientation }})
+                            </button>
+                        </div>
+                        {% endfor %}
+                        {% if not wall_lines %}
+                        <p class="gray-text">No snap lines added yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="actions-frame">
+                    <div class="actions-header">
+                        <i class="fas fa-tools"></i> Actions
+                    </div>
+                    <button class="btn info-btn" onclick="window.location.href='{{ url_for('artwork_manual') }}'">
+                        <i class="fas fa-plus"></i> Add Artwork
+                    </button>
+                    <button class="btn info-btn" onclick="showAddSnapLineModal()">
+                        <i class="fas fa-plus"></i> Add Snap Line
+                    </button>
+                    <button class="btn primary-btn" onclick="evenSpacing()">
+                        <i class="fas fa-align-center"></i> Even Spacing
+                    </button>
+                    <button class="btn primary-btn" onclick="calculateInstructions()">
+                        <i class="fas fa-calculator"></i> Calculate Installation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Wall Space -->
+            <div class="wall-space">
+                <div class="wall-header">
+                    <h2><i class="fas fa-vector-square"></i> Organize Art</h2>
+                    <div class="buttons-frame">
+                        <!-- Art type buttons would go here -->
+                    </div>
+                </div>
+
+                <!-- Canvas Area -->
+                <div id="wall-canvas" class="wall-canvas">
+                    <div class="canvas-container" id="canvas-container">
+                        <!-- Wall background will be drawn here -->
+                        <div id="wall-background" style="position: absolute; background-color: {{ current_wall.color }};"></div>
+                        <!-- Artwork and snap lines will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snap Line Modal -->
+    <div id="snapLineModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Add Snap Line</div>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="lineName">Name:</label>
+                    <input type="text" id="lineName" placeholder="Enter line name">
+                </div>
+                <div class="form-group">
+                    <label for="lineOrientation">Orientation:</label>
+                    <select id="lineOrientation">
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="linePosition">Position (%):</label>
+                    <input type="number" id="linePosition" min="0" max="100" value="50">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary-btn" onclick="closeModal()">Cancel</button>
+                <button class="btn primary-btn" id="saveLineBtn" onclick="saveSnapLine()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentWall = {
+            width: {{ current_wall.width }},
+            height: {{ current_wall.height }},
+            color: "{{ current_wall.color }}"
+        };
+        let selectedArtworkId = null;
+        let currentLineId = null;
+        let artworkElements = {};
+
+        // Initialize the editor
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCanvas();
+            loadArtwork();
+            loadSnapLines();
+        });
+
+        function initializeCanvas() {
+            const container = document.getElementById('canvas-container');
+            const wallBg = document.getElementById('wall-background');
+            
+            // Set canvas dimensions based on wall size (scaled to fit)
+            const maxWidth = container.parentElement.clientWidth - 40;
+            const maxHeight = container.parentElement.clientHeight - 40;
+            
+            const widthRatio = maxWidth / currentWall.width;
+            const heightRatio = maxHeight / currentWall.height;
+            const scale = Math.min(widthRatio, heightRatio);
+            
+            const scaledWidth = currentWall.width * scale;
+            const scaledHeight = currentWall.height * scale;
+            
+            wallBg.style.width = scaledWidth + 'px';
+            wallBg.style.height = scaledHeight + 'px';
+            wallBg.style.left = (container.clientWidth - scaledWidth) / 2 + 'px';
+            wallBg.style.top = (container.clientHeight - scaledHeight) / 2 + 'px';
+        }
+
+        function toggleMenu(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('i');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                content.style.display = 'none';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        function selectArtwork(artworkId) {
+            selectedArtworkId = artworkId;
+            
+            // Highlight selected artwork button
+            document.querySelectorAll('.artwork-btn').forEach(btn => {
+                btn.style.backgroundColor = btn.dataset.artworkId === artworkId ? '#d4edda' : 'white';
+            });
+            
+            // TODO: Implement artwork selection logic for canvas
+            console.log('Selected artwork:', artworkId);
+        }
+
+        function loadArtwork() {
+            // Load artwork onto the canvas
+            {% for artwork in current_wall_artwork %}
+            addArtworkToCanvas({
+                id: '{{ artwork.id }}',
+                name: '{{ artwork.name }}',
+                width: {{ artwork.width }},
+                height: {{ artwork.height }},
+                x: {{ artwork.x_position }},
+                y: {{ artwork.y_position }}
+            });
+            {% endfor %}
+        }
+
+        function addArtworkToCanvas(artwork) {
+            const container = document.getElementById('canvas-container');
+            const wallBg = document.getElementById('wall-background');
+            
+            // Calculate scaling factor
+            const scale = wallBg.clientWidth / currentWall.width;
+            
+            const element = document.createElement('div');
+            element.className = 'artwork-draggable';
+            element.id = 'artwork-' + artwork.id;
+            element.dataset.artworkId = artwork.id;
+            
+            // Set dimensions and position
+            element.style.width = (artwork.width * scale) + 'px';
+            element.style.height = (artwork.height * scale) + 'px';
+            element.style.left = (wallBg.offsetLeft + artwork.x * scale) + 'px';
+            element.style.top = (wallBg.offsetTop + artwork.y * scale) + 'px';
+            
+            element.innerHTML = artwork.name;
+            
+            // Make draggable
+            makeDraggable(element);
+            
+            container.appendChild(element);
+            artworkElements[artwork.id] = element;
+        }
+
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                
+                // TODO: Save new position to server
+                const artworkId = element.dataset.artworkId;
+                const wallBg = document.getElementById('wall-background');
+                const scale = wallBg.clientWidth / currentWall.width;
+                
+                const x = (element.offsetLeft - wallBg.offsetLeft) / scale;
+                const y = (element.offsetTop - wallBg.offsetTop) / scale;
+                
+                console.log(`Artwork ${artworkId} moved to (${x}, ${y})`);
+                // Here you would send this to your Flask backend
+            }
+        }
+
+        function loadSnapLines() {
+            {% for line in wall_lines %}
+            addSnapLineToCanvas({
+                id: '{{ line.id }}',
+                name: '{{ line.name }}',
+                orientation: '{{ line.orientation }}',
+                position: {{ line.position }}
+            });
+            {% endfor %}
+        }
+
+        function addSnapLineToCanvas(line) {
+            const container = document.getElementById('canvas-container');
+            const wallBg = document.getElementById('wall-background');
+            
+            const element = document.createElement('div');
+            element.className = `snap-line ${line.orientation}-line`;
+            element.id = 'line-' + line.id;
+            element.dataset.lineId = line.id;
+            
+            if (line.orientation === 'horizontal') {
+                element.style.width = wallBg.clientWidth + 'px';
+                element.style.height = '2px';
+                element.style.left = wallBg.offsetLeft + 'px';
+                element.style.top = (wallBg.offsetTop + (wallBg.clientHeight * line.position / 100)) + 'px';
+            } else {
+                element.style.width = '2px';
+                element.style.height = wallBg.clientHeight + 'px';
+                element.style.left = (wallBg.offsetLeft + (wallBg.clientWidth * line.position / 100)) + 'px';
+                element.style.top = wallBg.offsetTop + 'px';
+            }
+            
+            container.appendChild(element);
+        }
+
+        function showAddSnapLineModal(line = null) {
+            const modal = document.getElementById('snapLineModal');
+            const title = document.getElementById('modalTitle');
+            const saveBtn = document.getElementById('saveLineBtn');
+            
+            if (line) {
+                // Editing existing line
+                title.textContent = 'Edit Snap Line';
+                document.getElementById('lineName').value = line.name;
+                document.getElementById('lineOrientation').value = line.orientation;
+                document.getElementById('linePosition').value = line.position;
+                currentLineId = line.id;
+                saveBtn.textContent = 'Update';
+            } else {
+                // Adding new line
+                title.textContent = 'Add Snap Line';
+                document.getElementById('lineName').value = '';
+                document.getElementById('lineOrientation').value = 'horizontal';
+                document.getElementById('linePosition').value = 50;
+                currentLineId = null;
+                saveBtn.textContent = 'Save';
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('snapLineModal').style.display = 'none';
+        }
+
+        function saveSnapLine() {
+            const name = document.getElementById('lineName').value;
+            const orientation = document.getElementById('lineOrientation').value;
+            const position = parseInt(document.getElementById('linePosition').value);
+            
+            if (!name) {
+                alert('Please enter a name for the snap line');
+                return;
+            }
+            
+            if (isNaN(position) || position < 0 || position > 100) {
+                alert('Please enter a valid position between 0 and 100');
+                return;
+            }
+            
+            const lineData = {
+                id: currentLineId || generateId(),
+                name: name,
+                orientation: orientation,
+                position: position
+            };
+            
+            // TODO: Send to server and update UI
+            console.log('Saving snap line:', lineData);
+            
+            if (currentLineId) {
+                // Update existing line
+                // This would be an AJAX call to your Flask backend
+                updateSnapLineOnCanvas(lineData);
+            } else {
+                // Add new line
+                // This would be an AJAX call to your Flask backend
+                addSnapLineToCanvas(lineData);
+                
+                // Add to sidebar list
+                const list = document.getElementById('snap-lines-list');
+                if (list.querySelector('.gray-text')) {
+                    list.innerHTML = '';
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'snap-line-item';
+                item.innerHTML = `
+                    <button class="btn snap-line-btn" 
+                            onclick="editSnapLine('${lineData.id}')"
+                            data-line-id="${lineData.id}">
+                        ${lineData.name} (${lineData.position}% ${lineData.orientation})
+                    </button>
+                `;
+                list.appendChild(item);
+            }
+            
+            closeModal();
+        }
+
+        function editSnapLine(lineId) {
+            // TODO: Get line data from server or from existing elements
+            const line = {
+                id: lineId,
+                name: `Line ${lineId}`,
+                orientation: 'horizontal',
+                position: 50
+            };
+            
+            showAddSnapLineModal(line);
+        }
+
+        function updateSnapLineOnCanvas(line) {
+            const element = document.getElementById('line-' + line.id);
+            if (element) {
+                const wallBg = document.getElementById('wall-background');
+                
+                if (line.orientation === 'horizontal') {
+                    element.style.top = (wallBg.offsetTop + (wallBg.clientHeight * line.position / 100)) + 'px';
+                } else {
+                    element.style.left = (wallBg.offsetLeft + (wallBg.clientWidth * line.position / 100)) + 'px';
+                }
+                
+                // Update button in sidebar
+                const btn = document.querySelector(`.snap-line-btn[data-line-id="${line.id}"]`);
+                if (btn) {
+                    btn.textContent = `${line.name} (${line.position}% ${line.orientation})`;
+                }
+            }
+        }
+
+        function generateId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function evenSpacing() {
+            // TODO: Implement even spacing logic
+            alert('Even spacing functionality will be implemented');
+        }
+
+        function calculateInstructions() {
+            // TODO: Implement installation instructions
+            alert('Installation instructions will be calculated');
+        }
+
+        function saveGallery() {
+            // TODO: Implement save functionality
+            alert('Gallery saved');
+        }
+
+        function saveGalleryAs() {
+            // TODO: Implement save as functionality
+            alert('Gallery saved as new file');
+        }
+    </script>
+</body>
+</html>

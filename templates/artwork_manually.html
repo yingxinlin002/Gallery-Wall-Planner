@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Artwork Manually</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #5F3FCA;
+            --secondary-color: #69718A;
+            --info-color: #17a2b8;
+            --success-color: #28a745;
+            --bg-color: #F0F0F0;
+            --white: #ffffff;
+            --gray: #6c757d;
+            --light-gray: #f8f9fa;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .main-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            padding: 30px;
+        }
+        
+        .form-title {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(95, 63, 202, 0.25);
+        }
+        
+        .placeholder {
+            color: var(--gray);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #4a30a0;
+            border-color: #4a30a0;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4d5462;
+            border-color: #4d5462;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .artwork-list-container {
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .artwork-item {
+            background-color: var(--light-gray);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .artwork-name {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .artwork-details {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        #optionalFields {
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload {
+            display: none;
+        }
+        
+        .file-upload-label {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: var(--info-color);
+            color: var(--white);
+            border-radius: 4px;
+        }
+        
+        .file-name {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Pane - Form -->
+            <div class="col-md-6">
+                <div class="main-container">
+                    <h2 class="form-title">Enter Artwork Manually</h2>
+                    <p class="text-muted">Please enter artwork details:</p>
+                    
+                    <form id="artworkForm">
+                        <!-- Required Fields -->
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Name*</label>
+                            <input type="text" class="form-control placeholder" id="name" value="e.g., Starry Night">
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label for="width" class="form-label">Width* (inches)</label>
+                                <input type="number" class="form-control placeholder" id="width" value="e.g., 24.5" step="0.1">
+                            </div>
+                            <div class="col">
+                                <label for="height" class="form-label">Height* (inches)</label>
+                                <input type="number" class="form-control placeholder" id="height" value="e.g., 36.0" step="0.1">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="hanging" class="form-label">Hanging Point* (inches from top)</label>
+                            <input type="number" class="form-control placeholder" id="hanging" value="e.g., 12.0" step="0.1">
+                        </div>
+                        
+                        <!-- Toggle Button for Optional Fields -->
+                        <button type="button" class="btn btn-secondary mb-3" id="toggleOptionalBtn" onclick="toggleOptionalFields()">
+                            + Additional Options
+                        </button>
+                        
+                        <!-- Optional Fields (Initially Hidden) -->
+                        <div id="optionalFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="medium" class="form-label">Medium</label>
+                                <input type="text" class="form-control placeholder" id="medium" value="e.g., Oil on canvas">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="depth" class="form-label">Depth (inches)</label>
+                                <input type="number" class="form-control placeholder" id="depth" value="e.g., 2.0" step="0.1">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price (USD)</label>
+                                <input type="number" class="form-control placeholder" id="price" value="e.g., 2500.00" step="0.01">
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="nfs">
+                                <label class="form-check-label" for="nfs">Not For Sale</label>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Image</label>
+                                <div>
+                                    <label for="imageUpload" class="file-upload-label">Browse</label>
+                                    <input type="file" class="file-upload" id="imageUpload" accept="image/*">
+                                    <span class="file-name" id="fileName">No file selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-success" onclick="createArtwork()">
+                                Create Artwork
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="goBackToEditor()">
+                                Back to Editor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Pane - Artwork List -->
+            <div class="col-md-6">
+                <div class="main-container">
+                    <h2 class="form-title">Created Artworks</h2>
+                    <div class="artwork-list-container" id="artworkList">
+                        {% if artworks %}
+                            {% for artwork in artworks %}
+                            <div class="artwork-item">
+                                <div class="artwork-name">{{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")</div>
+                                <div class="artwork-details">
+                                    {% if artwork.medium %}{{ artwork.medium }} | {% endif %}
+                                    {% if artwork.price > 0 %}${{ "%.2f"|format(artwork.price) }} | {% endif %}
+                                    {% if artwork.nfs %}NFS{% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No artworks added yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize placeholder handling
+        document.querySelectorAll('.placeholder').forEach(input => {
+            const placeholder = input.value;
+            
+            input.addEventListener('focus', function() {
+                if (this.value === placeholder) {
+                    this.value = '';
+                    this.classList.remove('placeholder');
+                }
+            });
+            
+            input.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.value = placeholder;
+                    this.classList.add('placeholder');
+                }
+            });
+        });
+        
+        // File upload handling
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+            document.getElementById('fileName').textContent = fileName;
+        });
+        
+        // Toggle optional fields
+        function toggleOptionalFields() {
+            const optionalFields = document.getElementById('optionalFields');
+            const toggleBtn = document.getElementById('toggleOptionalBtn');
+            
+            if (optionalFields.style.display === 'none' || optionalFields.style.display === '') {
+                optionalFields.style.display = 'block';
+                toggleBtn.textContent = '- Additional Options';
+            } else {
+                optionalFields.style.display = 'none';
+                toggleBtn.textContent = '+ Additional Options';
+            }
+        }
+        
+        // Validate and create artwork
+        function createArtwork() {
+            // Get form values
+            const name = document.getElementById('name').value;
+            const width = document.getElementById('width').value;
+            const height = document.getElementById('height').value;
+            const hanging = document.getElementById('hanging').value;
+            
+            const medium = document.getElementById('medium').value;
+            const depth = document.getElementById('depth').value;
+            const price = document.getElementById('price').value;
+            const nfs = document.getElementById('nfs').checked;
+            const imageFile = document.getElementById('imageUpload').files[0];
+            
+            // Check required fields
+            const requiredFields = [
+                { field: name, name: 'Name', example: 'e.g., Starry Night' },
+                { field: width, name: 'Width', example: 'e.g., 24.5' },
+                { field: height, name: 'Height', example: 'e.g., 36.0' },
+                { field: hanging, name: 'Hanging Point', example: 'e.g., 12.0' }
+            ];
+            
+            for (const field of requiredFields) {
+                if (!field.field || field.field === field.example) {
+                    alert(`Please fill in ${field.name}`);
+                    return;
+                }
+            }
+            
+            // Convert to proper types
+            const artworkData = {
+                name: name === 'e.g., Starry Night' ? '' : name,
+                width: parseFloat(width),
+                height: parseFloat(height),
+                hanging_point: parseFloat(hanging),
+                medium: medium === 'e.g., Oil on canvas' ? '' : medium,
+                depth: depth === 'e.g., 2.0' ? 0 : parseFloat(depth),
+                price: price === 'e.g., 2500.00' ? 0 : parseFloat(price),
+                nfs: nfs,
+                image_path: imageFile ? imageFile.name : ''
+            };
+            
+            // Validate numbers
+            if (isNaN(artworkData.width) || isNaN(artworkData.height) || isNaN(artworkData.hanging_point)) {
+                alert('Please enter valid numbers for dimensions');
+                return;
+            }
+            
+            // Send to server (in a real app, this would be an AJAX call)
+            console.log('Artwork data:', artworkData);
+            
+            // Add to artwork list (in a real app, this would come from server response)
+            addArtworkToList(artworkData);
+            
+            // Show success message
+            alert('Artwork created successfully!');
+            
+            // Reset form (optional)
+            // document.getElementById('artworkForm').reset();
+        }
+        
+        // Add artwork to the list
+        function addArtworkToList(artwork) {
+            const artworkList = document.getElementById('artworkList');
+            
+            // Remove "no artworks" message if present
+            if (artworkList.querySelector('.text-muted')) {
+                artworkList.innerHTML = '';
+            }
+            
+            // Create new artwork item
+            const item = document.createElement('div');
+            item.className = 'artwork-item';
+            
+            let details = '';
+            if (artwork.medium) details += `${artwork.medium} | `;
+            if (artwork.price > 0) details += `$${artwork.price.toFixed(2)} | `;
+            if (artwork.nfs) details += 'NFS';
+            
+            item.innerHTML = `
+                <div class="artwork-name">${artwork.name} (${artwork.width}" × ${artwork.height}")</div>
+                <div class="artwork-details">${details}</div>
+            `;
+            
+            artworkList.prepend(item);
+        }
+        
+        // Navigate back to editor
+        function goBackToEditor() {
+            window.location.href = "{{ url_for('editor') }}";
+        }
+    </script>
+</body>
+</html>

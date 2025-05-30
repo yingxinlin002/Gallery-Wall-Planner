@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Wall Planner - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-image: url("{{ url_for('static', filename='images/gallery_background.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 36px;
+            color: #5F3FCA;
+            margin-bottom: 50px;
+            font-weight: bold;
+        }
+
+        .menu-button {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #5F3FCA;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            width: 250px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+        }
+
+        .menu-button:hover {
+            background-color: #4a30a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Gallery Wall Planner</h1>
+
+        {% if last_project_exists %}
+            <a href="{{ url_for('continue_last_project') }}" class="menu-button">Continue Last Project</a>
+        {% endif %}
+
+        <a href="{{ url_for('new_gallery') }}" class="menu-button">New Exhibit</a>
+
+        <form action="{{ url_for('select_wall_space') }}" method="post" enctype="multipart/form-data">
+            <input type="file" id="exhibit-file" name="file" accept=".xlsx" style="display: none;">
+            <button type="button" class="menu-button" onclick="document.getElementById('exhibit-file').click()">Load Exhibit</button>
+            <button type="submit" style="display: none;"></button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('exhibit-file').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                this.form.submit();
+            }
+        });
+    </script>
+</body>
+</html>

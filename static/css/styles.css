@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.main-frame {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header-frame {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #ddd;
+}
+
+.content-frame {
+    display: flex;
+    flex: 1;
+}
+
+.sidebar {
+    width: 300px;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+}
+
+.menu-section {
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+}
+
+.menu-header {
+    background-color: #e0e0e0;
+    padding: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.menu-content {
+    background-color: white;
+    padding: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.actions-frame {
+    margin-top: auto;
+    padding: 10px 0;
+}
+
+.actions-header {
+    font-weight: bold;
+    padding-bottom: 5px;
+}
+
+.wall-space {
+    flex: 1;
+    background-color: white;
+    padding: 20px;
+}
+
+.wall-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn {
+    padding: 8px 12px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.primary-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.secondary-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.info-btn {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.gray-text {
+    color: gray;
+    text-align: center;
+    padding: 10px;
+}
+
+.scroll-box {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 5px;
+    border-top: 1px solid #ccc;
+}

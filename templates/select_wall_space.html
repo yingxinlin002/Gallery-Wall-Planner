@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Wall Space</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .wall-preview {
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+        .wall-btn.active {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <h1 class="mb-4">Select Wall Space</h1>
+
+    <div class="row">
+        <!-- Left Panel -->
+        <div class="col-md-4">
+            <div class="bg-light p-3 rounded">
+                <h5 class="mb-3">Wall Spaces</h5>
+                <div class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
+                    {% for wall in walls %}
+                        <div class="d-flex align-items-center mb-1">
+                            <a href="{{ url_for('select_wall', wall_id=wall.id) }}"
+                               class="list-group-item list-group-item-action wall-btn flex-grow-1 {% if wall.id == current_wall.id %}active{% endif %}">
+                                {{ wall.name }}
+                            </a>
+                            <form action="{{ url_for('delete_wall', wall_id=wall.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this wall?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-danger ms-2" title="Delete wall">&times;</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <a href="{{ url_for('create_wall') }}" class="btn btn-primary w-100 mb-2">Create New Wall Space</a>
+                <a href="{{ url_for('edit_permanent_objects') }}"
+                   class="btn btn-primary w-100 mb-2 {% if not current_wall %}disabled{% endif %}">
+                    Edit Permanent Objects
+                </a>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="col-md-8">
+            <div class="text-center mb-3">
+                {% if current_wall %}
+                    <svg width="400" height="300" class="wall-preview">
+                        <!-- Wall rectangle -->
+                        {% set ratio = min(400 / current_wall.width, 300 / current_wall.height) %}
+                        {% set wall_w = current_wall.width * ratio %}
+                        {% set wall_h = current_wall.height * ratio %}
+                        {% set x0 = (400 - wall_w) / 2 %}
+                        {% set y0 = (300 - wall_h) / 2 %}
+
+                        <rect x="{{ x0 }}" y="{{ y0 }}" width="{{ wall_w }}" height="{{ wall_h }}"
+                              fill="{{ current_wall.color }}" stroke="black"/>
+
+                        <!-- Permanent objects -->
+                        {% for obj in current_wall.permanent_objects %}
+                            {% set ox = x0 + obj.position.x * ratio %}
+                            {% set oy = y0 + obj.position.y * ratio %}
+                            {% set ow = obj.width * ratio %}
+                            {% set oh = obj.height * ratio %}
+                            <rect x="{{ ox }}" y="{{ oy }}" width="{{ ow }}" height="{{ oh }}"
+                                  fill="lightblue" stroke="black" stroke-width="2"/>
+                            {% if ow > 40 and oh > 20 %}
+                                <text x="{{ ox + ow / 2 }}" y="{{ oy + oh / 2 }}"
+                                      font-size="10" text-anchor="middle" alignment-baseline="middle"
+                                      fill="black">{{ obj.name }}</text>
+                            {% endif %}
+                        {% endfor %}
+                    </svg>
+
+                    <p class="mt-3">
+                        <strong>Wall:</strong> {{ current_wall.name }}<br>
+                        <strong>Dimensions:</strong> {{ current_wall.width }}" x {{ current_wall.height }}"<br>
+                        <strong>Color:</strong> {{ current_wall.color }}<br>
+                        <strong>Permanent Objects:</strong> {{ current_wall.permanent_objects | length }}
+                    </p>
+                {% else %}
+                    <p>Select a wall to preview</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Buttons -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <a href="{{ url_for('home') }}" class="btn btn-secondary">&lt; Back to Home</a>
+        <a href="{{ url_for('editor') }}" class="btn btn-primary">Continue &gt;</a>
+    </div>
+
+    <!-- Back to Wall Selection Button -->
+    {% if current_wall %}
+        <div class="mt-3">
+            <button class="btn back-btn" onclick="window.location.href='{{ url_for('select_wall', wall_id=current_wall.id) }}'">
+                <i class="fas fa-arrow-left"></i> Back to Wall Selection
+            </button>
+        </div>
+    {% endif %}
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+</body>
+</html>

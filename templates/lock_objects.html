@@ -1,0 +1,67 @@
+<!-- templates/lock_objects.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Place Fixtures</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Place Fixtures</h1>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel with Collapsible Menu -->
+            <div class="left-panel">
+                <div class="collapsible-menu">
+                    <button class="collapsible">Permanent Objects</button>
+                    <div class="collapsible-content">
+                        <div class="scroll-box">
+                            {% for obj in permanent_objects %}
+                                <div class="wall-item">
+                                    {{ obj.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <form action="{{ url_for('add_wall_object') }}" method="post">
+                            <button type="submit" class="btn">+ Add New Fixture</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <canvas id="wall-canvas" width="800" height="600">
+                    Your browser does not support the canvas element.
+                </canvas>
+            </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="footer-buttons">
+            <a href="{{ url_for('home') }}" class="btn secondary">← Back to Home</a>
+            <form action="{{ url_for('save_and_continue') }}" method="post" style="display: inline;">
+                <button type="submit" class="btn primary">Save and Next →</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Optional: JavaScript to handle collapsible menu
+        document.querySelectorAll(".collapsible").forEach(button => {
+            button.addEventListener("click", () => {
+                button.classList.toggle("active");
+                const content = button.nextElementSibling;
+                content.style.display = content.style.display === "block" ? "none" : "block";
+            });
+        });
+
+        // TODO: JavaScript to render wall objects on the canvas based on data passed from Flask
+    </script>
+</body>
+</html>
