@@ -100,27 +100,46 @@ def lock_objects(wall_id):
 
 @app.route('/add-permanent-object', methods=['POST'])
 def add_permanent_object():
-    wall_id = request.form.get('wall_id')
-    name = request.form.get('name')
-    width = float(request.form.get('width', 0))
-    height = float(request.form.get('height', 0))
-    x = float(request.form.get('x', 0))
-    y = float(request.form.get('y', 0))
-    image_path = request.form.get('image_path')
-    from gallery.models.permanent_object import PermanentObject
-    obj = PermanentObject(
-        name=name,
-        width=width,
-        height=height,
-        x=x,
-        y=y,
-        image_path=image_path,
-        wall_id=wall_id
-    )
-    db.session.add(obj)
-    db.session.commit()
-    flash("Permanent object added successfully", "success")
-    return redirect(url_for('lock_objects', wall_id=wall_id))
+    try:
+        wall_id = request.form.get('wall_id')
+        name = request.form.get('name')
+        width = float(request.form.get('width', 0))
+        height = float(request.form.get('height', 0))
+        x = float(request.form.get('x', 0))
+        y = float(request.form.get('y', 0))
+        color = request.form.get('color', '#6495ed')
+        
+        # Handle file upload
+        image_path = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                upload_dir = os.path.join(app.static_folder, 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                filepath = os.path.join(upload_dir, filename)
+                file.save(filepath)
+                image_path = os.path.join('uploads', filename)
+        
+        obj = PermanentObject(
+            name=name,
+            width=width,
+            height=height,
+            x=x,
+            y=y,
+            color=color,
+            image_path=image_path,
+            wall_id=wall_id
+        )
+        db.session.add(obj)
+        db.session.commit()
+        flash("Fixture added successfully", "success")
+        return redirect(url_for('edit_permanent_objects'))
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error adding fixture: {str(e)}", "error")
+        return redirect(url_for('edit_permanent_objects'))
 
 @app.route('/delete_permanent_object/<int:obj_id>', methods=['POST'])
 def delete_permanent_object(obj_id):
@@ -180,7 +199,6 @@ def editor():
         wall_lines=getattr(wall, "snap_lines", [])
     )
 
-@app.route('/artwork-manual', methods=['GET', 'POST'])
 @app.route('/artwork-manual', methods=['GET', 'POST'])
 def artwork_manual():
     wall = get_current_wall()
@@ -242,25 +260,7 @@ def artwork_manual():
 
 @app.route("/load", methods=["POST"])
 def load_exhibit():
-    uploaded_file = request.files.get("file")
-    if uploaded_file:
-        filename = secure_filename(uploaded_file.filename)
-        file_path = os.path.join(USER_DIR, filename)
-        uploaded_file.save(file_path)
-        try:
-            import_gallery_from_excel(file_path, db)  # Pass db if needed
-            return redirect(url_for('select_wall_space'))
-        except Exception as e:
-            flash(str(e))
-            return redirect(url_for("home"))
-    flash("No file selected.")
-    return redirect(url_for("home"))
-
-@app.route("/quit")
-def quit_app():
-    gallery = Gallery.query.first()  # Retrieve the gallery object
-    export_gallery_to_excel(TEMP_FILE, gallery)
-    return send_file(TEMP_FILE, as_attachment=True, download_name="gallery_export.xlsx")
+    return redirect(url_for('select_wall_space'))
 
 @app.route('/delete-wall/<int:wall_id>', methods=['POST'])
 def delete_wall(wall_id):

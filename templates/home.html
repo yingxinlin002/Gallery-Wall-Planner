@@ -62,20 +62,7 @@
         {% endif %}
 
         <a href="{{ url_for('new_gallery') }}" class="menu-button">New Exhibit</a>
-
-        <form action="{{ url_for('select_wall_space') }}" method="post" enctype="multipart/form-data">
-            <input type="file" id="exhibit-file" name="file" accept=".xlsx" style="display: none;">
-            <button type="button" class="menu-button" onclick="document.getElementById('exhibit-file').click()">Load Exhibit</button>
-            <button type="submit" style="display: none;"></button>
-        </form>
+        <a href="{{ url_for('select_wall_space') }}" class="menu-button">Load Exhibit</a>
     </div>
-
-    <script>
-        document.getElementById('exhibit-file').addEventListener('change', function() {
-            if (this.files.length > 0) {
-                this.form.submit();
-            }
-        });
-    </script>
 </body>
 </html>

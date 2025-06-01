@@ -1,4 +1,3 @@
-<!-- templates/lock_objects.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,134 +7,73 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lock_objects.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <style>
+        :root {
+            --sidebar-width: 300px;
+            --sidebar-collapsed-width: 60px;
+            --header-height: 80px;
+            --footer-height: 70px;
+            --primary-color: #3498db;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+        }
+        
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+        
         .header {
             background-color: #343a40;
             color: white;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
             border-radius: 5px;
         }
+        
         .left-panel {
             background-color: white;
             border-radius: 5px;
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            height: calc(100vh - 200px);
+            height: calc(100vh - var(--header-height) - var(--footer-height) - 30px);
             overflow-y: auto;
-            transition: width 0.3s ease;
+            transition: all 0.3s ease;
+            width: var(--sidebar-width);
         }
+        
         .left-panel.collapsed {
-            width: 50px !important;
+            width: var(--sidebar-collapsed-width) !important;
             overflow: hidden;
         }
-        .left-panel-content {
-            transition: opacity 0.2s ease;
-        }
-        .left-panel.collapsed .left-panel-content {
-            opacity: 0;
-            pointer-events: none;
-        }
+        
         .canvas-container {
             background-color: white;
             border-radius: 5px;
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            height: calc(100vh - 200px);
+            height: calc(100vh - var(--header-height) - var(--footer-height) - 30px);
             position: relative;
         }
-        #wall-canvas {
-            background-color: #f1f1f1;
-            border: 1px solid #ddd;
-            width: 100%;
-            height: 100%;
-        }
-        .wall-item {
-            padding: 10px;
-            margin-bottom: 5px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .wall-item:hover {
-            background-color: #dee2e6;
-        }
-        .wall-item-actions {
-            display: flex;
-            gap: 5px;
-        }
-        .footer-buttons {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .collapsible {
-            background-color: #6c757d;
-            color: white;
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 1rem;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .collapsible:hover {
-            background-color: #5a6268;
-        }
-        .collapsible-content {
-            padding: 0 10px;
-            display: none;
-            overflow: hidden;
-            background-color: #f8f9fa;
-            border-radius: 0 0 4px 4px;
-        }
-        .active, .collapsible:hover {
-            background-color: #5a6268;
-        }
-        .item-form {
-            background-color: white;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-        .position-controls {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 15px;
-        }
-        .dimension-label {
+        
+        .canvas-object {
             position: absolute;
-            color: #333;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 2px 5px;
-            border-radius: 3px;
-            pointer-events: none;
+            background: rgba(100, 149, 237, 0.7);
+            border: 2px solid #003;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+            transition: all 0.2s ease;
+            z-index: 2;
         }
-        .width-label {
-            top: 5px;
-            left: 5px;
+        
+        .canvas-object.collision-highlight {
+            background: rgba(255, 0, 0, 0.5) !important;
+            border: 2px solid red !important;
         }
-        .height-label {
-            top: 5px;
-            right: 5px;
-        }
+        
         .toggle-sidebar-btn {
             position: absolute;
             left: 10px;
@@ -153,12 +91,11 @@
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .collision-highlight {
-            background: rgba(255, 0, 0, 0.5) !important;
-            border: 2px solid red !important;
-        }
-        .add-fixture-btn-container {
-            margin-bottom: 15px;
+        
+        .footer-buttons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -166,7 +103,12 @@
     <div class="container-fluid py-3">
         <!-- Header -->
         <div class="header">
-            <h1><i class="bi bi-pin-angle"></i> Place Fixtures</h1>
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="m-0"><i class="bi bi-pin-angle me-2"></i> Place Fixtures</h1>
+                <div id="collision-indicator" class="badge bg-danger d-none">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Collisions Detected
+                </div>
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -178,31 +120,41 @@
                 </button>
                 <div class="left-panel" id="leftPanel">
                     <div class="left-panel-content">
-                        <div class="add-fixture-btn-container">
+                        <div class="add-fixture-btn-container mb-3">
                             <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#newItemModal">
-                                <i class="bi bi-plus"></i> Add New Fixture
+                                <i class="bi bi-plus-lg me-2"></i> Add New Fixture
                             </button>
                         </div>
                         
-                        <button class="collapsible active">
-                            <span><i class="bi bi-collection"></i> Permanent Objects</span>
-                            <i class="bi bi-chevron-up"></i>
-                        </button>
-                        <div class="collapsible-content" style="display: block;">
-                            <div class="scroll-box mb-3">
-                                {% for obj in wall.permanent_objects %}
-                                <div class="wall-item" draggable="true" data-id="{{ obj.id }}">
-                                    <span>{{ obj.name }}</span>
-                                    <div class="wall-item-actions">
-                                        <button class="btn btn-sm btn-outline-primary edit-btn" data-id="{{ obj.id }}">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="{{ obj.id }}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
+                        <div class="accordion" id="fixturesAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#permanentObjectsCollapse">
+                                        <i class="bi bi-collection me-2"></i> Permanent Objects
+                                    </button>
+                                </h2>
+                                <div id="permanentObjectsCollapse" class="accordion-collapse collapse show" data-bs-parent="#fixturesAccordion">
+                                    <div class="accordion-body p-0">
+                                        <div id="permanentObjectsList" class="list-group list-group-flush">
+                                            {% for obj in wall.permanent_objects %}
+                                            <div class="list-group-item wall-item d-flex justify-content-between align-items-center" 
+                                                 draggable="true" 
+                                                 data-id="{{ obj.id }}"
+                                                 data-obj='{{ obj.to_dict()|tojson|safe }}'>
+                                                <span>{{ obj.name }}</span>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary edit-btn" data-id="{{ obj.id }}">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger delete-btn" data-id="{{ obj.id }}">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 </div>
-                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -211,25 +163,29 @@
 
             <!-- Canvas Area -->
             <div class="col-md-9">
-                <div class="canvas-container" style="position: relative;">
+                <div class="canvas-container">
                     <canvas id="wall-canvas"></canvas>
-                    <div id="dimension-labels" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                        <div class="dimension-label width-label"></div>
-                        <div class="dimension-label height-label"></div>
-                    </div>
-                    <div id="canvas-objects-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
-                        {% for obj in wall.permanent_objects %}
-                            <div class="canvas-object"
-                                 id="object-{{ obj.id }}"
-                                 data-x="{{ obj.x }}"
-                                 data-y="{{ obj.y }}"
-                                 data-width="{{ obj.width }}"
-                                 data-height="{{ obj.height }}"
-                                 style="position: absolute; pointer-events: auto; background: rgba(100,149,237,0.7); border: 2px solid #003;"
-                            >
-                                {{ obj.name }}
-                            </div>
-                        {% endfor %}
+                    <div id="canvas-overlay" class="canvas-overlay">
+                        <div id="dimension-labels">
+                            <div class="dimension-label width-label"></div>
+                            <div class="dimension-label height-label"></div>
+                        </div>
+                        <div id="canvas-objects-layer">
+                            {% for obj in wall.permanent_objects %}
+                                <div class="canvas-object"
+                                     id="object-{{ obj.id }}"
+                                     data-id="{{ obj.id }}"
+                                     style="--object-color: {{ obj.color|default('#6495ed') }}">
+                                    <div class="object-content">
+                                        <span class="object-name">{{ obj.name }}</span>
+                                        {% if obj.image_path %}
+                                        <img src="{{ url_for('static', filename=obj.image_path) }}" alt="{{ obj.name }}" class="object-image">
+                                        {% endif %}
+                                    </div>
+                                    <div class="object-handle object-handle-resize"></div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -237,13 +193,13 @@
 
         <!-- Footer Buttons -->
         <div class="footer-buttons">
-            <a href="{{ url_for('select_wall_space') }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Wall Selection
+            <a href="{{ url_for('select_wall_space') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i> Back to Wall Selection
             </a>
-            <form action="{{ url_for('save_and_continue_permanent_objects') }}" method="post" style="display:inline;">
+            <form action="{{ url_for('save_and_continue_permanent_objects') }}" method="post" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-primary">
-                    Save and Next <i class="bi bi-arrow-right"></i>
+                <button type="submit" id="saveBtn" class="btn btn-primary">
+                    Save and Next <i class="bi bi-arrow-right ms-2"></i>
                 </button>
             </form>
         </div>
@@ -257,7 +213,7 @@
                     <h5 class="modal-title" id="newItemModalLabel">Add New Fixture</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="newItemForm" action="{{ url_for('add_permanent_object') }}" method="post">
+                <form id="newItemForm" action="{{ url_for('add_permanent_object') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="wall_id" value="{{ wall.id }}">
                     <div class="modal-body">
@@ -276,53 +232,24 @@
                                     <input type="number" class="form-control" id="itemHeight" name="height" min="0" step="0.1" required>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="itemColor" class="form-label">Color</label>
+                                    <input type="color" class="form-control form-control-color" id="itemColor" name="color" value="#6495ed">
+                                </div>
+                                <div class="mb-3">
                                     <label for="itemImage" class="form-label">Image</label>
-                                    <input type="file" class="form-control" id="itemImage" name="image">
+                                    <input type="file" class="form-control" id="itemImage" name="image" accept="image/*">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="position-controls">
                                     <h6>Position</h6>
                                     <div class="mb-3">
-                                        <label class="form-label">Measure From</label>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_from" id="measureEdges" value="edges" checked>
-                                            <label class="form-check-label" for="measureEdges">Edges</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_from" id="measureCenter" value="center">
-                                            <label class="form-check-label" for="measureCenter">Center</label>
-                                        </div>
+                                        <label for="itemX" class="form-label">X Position (inches)</label>
+                                        <input type="number" class="form-control" id="itemX" name="x" min="0" step="0.1" value="0">
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Horizontal Alignment</label>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_horizontal" id="measureLeft" value="left" checked>
-                                            <label class="form-check-label" for="measureLeft">Left</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_horizontal" id="measureRight" value="right">
-                                            <label class="form-check-label" for="measureRight">Right</label>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Vertical Alignment</label>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_vertical" id="measureTop" value="top" checked>
-                                            <label class="form-check-label" for="measureTop">Top</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="measure_vertical" id="measureBottom" value="bottom">
-                                            <label class="form-check-label" for="measureBottom">Bottom</label>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="horizontalDistance" class="form-label">Horizontal Distance (inches)</label>
-                                        <input type="number" class="form-control" id="horizontalDistance" name="horizontal_distance" min="0" step="0.1" value="0">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="verticalDistance" class="form-label">Vertical Distance (inches)</label>
-                                        <input type="number" class="form-control" id="verticalDistance" name="vertical_distance" min="0" step="0.1" value="0">
+                                        <label for="itemY" class="form-label">Y Position (inches)</label>
+                                        <input type="number" class="form-control" id="itemY" name="y" min="0" step="0.1" value="0">
                                     </div>
                                 </div>
                             </div>
@@ -339,7 +266,25 @@
 
     <!-- Edit Item Modal -->
     <div class="modal fade" id="editItemModal" tabindex="-1" aria-hidden="true">
-        <!-- Similar structure to newItemModal, will be populated via JavaScript -->
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Fixture</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editItemForm" action="{{ url_for('update_permanent_object') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="obj_id" id="editObjId">
+                    <div class="modal-body">
+                        <!-- Content will be populated by JavaScript -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Collision Warning Modal -->
@@ -351,7 +296,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>The program has identified an impossible layout. Would you like to keep editing?</p>
+                    <p>The fixture overlaps with another object. Would you like to continue anyway?</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Editing</button>
@@ -363,14 +308,31 @@
 
     <!-- Pass server-side variables to JS -->
     <script>
-        window.wallWidth = {{ wall.width }};
-        window.wallHeight = {{ wall.height }};
-        window.wallColor = "{{ wall.color }}";
+        window.wallData = {
+            id: "{{ wall.id }}",
+            width: {{ wall.width }},
+            height: {{ wall.height }},
+            color: "{{ wall.color }}",
+            permanentObjects: {{ wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }}
+        };
+        window.urls = {
+            addObject: "{{ url_for('add_permanent_object') }}",
+            updateObject: "{{ url_for('update_permanent_object') }}",
+            deleteObject: "{{ url_for('delete_permanent_object') }}",
+            updatePosition: "{{ url_for('update_object_position') }}",
+            editor: "{{ url_for('editor') }}"
+        };
         window.csrfToken = "{{ csrf_token() }}";
-        window.editorUrl = "{{ url_for('editor') }}";
     </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/lock_objects_init.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script type="module" src="{{ url_for('static', filename='js/modules/WallCanvas.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/modules/ObjectManager.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/modules/MeasurementManager.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/modules/CollisionDetector.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/lock_objects_init.js') }}"></script>
 </body>
 </html>
