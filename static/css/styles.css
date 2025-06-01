@@ -118,3 +118,9 @@ body {
     pointer-events: none;
     z-index: 10;
 }
+ #canvas-objects-layer {
+    pointer-events: none;
+ }
+ .canvas-object {
+    pointer-events: auto;
+ }

@@ -122,3 +122,27 @@
     border-radius: 0.2rem;
     white-space: nowrap;
 }
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#wall-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+#canvas-objects-layer {
+    pointer-events: none; /* Container ignores events */
+}
+
+.canvas-object {
+    pointer-events: auto; /* Draggable objects receive events */
+    position: absolute;
+    background: rgba(100,149,237,0.7);
+    border: 2px solid #003;
+    /* Add any other styles you need */
+    z-index: 2; /* Ensure above measurement lines */
+}
