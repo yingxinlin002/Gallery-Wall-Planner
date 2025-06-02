@@ -16,7 +16,13 @@ export class ObjectManager {
     }
 
     addObject(objData) {
-        console.log('Adding object:', objData); // Debug log
+        console.log('Adding object with dimensions:', {
+            width: objData.width,
+            height: objData.height,
+            x: objData.x,
+            y: objData.y
+        });
+
         // Create the object with all necessary properties
         const object = {
             id: objData.id,
@@ -25,7 +31,6 @@ export class ObjectManager {
             height: objData.height,
             x: objData.x,
             y: objData.y,
-            color: objData.color || '#6495ed',
             image_path: objData.image_path,
             element: null,
             isColliding: false
@@ -54,7 +59,6 @@ export class ObjectManager {
         
         objectElement.className = 'canvas-object';
         objectElement.id = `object-${object.id}`;
-        objectElement.style.setProperty('--object-color', object.color);
         
         // Set data attributes for positioning
         objectElement.setAttribute('data-id', object.id);
@@ -80,12 +84,30 @@ export class ObjectManager {
 
     positionObject(object) {
         const scale = this.wallCanvas.getScale();
+        console.log('Positioning object with scale:', scale, 'Calculated dimensions:', {
+            width: object.width * scale,
+            height: object.height * scale
+        });
         const element = object.element;
         
-        element.style.left = `${object.x * scale}px`;
-        element.style.top = `${object.y * scale}px`;
-        element.style.width = `${object.width * scale}px`;
-        element.style.height = `${object.height * scale}px`;
+        if (!element) return;
+        
+        // Convert inches to pixels using the scale
+        const widthPx = object.width * scale;
+        const heightPx = object.height * scale;
+        const leftPx = object.x * scale;
+        const topPx = object.y * scale;
+        
+        element.style.width = `${widthPx}px`;
+        element.style.height = `${heightPx}px`;
+        element.style.left = `${leftPx}px`;
+        element.style.top = `${topPx}px`;
+        
+        // Update data attributes
+        element.setAttribute('data-width', object.width);
+        element.setAttribute('data-height', object.height);
+        element.setAttribute('data-x', object.x);
+        element.setAttribute('data-y', object.y);
     }
 
     makeDraggable(object) {
@@ -102,11 +124,11 @@ export class ObjectManager {
             listeners: {
                 start: (event) => {
                     this.selectedObject = object;
-                    object.element.style.zIndex = '100';
+                    event.target.style.zIndex = '100';
                     this.measurementManager.clear();
                 },
                 move: (event) => {
-                    // Update object position
+                    // Update object position in inches
                     object.x += event.dx / scale;
                     object.y += event.dy / scale;
                     
@@ -114,11 +136,8 @@ export class ObjectManager {
                     object.x = Math.max(0, Math.min(object.x, this.wallCanvas.wallWidth - object.width));
                     object.y = Math.max(0, Math.min(object.y, this.wallCanvas.wallHeight - object.height));
                     
+                    // Update visual position
                     this.positionObject(object);
-                    
-                    // Update data attributes
-                    object.element.setAttribute('data-x', object.x);
-                    object.element.setAttribute('data-y', object.y);
                     
                     // Check for collisions
                     object.isColliding = this.collisionDetector.checkCollisions(object, this.objects);
@@ -139,7 +158,7 @@ export class ObjectManager {
                     this.updateObjectPosition(object);
                 },
                 end: (event) => {
-                    object.element.style.zIndex = '2';
+                    event.target.style.zIndex = '2';
                     this.measurementManager.clear();
                 }
             }

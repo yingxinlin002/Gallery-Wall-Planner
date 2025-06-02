@@ -71,49 +71,110 @@ function positionCanvasObjects() {
 
 // Make objects draggable
 function makeObjectsDraggable() {
-    const scale = canvas.width / wallWidth;
-
-    // Set all canvas objects to z-index 2
-    document.querySelectorAll('.canvas-object').forEach(obj => {
-        obj.style.zIndex = '2';
-    });
-
+    // First remove any existing interact instances
+    interact('.canvas-object').unset();
+    
     interact('.canvas-object').draggable({
+        // Enable inertial throwing
         inertia: true,
+        // Keep the element within the parent
         modifiers: [
-            interact.modifiers.restrictRect({
+            interact.modifiers.restrict({
                 restriction: 'parent',
-                endOnly: true
+                endOnly: true,
+                elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
             })
         ],
-        listeners: {
-            start: function(event) {
-                measurementManager.clearMeasurementLines();
-                // Bring the dragged element to the front
-                event.target.style.zIndex = '3';
-            },
-            move: function(event) {
-                const target = event.target;
-                let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx / scale;
-                let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy / scale;
-                const width = parseFloat(target.getAttribute('data-width'));
-                const height = parseFloat(target.getAttribute('data-height'));
+        // Enable autoScroll
+        autoScroll: true,
 
+        // Callback functions
+        listeners: {
+            start(event) {
+                console.log('Drag started', event.target);
+                event.target.style.zIndex = '10';
+                event.target.classList.add('dragging');
+            },
+            
+            move(event) {
+                console.log('Dragging', event.dx, event.dy);
+                const target = event.target;
+                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                // Update the element's style
+                target.style.transform = `translate(${x}px, ${y}px)`;
+                
+                // Update the posiion attributes
                 target.setAttribute('data-x', x);
                 target.setAttribute('data-y', y);
-                positionCanvasObjects();
-                updateObjectPosition(target.id.replace('object-', ''), x, y);
-
-                measurementManager.drawMeasurementLines(x, y, width, height, scale);
             },
-            end: function(event) {
-                measurementManager.clearMeasurementLines();
-                // Reset z-index after dragging
+
+            end(event) {
+                console.log('Drag ended');
                 event.target.style.zIndex = '2';
+                event.target.classList.remove('dragging');
+                
+                // Convert pixel positions back to inches and save
+                const scale = canvas.width / wallWidth;
+                const x = parseFloat(event.target.getAttribute('data-x')) / scale;
+                const y = parseFloat(event.target.getAttribute('data-y')) / scale;
+                updateObjectPosition(event.target.id.replace('object-', ''), x, y);
             }
         }
     });
 }
+// function makeObjectsDraggable() {
+//     const scale = canvas.width / wallWidth;
+
+//     interact('.canvas-object').draggable({
+//         inertia: true,
+//         modifiers: [
+//             interact.modifiers.restrictRect({
+//                 restriction: 'parent',
+//                 endOnly: true
+//             })
+//         ],
+//         listeners: {
+//             start: function(event) {
+//                 measurementManager.clearMeasurementLines();
+//                 // Bring the dragged element to the front
+//                 event.target.style.zIndex = '10';
+//             },
+//             move: function(event) {
+//                 const target = event.target;
+//                 // Get current position in inches (from data attributes)
+//                 let x = parseFloat(target.getAttribute('data-x')) || 0;
+//                 let y = parseFloat(target.getAttribute('data-y')) || 0;
+                
+//                 // Update position in inches
+//                 x += event.dx / scale;
+//                 y += event.dy / scale;
+                
+//                 // Update data attributes
+//                 target.setAttribute('data-x', x);
+//                 target.setAttribute('data-y', y);
+                
+//                 // Update CSS position (convert inches to pixels)
+//                 target.style.left = `${x * scale}px`;
+//                 target.style.top = `${y * scale}px`;
+                
+//                 // Update server position
+//                 updateObjectPosition(target.id.replace('object-', ''), x, y);
+
+//                 // Update measurement lines
+//                 const width = parseFloat(target.getAttribute('data-width'));
+//                 const height = parseFloat(target.getAttribute('data-height'));
+//                 measurementManager.drawMeasurementLines(x, y, width, height, scale);
+//             },
+//             end: function(event) {
+//                 measurementManager.clearMeasurementLines();
+//                 // Reset z-index after dragging
+//                 event.target.style.zIndex = '2';
+//             }
+//         }
+//     });
+// }
 
 function updateObjectPosition(objId, x, y) {
     fetch(`${window.urls.updatePosition}/${objId}`, {
@@ -344,11 +405,17 @@ window.addEventListener('load', () => {
         obj.style.zIndex = '2';
     });
 
+    // --- Debug lines ---
+    console.log("Interact.js loaded:", typeof interact !== 'undefined');
+    console.log("Canvas objects found:", document.querySelectorAll('.canvas-object').length);
+    // -------------------
+
     makeObjectsDraggable();
     updateDimensionLabels();
     checkCollisions();
     setInterval(checkCollisions, 500);
 });
+
 window.addEventListener('resize', () => {
     resizeCanvas();
     positionCanvasObjects();

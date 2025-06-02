@@ -94,7 +94,6 @@ def add_permanent_object():
         height = float(request.form.get('height', 0))
         x = float(request.form.get('x', 0))
         y = float(request.form.get('y', 0))
-        color = request.form.get('color', '#6495ed')
         
         # Handle file upload
         image_path = None
@@ -114,7 +113,6 @@ def add_permanent_object():
             height=height,
             x=x,
             y=y,
-            color=color,
             image_path=image_path,
             wall_id=wall_id
         )
@@ -147,7 +145,11 @@ def edit_permanent_objects():
         flash("No wall selected", "error")
         return redirect(url_for('select_wall_space'))
     
-    return render_template('lock_objects.html', wall=wall)
+    permanent_objects = [obj.to_dict() for obj in wall.permanent_objects]
+    
+    return render_template('lock_objects.html', 
+                           wall=wall, 
+                           permanent_objects=permanent_objects)
 
 @app.route('/update_permanent_object', methods=['POST'])
 def update_permanent_object():
@@ -158,7 +160,6 @@ def update_permanent_object():
         height = float(request.form.get('height', 0))
         x = float(request.form.get('x', 0))
         y = float(request.form.get('y', 0))
-        color = request.form.get('color', '#6495ed')
         
         from gallery.models.permanent_object import PermanentObject
         obj = PermanentObject.query.get_or_404(obj_id)
@@ -167,7 +168,6 @@ def update_permanent_object():
         obj.height = height
         obj.x = x
         obj.y = y
-        obj.color = color
         
         # Handle file upload if needed
         if 'image' in request.files:

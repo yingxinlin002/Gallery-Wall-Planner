@@ -173,9 +173,13 @@
                         <div id="canvas-objects-layer">
                             {% for obj in wall.permanent_objects %}
                                 <div class="canvas-object"
-                                     id="object-{{ obj.id }}"
-                                     data-id="{{ obj.id }}"
-                                     style="--object-color: {{ obj.color|default('#6495ed') }}">
+                                    id="object-{{ obj.id }}"
+                                    data-id="{{ obj.id }}"
+                                    data-x="{{ obj.x }}"
+                                    data-y="{{ obj.y }}"
+                                    data-width="{{ obj.width }}"
+                                    data-height="{{ obj.height }}"
+                                    style="--obj-width: {{ obj.width }}; --obj-height: {{ obj.height }}; --obj-x: {{ obj.x }}; --obj-y: {{ obj.y }};">
                                     <div class="object-content">
                                         <span class="object-name">{{ obj.name }}</span>
                                         {% if obj.image_path %}
@@ -230,10 +234,6 @@
                                 <div class="mb-3">
                                     <label for="itemHeight" class="form-label">Height (inches)</label>
                                     <input type="number" class="form-control" id="itemHeight" name="height" min="0" step="0.1" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="itemColor" class="form-label">Color</label>
-                                    <input type="color" class="form-control form-control-color" id="itemColor" name="color" value="#6495ed">
                                 </div>
                                 <div class="mb-3">
                                     <label for="itemImage" class="form-label">Image</label>
@@ -313,7 +313,7 @@
             width: {{ wall.width }},
             height: {{ wall.height }},
             color: "{{ wall.color }}",
-            permanentObjects: {{ wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }}
+            permanentObjects: {{ permanent_objects|tojson|safe }}
         };
         window.urls = {
             addObject: "{{ url_for('add_permanent_object') }}",

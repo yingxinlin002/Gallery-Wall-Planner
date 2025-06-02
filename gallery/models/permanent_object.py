@@ -25,7 +25,7 @@ class PermanentObject(WallObject):
         self.image_path = image_path
         self.wall_id = wall_id
 
-    def to_dict(self) -> Dict:
+    def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,

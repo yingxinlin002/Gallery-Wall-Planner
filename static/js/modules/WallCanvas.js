@@ -49,8 +49,13 @@ export class WallCanvas {
         }
     }
 
+    // In WallCanvas.js
     getScale() {
-        return this.scale;
+        // Return the scale factor (pixels per inch)
+        return Math.min(
+            this.canvas.width / this.wallWidth,
+            this.canvas.height / this.wallHeight
+        );
     }
 
     clear() {
