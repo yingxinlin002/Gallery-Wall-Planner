@@ -116,7 +116,7 @@ function makeObjectsDraggable() {
 }
 
 function updateObjectPosition(objId, x, y) {
-    fetch(`/update_object_position/${objId}`, {
+    fetch(`${window.urls.updatePosition}/${objId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -318,8 +318,7 @@
         window.urls = {
             addObject: "{{ url_for('add_permanent_object') }}",
             updateObject: "{{ url_for('update_permanent_object') }}",
-            deleteObject: "{{ url_for('delete_permanent_object') }}",
-            updatePosition: "{{ url_for('update_object_position') }}",
+            updatePosition: (objId) => `/update_object_position/${objId}`,
             editor: "{{ url_for('editor') }}"
         };
         window.csrfToken = "{{ csrf_token() }}";

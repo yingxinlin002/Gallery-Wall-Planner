@@ -202,11 +202,65 @@ class LockObjectsApp {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': this.csrfToken
+                'X-CSRFToken': this.csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }).then(response => {
-            if (response.ok) {
-                window.location.reload();
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Add the new object to the list
+                this.addObjectToList(data.object);
+                // Add the object to the canvas
+                this.objectManager.addObject(data.object);
+                // Close the modal
+                bootstrap.Modal.getInstance(this.elements.newItemForm.closest('.modal')).hide();
+                // Reset the form
+                this.elements.newItemForm.reset();
+                console.log('Object added successfully:', data.object);
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while adding the fixture');
+        });
+    }
+
+    addObjectToList(obj) {
+        const newItem = document.createElement('div');
+        newItem.className = 'list-group-item wall-item d-flex justify-content-between align-items-center';
+        newItem.setAttribute('draggable', 'true');
+        newItem.setAttribute('data-id', obj.id);
+        newItem.setAttribute('data-obj', JSON.stringify(obj));
+        newItem.innerHTML = `
+            <span>${obj.name}</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary edit-btn" data-id="${obj.id}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-outline-danger delete-btn" data-id="${obj.id}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        this.elements.permanentObjectsList.appendChild(newItem);
+        
+        // Reattach event listeners to the new buttons
+        newItem.querySelector('.edit-btn').addEventListener('click', (e) => {
+            const itemId = e.currentTarget.getAttribute('data-id');
+            this.showEditModal(itemId);
+        });
+        
+        newItem.querySelector('.delete-btn').addEventListener('click', (e) => {
+            const itemId = e.currentTarget.getAttribute('data-id');
+            if (confirm('Are you sure you want to delete this fixture?')) {
+                this.deleteObject(itemId);
             }
         });
     }

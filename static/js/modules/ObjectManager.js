@@ -16,34 +16,65 @@ export class ObjectManager {
     }
 
     addObject(objData) {
+        console.log('Adding object:', objData); // Debug log
+        // Create the object with all necessary properties
         const object = {
-            ...objData,
-            element: this.createObjectElement(objData),
+            id: objData.id,
+            name: objData.name,
+            width: objData.width,
+            height: objData.height,
+            x: objData.x,
+            y: objData.y,
+            color: objData.color || '#6495ed',
+            image_path: objData.image_path,
+            element: null,
             isColliding: false
         };
         
+        // Create and store the DOM element
+        object.element = this.createObjectElement(object);
+        
+        // Add to objects array
         this.objects.push(object);
+        
+        // Position and make draggable
         this.positionObject(object);
         this.makeDraggable(object);
         
         return object;
     }
 
-    createObjectElement(objData) {
+    createObjectElement(object) {
         const objectLayer = document.getElementById('canvas-objects-layer');
+        if (!objectLayer) {
+            console.error('Canvas objects layer not found');
+            return null;
+        }
         const objectElement = document.createElement('div');
         
         objectElement.className = 'canvas-object';
-        objectElement.id = `object-${objData.id}`;
-        objectElement.innerHTML = `
+        objectElement.id = `object-${object.id}`;
+        objectElement.style.setProperty('--object-color', object.color);
+        
+        // Set data attributes for positioning
+        objectElement.setAttribute('data-id', object.id);
+        objectElement.setAttribute('data-x', object.x);
+        objectElement.setAttribute('data-y', object.y);
+        objectElement.setAttribute('data-width', object.width);
+        objectElement.setAttribute('data-height', object.height);
+        
+        // Create object content
+        const contentHTML = `
             <div class="object-content">
-                <span class="object-name">${objData.name}</span>
-                ${objData.image ? `<img src="${objData.image}" alt="${objData.name}" class="object-image">` : ''}
+                <span class="object-name">${object.name}</span>
+                ${object.image_path ? `<img src="/static/${object.image_path}" alt="${object.name}" class="object-image">` : ''}
             </div>
             <div class="object-handle object-handle-resize"></div>
         `;
         
+        objectElement.innerHTML = contentHTML;
         objectLayer.appendChild(objectElement);
+        
         return objectElement;
     }
 
@@ -85,6 +116,10 @@ export class ObjectManager {
                     
                     this.positionObject(object);
                     
+                    // Update data attributes
+                    object.element.setAttribute('data-x', object.x);
+                    object.element.setAttribute('data-y', object.y);
+                    
                     // Check for collisions
                     object.isColliding = this.collisionDetector.checkCollisions(object, this.objects);
                     this.updateObjectAppearance(object);
@@ -99,15 +134,34 @@ export class ObjectManager {
                         this.wallCanvas.wallHeight,
                         scale
                     );
+                    
+                    // Send position update to server
+                    this.updateObjectPosition(object);
                 },
                 end: (event) => {
                     object.element.style.zIndex = '2';
                     this.measurementManager.clear();
-                    // Here you would typically save the new position to your backend
                 }
             }
         });
     }
+
+    updateObjectPosition(object) {
+        const url = window.urls.updatePosition(object.id);
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: JSON.stringify({ 
+                x: object.x, 
+                y: object.y 
+            })
+        }).catch(error => {
+            console.error('Error updating position:', error);
+        });
+}
 
     updateObjectAppearance(object) {
         if (object.isColliding) {

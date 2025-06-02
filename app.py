@@ -84,22 +84,9 @@ def submit_wall():
     # Redirect to permanent object placement page
     return redirect(url_for('edit_permanent_objects'))
 
-@app.route('/edit-permanent-objects')
-def edit_permanent_objects():
-    wall = get_current_wall()
-    if wall is None:
-        flash("No wall selected", "error")
-        return redirect(url_for('select_wall_space'))
-    
-    return render_template('lock_objects.html', wall=wall)
-
-@app.route('/lock_objects/<int:wall_id>')
-def lock_objects(wall_id):
-    wall = Wall.query.get_or_404(wall_id)
-    return render_template('lock_objects.html', wall=wall)
-
-@app.route('/add-permanent-object', methods=['POST'])
+@app.route('/add_permanent_object', methods=['POST'])
 def add_permanent_object():
+    from gallery.models.permanent_object import PermanentObject
     try:
         wall_id = request.form.get('wall_id')
         name = request.form.get('name')
@@ -133,12 +120,73 @@ def add_permanent_object():
         )
         db.session.add(obj)
         db.session.commit()
-        flash("Fixture added successfully", "success")
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True,
+                'object': obj.to_dict()
+            })
+        else:
+            flash("Fixture added successfully", "success")
+            return redirect(url_for('edit_permanent_objects'))
+        
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 400
+        else:
+            flash(f"Error adding fixture: {str(e)}", "error")
+            return redirect(url_for('edit_permanent_objects'))
+    
+@app.route('/edit_permanent_objects')
+def edit_permanent_objects():
+    wall = get_current_wall()
+    if not wall:
+        flash("No wall selected", "error")
+        return redirect(url_for('select_wall_space'))
+    
+    return render_template('lock_objects.html', wall=wall)
+
+@app.route('/update_permanent_object', methods=['POST'])
+def update_permanent_object():
+    try:
+        obj_id = request.form.get('obj_id')
+        name = request.form.get('name')
+        width = float(request.form.get('width', 0))
+        height = float(request.form.get('height', 0))
+        x = float(request.form.get('x', 0))
+        y = float(request.form.get('y', 0))
+        color = request.form.get('color', '#6495ed')
+        
+        from gallery.models.permanent_object import PermanentObject
+        obj = PermanentObject.query.get_or_404(obj_id)
+        obj.name = name
+        obj.width = width
+        obj.height = height
+        obj.x = x
+        obj.y = y
+        obj.color = color
+        
+        # Handle file upload if needed
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                upload_dir = os.path.join(app.static_folder, 'uploads')
+                os.makedirs(upload_dir, exist_ok=True)
+                filepath = os.path.join(upload_dir, filename)
+                file.save(filepath)
+                obj.image_path = os.path.join('uploads', filename)
+        
+        db.session.commit()
+        flash("Fixture updated successfully", "success")
         return redirect(url_for('edit_permanent_objects'))
     
     except Exception as e:
         db.session.rollback()
-        flash(f"Error adding fixture: {str(e)}", "error")
+        flash(f"Error updating fixture: {str(e)}", "error")
         return redirect(url_for('edit_permanent_objects'))
 
 @app.route('/delete_permanent_object/<int:obj_id>', methods=['POST'])
@@ -167,7 +215,7 @@ def select_wall(wall_id):
     session["current_wall_id"] = wall_id
     return redirect(url_for('select_wall_space'))
 
-@app.route('/create-wall', methods=['GET', 'POST'])
+@app.route('/create_wall', methods=['GET', 'POST'])
 def create_wall():
     if request.method == 'POST':
         name = request.form.get('wall_name')
