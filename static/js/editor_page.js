@@ -1,12 +1,7 @@
-import { EvenSpacing } from './even_spacing.js';
-import { MeasurementLinesManager } from './measurement_lines_manager.js';
+//import { EvenSpacing } from './even_spacing.js';
+//import { MeasurementLinesManager } from './measurement_lines_manager.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Sidebar collapse
-    document.getElementById('toggleSidebarBtn').addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-    });
-
     // Add artwork to canvas
     document.querySelectorAll('.add-artwork-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -18,43 +13,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Create artwork form
-    document.getElementById('createArtworkForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        fetch('/artwork-manual', {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // Add to imported list
-                addArtworkToImportedList(data.artwork);
-                window.unplacedArtworkData.push(data.artwork);
-                document.getElementById('createArtworkForm').reset();
-                bootstrap.Modal.getInstance(document.getElementById('createArtworkModal')).hide();
-            } else {
-                alert(data.error || 'Error creating artwork');
-            }
-        });
-    });
-
     // Canvas logic
     const canvas = document.getElementById('wall-canvas');
     const layer = document.getElementById('canvas-artwork-layer');
+    const container = document.getElementById('canvas-container');
     const wall = window.currentWallData;
+
+    // Check if essential elements exist
+    if (!canvas || !layer || !container || !wall) {
+        console.error('Essential elements not found:', {canvas, layer, container, wall});
+        return;
+    }
+
     let placedArtworks = window.currentWallArtworkData || [];
 
     // Draw wall
     function drawWall() {
+        if (!canvas || !wall) return;
+
         const ctx = canvas.getContext('2d');
         const scale = getScale();
+        if (!scale) return;
+
         canvas.width = wall.width * scale;
         canvas.height = wall.height * scale;
         ctx.fillStyle = wall.color || '#fff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         ctx.strokeStyle = '#ccc';
         ctx.lineWidth = 1;
         for (let x = 0; x <= wall.width; x += 12) {
@@ -72,7 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getScale() {
-        const container = document.getElementById('canvas-container');
+        if (!container || !wall || !wall.width || !wall.height) {
+            console.error('Missing required data for scaling');
+            return 1; // Default scale if something is missing
+        }
         return Math.min(
             container.clientWidth / wall.width,
             container.clientHeight / wall.height
@@ -161,18 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function addArtworkToImportedList(artwork) {
-        const list = document.getElementById('importedArtworkList');
-        const div = document.createElement('div');
-        div.className = 'd-flex align-items-center justify-content-between border rounded p-2 mb-2';
-        div.innerHTML = `<span>${artwork.name}</span>
-            <button class="btn btn-sm btn-primary add-artwork-btn" data-artwork-id="${artwork.id}">Add</button>`;
-        div.querySelector('.add-artwork-btn').addEventListener('click', function() {
-            addArtworkToCanvas(artwork);
-        });
-        list.prepend(div);
-    }
-
     // Initial render
     drawWall();
     renderArtworks();
@@ -180,4 +156,18 @@ document.addEventListener('DOMContentLoaded', function() {
         drawWall();
         renderArtworks();
     });
+
+    // Add Artwork button handler
+    const addArtworkBtn = document.getElementById('addArtworkBtn');
+    if (addArtworkBtn) {
+        addArtworkBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (window.artworkManualUrl) {
+                window.location.href = window.artworkManualUrl;
+            } else {
+                console.error('artworkManualUrl is not defined');
+                window.location.href = '/artwork-manual';
+            }
+        });
+    }
 });

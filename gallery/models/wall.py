@@ -52,13 +52,11 @@ class Wall(db.Model):
 
     def to_dict(self) -> Dict:
         return {
-            'id': self.id,
-            'name': self.name,
-            'width': self.width,
-            'height': self.height,
-            'color': self.color,
-            'permanent_objects': self.get_permanent_objects(),
-            'artworks': [artwork.to_dict() for artwork in self.artworks]
+            "id": self.id,
+            "name": self.name,
+            "width": self.width,
+            "height": self.height,
+            "color": self.color,
         }
 
     def __repr__(self):

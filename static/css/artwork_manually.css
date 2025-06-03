@@ -1,0 +1,135 @@
+:root {
+    --primary-color: #5F3FCA;
+    --secondary-color: #69718A;
+    --info-color: #17a2b8;
+    --success-color: #28a745;
+    --bg-color: #F0F0F0;
+    --white: #ffffff;
+    --gray: #6c757d;
+    --light-gray: #f8f9fa;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Arial', sans-serif;
+}
+
+.main-container {
+    background-color: var(--white);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    margin: 20px auto;
+    padding: 30px;
+}
+
+.form-title {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(95, 63, 202, 0.25);
+}
+
+.placeholder {
+    color: var(--gray);
+}
+
+/* Placeholder styling */
+::placeholder {
+    color: var(--gray);
+    opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+    color: var(--gray);
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+    color: var(--gray);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #4a30a0;
+    border-color: #4a30a0;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+    background-color: #4d5462;
+    border-color: #4d5462;
+}
+
+.btn-info {
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.artwork-list-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+.artwork-item {
+    background-color: var(--light-gray);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.artwork-name {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.artwork-details {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+#optionalFields {
+    transition: all 0.3s ease;
+}
+
+.file-upload {
+    display: none;
+}
+
+.file-upload-label {
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    background-color: var(--info-color);
+    color: var(--white);
+    border-radius: 4px;
+}
+
+.file-name {
+    margin-left: 10px;
+    font-size: 0.9rem;
+    color: var(--gray);
+}

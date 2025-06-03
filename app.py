@@ -236,15 +236,17 @@ def save_and_continue():
 
 @app.route('/editor')
 def editor():
-    wall = get_current_wall()
-    # Unplaced artworks: those not assigned to any wall
+    from gallery.models.wall_line import SingleLine as WallLine
+    current_wall = get_current_wall()
     unplaced_artwork = Artwork.query.filter_by(wall_id=None).all()
+    current_wall_artwork = Artwork.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
+    wall_lines = WallLine.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
     return render_template(
         'editor.html',
-        current_wall=wall.to_dict() if wall else None,
-        unplaced_artwork=unplaced_artwork,
-        current_wall_artwork=[a.to_dict() for a in getattr(wall, 'artworks', [])] if wall else [],
-        wall_lines=getattr(wall, "snap_lines", [])
+        current_wall=current_wall.to_dict() if current_wall else None,
+        unplaced_artwork=[a.to_dict() for a in unplaced_artwork],
+        current_wall_artwork=[a.to_dict() for a in current_wall_artwork],
+        wall_lines=[l.to_dict() for l in wall_lines]
     )
 
 @app.route('/artwork-manual', methods=['GET', 'POST'])
@@ -258,7 +260,7 @@ def artwork_manual():
                 value = form.get(field)
                 return float(value) if value else default
 
-            # Create new artwork
+            # Create new artwork - IMPORTANT: Set wall_id=None
             artwork = Artwork(
                 name=request.form.get('name', '').strip(),
                 width=get_float(request.form, 'width'),
@@ -268,7 +270,7 @@ def artwork_manual():
                 depth=get_float(request.form, 'depth'),
                 price=get_float(request.form, 'price'),
                 nfs=bool(request.form.get('nfs')),
-                wall_id=wall.id if wall else None
+                wall_id=None  # This is the key change - don't assign to wall immediately
             )
             
             # Handle file upload

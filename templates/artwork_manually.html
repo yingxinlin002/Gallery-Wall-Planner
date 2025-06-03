@@ -5,129 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enter Artwork Manually</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #5F3FCA;
-            --secondary-color: #69718A;
-            --info-color: #17a2b8;
-            --success-color: #28a745;
-            --bg-color: #F0F0F0;
-            --white: #ffffff;
-            --gray: #6c757d;
-            --light-gray: #f8f9fa;
-        }
-        
-        body {
-            background-color: var(--bg-color);
-            font-family: 'Arial', sans-serif;
-        }
-        
-        .main-container {
-            background-color: var(--white);
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-            margin: 20px auto;
-            padding: 30px;
-        }
-        
-        .form-title {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(95, 63, 202, 0.25);
-        }
-        
-        .placeholder {
-            color: var(--gray);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: #4a30a0;
-            border-color: #4a30a0;
-        }
-        
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-secondary:hover {
-            background-color: #4d5462;
-            border-color: #4d5462;
-        }
-        
-        .btn-info {
-            background-color: var(--info-color);
-            border-color: var(--info-color);
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-        }
-        
-        .artwork-list-container {
-            max-height: 70vh;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-        }
-        
-        .artwork-item {
-            background-color: var(--light-gray);
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .artwork-name {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .artwork-details {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-        
-        #optionalFields {
-            transition: all 0.3s ease;
-        }
-        
-        .file-upload {
-            display: none;
-        }
-        
-        .file-upload-label {
-            display: inline-block;
-            padding: 6px 12px;
-            cursor: pointer;
-            background-color: var(--info-color);
-            color: var(--white);
-            border-radius: 4px;
-        }
-        
-        .file-name {
-            margin-left: 10px;
-            font-size: 0.9rem;
-            color: var(--gray);
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/artwork_manually.css') }}">
 </head>
 <body>
     <div class="container-fluid">
@@ -143,23 +21,23 @@
                         <!-- Required Fields -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Name*</label>
-                            <input type="text" class="form-control placeholder" id="name" name="name" value="e.g., Starry Night">
+                            <input type="text" class="form-control" id="name" name="name" placeholder="e.g., Starry Night" required>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col">
                                 <label for="width" class="form-label">Width* (inches)</label>
-                                <input type="number" class="form-control placeholder" id="width" name="width" value="e.g., 24.5" step="0.1">
+                                <input type="number" class="form-control" id="width" name="width" placeholder="e.g., 24.5" step="0.1" min="0.1" required>
                             </div>
                             <div class="col">
                                 <label for="height" class="form-label">Height* (inches)</label>
-                                <input type="number" class="form-control placeholder" id="height" name="height" value="e.g., 36.0" step="0.1">
+                                <input type="number" class="form-control" id="height" name="height" placeholder="e.g., 36.0" step="0.1" mini="0.1" required>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="hanging" class="form-label">Hanging Point* (inches from top)</label>
-                            <input type="number" class="form-control placeholder" id="hanging" name="hanging" value="e.g., 12.0" step="0.1">
+                            <input type="number" class="form-control" id="hanging" name="hanging" placeholder="e.g., 12.0" step="0.1" required>
                         </div>
                         
                         <!-- Toggle Button for Optional Fields -->
@@ -171,17 +49,17 @@
                         <div id="optionalFields" style="display: none;">
                             <div class="mb-3">
                                 <label for="medium" class="form-label">Medium</label>
-                                <input type="text" class="form-control placeholder" id="medium" name="medium" value="e.g., Oil on canvas">
+                                <input type="text" class="form-control" id="medium" name="medium" placeholder="e.g., Oil on canvas">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="depth" class="form-label">Depth (inches)</label>
-                                <input type="number" class="form-control placeholder" id="depth" name="depth" value="e.g., 2.0" step="0.1">
+                                <input type="number" class="form-control" id="depth" name="depth" placeholder="e.g., 2.0" step="0.1" min="0.0">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="price" class="form-label">Price (USD)</label>
-                                <input type="number" class="form-control placeholder" id="price" name="price" value="e.g., 2500.00" step="0.01">
+                                <input type="number" class="form-control" id="price" name="price" placeholder="e.g., 2500.00" step="0.01" min="0.00">
                             </div>
                             
                             <div class="mb-3 form-check">
@@ -239,7 +117,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Pass the editor URL to JS
         window.goBackToEditorUrl = "{{ url_for('editor') }}";
     </script>
     <script src="{{ url_for('static', filename='js/artwork_manually.js') }}"></script>

@@ -10,7 +10,20 @@
             background-color: #fff;
         }
         .wall-btn.active {
-            background-color: yellow;
+            background-color: #e8f4ff;  /* Light blue background */
+            color: #0056b3;             /* Darker blue text */
+            border-left: 4px solid #0056b3; /* Left border accent */
+            font-weight: 500;
+        }
+
+        /* Optional: Add hover effect */
+        .wall-btn:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+
+        /* Optional: Transition for smooth color change */
+        .list-group-item {
+            transition: all 0.2s ease;
         }
     </style>
 </head>

@@ -1,23 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize placeholder handling
-    document.querySelectorAll('.placeholder').forEach(input => {
-        const placeholder = input.value;
-        
-        input.addEventListener('focus', function() {
-            if (this.value === placeholder) {
-                this.value = '';
-                this.classList.remove('placeholder');
-            }
-        });
-        
-        input.addEventListener('blur', function() {
-            if (this.value === '') {
-                this.value = placeholder;
-                this.classList.add('placeholder');
-            }
-        });
-    });
-
     // File upload handling
     document.getElementById('imageUpload').addEventListener('change', function(e) {
         const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
@@ -47,11 +28,22 @@ document.addEventListener('DOMContentLoaded', function() {
         let isValid = true;
         
         requiredFields.forEach(field => {
-            const value = form.elements[field].value;
-            if (!value || value === form.elements[field].placeholder) {
+            const input = form.elements[field];
+            if (!input.value || input.value.trim() === '') {
                 alert(`Please fill in the ${field} field`);
+                input.focus();
                 isValid = false;
                 return;
+            }
+            
+            // Additional validation for number fields
+            if (['width', 'height', 'hanging'].includes(field)) {
+                if (isNaN(input.value) || Number(input.value) <= 0) {
+                    alert(`Please enter a valid positive number for ${field}`);
+                    input.focus();
+                    isValid = false;
+                    return;
+                }
             }
         });
         
@@ -78,6 +70,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('fileName').textContent = 'No file selected';
                 // Show success message
                 alert('Artwork created successfully!');
+                //refresh the page to show the new artwork
+                window.location.reload();
             }
         })
         .catch(error => {
@@ -112,6 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.goBackToEditor = function() {
-        window.location.href = window.goBackToEditorUrl;
+        window.location.href = window.goBackToEditorUrl + '?refresh=' + new Date().getTime();
     };
 });
