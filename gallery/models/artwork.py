@@ -19,6 +19,7 @@ class Artwork(WallObject):
     depth = db.Column(db.Float)
     price = db.Column(db.Float)
     nfs = db.Column(db.Boolean, default=False)
+    notes = db.Column(db.String(500))
     image_path = db.Column(db.String(200))
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'))
     gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))

@@ -1,40 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery Wall Editor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="editor-bg">
     <!-- Header -->
-    <div class="header-container">
+    <div class="canvas-header">
         <button class="btn btn-secondary" onclick="window.location.href='{{ url_for('select_wall_space') }}'">
-            <i class="fas fa-arrow-left"></i> Back to Wall Selection
+            &lt; Back to Wall Selection
         </button>
-        <button class="btn btn-primary" onclick="saveGallery()">Save</button>
-        <button class="btn btn-secondary" onclick="saveGalleryAs()">Save As</button>
-    </div>
-    <div class="content-container">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <!-- Collapsible sections for artwork, snap lines, actions -->
-            <!-- ...see your current HTML for details... -->
+        <h2 class="header-title">Organize Art</h2>
+        <div class="save-buttons">
+            <!-- Save buttons would go here -->
         </div>
-        <!-- Main Wall Space -->
-        <div class="wall-space">
-            <div class="wall-header">
-                <h2 class="wall-title"><i class="fas fa-vector-square"></i> Organize Art</h2>
-            </div>
-            <div class="wall-canvas">
-                <div class="canvas-container" id="canvas-container">
-                    <canvas id="wall-canvas"></canvas>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Artwork Tab -->
+            <div class="sidebar-section">
+                <div class="sidebar-header collapsible" data-target="artwork-content">
+                    <span><i class="fas fa-image"></i> Imported Artwork</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="sidebar-content" id="artwork-content">
+                    <div class="artwork-list">
+                        {% for artwork in unplaced_artwork %}
+                        <div class="artwork-item">
+                            <span>{{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")</span>
+                            <button class="btn btn-sm btn-primary add-artwork-btn" data-artwork-id="{{ artwork.id }}">Add</button>
+                        </div>
+                        {% endfor %}
+                        {% if not unplaced_artwork %}
+                        <div class="empty-message">No artworks added yet</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
+
+            <!-- Snap Lines Tab -->
+            <div class="sidebar-section">
+                <div class="sidebar-header collapsible" data-target="snap-lines-content">
+                    <span><i class="fas fa-ruler-horizontal"></i> Snap Lines</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="sidebar-content" id="snap-lines-content" style="display: none;">
+                    <div class="snap-lines-list">
+                        {% for line in wall_lines %}
+                        <div class="snap-line-item" data-line-id="{{ line.id }}">
+                            <span>{{ line.name }}</span>
+                            <div class="line-actions">
+                                <button class="btn btn-sm btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if not wall_lines %}
+                        <div class="empty-message">No snap lines added yet</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="sidebar-actions">
+                <button class="btn btn-success" id="addArtworkBtn">
+                    <i class="fas fa-plus"></i> Add Artwork
+                </button>
+                <button class="btn btn-info" id="addSnapLineBtn">
+                    <i class="fas fa-ruler-horizontal"></i> Add Snap Line
+                </button>
+                <button class="btn btn-primary" id="evenSpacingBtn">
+                    <i class="fas fa-arrows-alt-h"></i> Even Spacing
+                </button>
+                <button class="btn btn-warning" id="calcInstructionBtn">
+                    <i class="fas fa-calculator"></i> Calculate Installation Instruction
+                </button>
+            </div>
+        </div>
+
+        <!-- Wall Canvas -->
+        <div class="wall-space">
+            <div class="canvas-container">
+                <canvas id="wall-canvas"></canvas>
+                <div id="canvas-artwork-layer"></div>
+            </div>
         </div>
     </div>
-    <!-- Modals for add/edit artwork, snap lines, even spacing, etc. -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="{{ url_for('static', filename='js/editor.js') }}"></script>
+
+    <script>
+        window.currentWallData = {{ current_wall|tojson|safe }};
+        window.currentWallArtworkData = {{ current_wall_artwork|tojson|safe }};
+        window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};
+        window.wallLinesData = {{ wall_lines|tojson|safe }};
+        window.csrfToken = "{{ csrf_token() }}";
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 </body>
 </html>

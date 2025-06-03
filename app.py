@@ -241,9 +241,9 @@ def editor():
     unplaced_artwork = Artwork.query.filter_by(wall_id=None).all()
     return render_template(
         'editor.html',
-        current_wall=wall,
+        current_wall=wall.to_dict() if wall else None,
         unplaced_artwork=unplaced_artwork,
-        current_wall_artwork=getattr(wall, "artworks", []),
+        current_wall_artwork=[a.to_dict() for a in getattr(wall, 'artworks', [])] if wall else [],
         wall_lines=getattr(wall, "snap_lines", [])
     )
 
