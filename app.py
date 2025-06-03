@@ -238,7 +238,8 @@ def save_and_continue():
 def editor():
     from gallery.models.wall_line import SingleLine as WallLine
     current_wall = get_current_wall()
-    unplaced_artwork = Artwork.query.filter_by(wall_id=None).all()
+    # Get artworks not placed on ANY wall (not just current wall)
+    unplaced_artwork = Artwork.query.filter(Artwork.wall_id.is_(None)).all()
     current_wall_artwork = Artwork.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
     wall_lines = WallLine.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
     return render_template(
@@ -286,6 +287,7 @@ def artwork_manual():
             
             db.session.add(artwork)
             db.session.commit()
+            app.logger.info(f"Created artwork: {artwork.id}, wall_id: {artwork.wall_id}")
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({

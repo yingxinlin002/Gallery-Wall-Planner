@@ -72,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Artwork created successfully!');
                 //refresh the page to show the new artwork
                 window.location.reload();
+                window.location.href = window.goBackToEditorUrl;
             }
         })
         .catch(error => {
