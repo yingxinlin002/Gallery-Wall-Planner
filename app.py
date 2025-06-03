@@ -344,4 +344,6 @@ def update_artwork_position(artwork_id):
     return jsonify({'success': True})
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0
+    port = int(os.environ.get("PORT", 8080))  # Default to 5000
+    app.run(debug=True, host=host, port=port)
