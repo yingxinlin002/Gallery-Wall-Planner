@@ -345,5 +345,5 @@ def update_artwork_position(artwork_id):
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0
-    port = int(os.environ.get("PORT", 8080))  # Default to 5000
+    port = int(os.environ.get("PORT", 8080))  # Default to 8080
     app.run(debug=True, host=host, port=port)
