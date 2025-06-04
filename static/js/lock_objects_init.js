@@ -2,7 +2,6 @@ import { WallCanvas } from './modules/WallCanvas.js';
 import { ObjectManager } from './modules/ObjectManager.js';
 import { MeasurementManager } from './modules/MeasurementManager.js';
 import { CollisionDetector } from './modules/CollisionDetector.js';
-import interact from 'interactjs';
 
 class LockObjectsApp {
     constructor() {

@@ -9,6 +9,12 @@ export class ObjectManager {
         this.initInteractJS();
     }
 
+    initInteractJS() {
+        // You can add global Interact.js settings here if needed.
+        // For example, set up custom actions, plugins, or default options.
+        // If not needed, leave this empty.
+    }
+
     initObjects(objectsData) {
         objectsData.forEach(objData => {
             this.addObject(objData);

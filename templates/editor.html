@@ -21,7 +21,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-content">
+    <div class="main-content d-flex">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <!-- Artwork Tab -->
@@ -102,8 +102,8 @@
         window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};
         window.wallLinesData = {{ wall_lines|tojson|safe }};
         window.csrfToken = "{{ csrf_token() }}";
-        // Add timestamp to force fresh data
-        window.lastUpdated = new Date().getTime();
+        // Add permanent objects data
+        window.currentWallData.permanentObjects = {{ current_wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }};
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
