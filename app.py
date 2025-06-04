@@ -360,7 +360,7 @@ authentik = oauth.register(
     client_id=os.environ.get("AUTHENTIK_CLIENT_ID", "CLIENT_ID"),
     client_secret=os.environ.get("AUTHENTIK_CLIENT_SECRET", "CLIENT_SECRET"),
     access_token_url=os.environ.get("AUTHENTIK_TOKEN_URL", "https://auth.example.com/application/o/token/"),
-    server_metadata_url=os.environ.get("AUTHENTIK_METADATA_URL", "https://auth.example.com/application/o/galleryweb.well-known/openid-configuration"),
+    server_metadata_url=os.environ.get("AUTHENTIK_METADATA_URL", "https://auth.example.com/application/o/application-slug/.well-known/openid-configuration"),
     authorize_url=os.environ.get("AUTHENTIK_AUTHORIZE_URL", "https://auth.example.com/application/o/authorize/"),
     client_kwargs={
         'scope': os.environ.get("AUTHENTIK_SCOPE", "openid email profile"),
