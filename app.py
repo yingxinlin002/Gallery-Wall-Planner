@@ -350,11 +350,6 @@ def update_artwork_position(artwork_id):
 
 oauth = OAuth(app)
 
-@app.route('/login')
-def login():
-    redirect_uri = os.environ.get("AUTHENTIK_REDIRECT_URI", url_for('auth_callback', _external=True))
-    return authentik.authorize_redirect(redirect_uri)
-
 authentik = oauth.register(
     name='authentik',
     client_id=os.environ.get("AUTHENTIK_CLIENT_ID", "CLIENT_ID"),
@@ -367,14 +362,19 @@ authentik = oauth.register(
     },
 )
 
+@app.route('/login')
+def login():
+    redirect_uri = os.environ.get("AUTHENTIK_REDIRECT_URI", url_for('auth_callback', _external=True))
+    return authentik.authorize_redirect(redirect_uri)
+
 @app.route('/auth/callback')
 def auth_callback():
     token = authentik.authorize_access_token()
-    userinfo = authentik.userinfo()  # ← This is preferred for OIDC
+    userinfo = authentik.userinfo()
     session['user'] = userinfo
     return redirect('/')
 
 if __name__ == "__main__":
-    host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0
-    port = int(os.environ.get("HOST_PORT", 8080))  # Default to 8080
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("HOST_PORT", 8080))
     app.run(debug=True, host=host, port=port)
