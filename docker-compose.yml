@@ -2,18 +2,18 @@ version: "3.9"
 
 services:
   gallery-wall-planner:
-  build: .
-  ports:
-    - "${HOST_PORT:-11002}:8080"
-  environment:
-    - FLASK_ENV=development
-    - HOST=0.0.0.0
-    - PORT=8080
-    - AUTHENTIK_CLIENT_ID: "your-client-id"
-    - AUTHENTIK_CLIENT_SECRET: "your-client-secret"
-    - AUTHENTIK_AUTHORIZE_URL: "https://authentik.example.com/application/o/authorize/"
-    - AUTHENTIK_TOKEN_URL: "https://authentik.example.com/application/o/token/"
-    - AUTHENTIK_METADATA_URL: https://auth.example.com/application/o/gallery-wall-planner/.well-known/openid-configuration
-    - AUTHENTIK_REDIRECT_URI: "http://localhost:5000/auth/callback"
-    - AUTHENTIK_SCOPE: "openid email profile"
-  restart: unless-stopped
+    build: .
+    ports:
+      - "${HOST_PORT:-11002}:8080"
+    environment:
+      - FLASK_ENV=development
+      - HOST=0.0.0.0
+      - PORT=8080
+      - AUTHENTIK_CLIENT_ID: "your-client-id"
+      - AUTHENTIK_CLIENT_SECRET: "your-client-secret"
+      - AUTHENTIK_AUTHORIZE_URL: "https://authentik.example.com/application/o/authorize/"
+      - AUTHENTIK_TOKEN_URL: "https://authentik.example.com/application/o/token/"
+      - AUTHENTIK_METADATA_URL: https://auth.example.com/application/o/gallery-wall-planner/.well-known/openid-configuration
+      - AUTHENTIK_REDIRECT_URI: "http://localhost:5000/auth/callback"
+      - AUTHENTIK_SCOPE: "openid email profile"
+    restart: unless-stopped
