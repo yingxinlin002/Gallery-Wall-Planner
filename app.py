@@ -9,9 +9,10 @@ from gallery.models import db
 from gallery.models.project_exporter import export_gallery_to_excel, import_gallery_from_excel
 from flask_wtf import CSRFProtect
 from gallery.models.artwork import Artwork
+from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # Required for flashing messages
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")  # Required for flashing messages ## Adding OAuth Support
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
@@ -346,6 +347,32 @@ def update_artwork_position(artwork_id):
     artwork.wall_id = data.get('wall_id', artwork.wall_id)
     db.session.commit()
     return jsonify({'success': True})
+
+oauth = OAuth(app)
+
+@app.route('/login')
+def login():
+    redirect_uri = os.environ.get("AUTHENTIK_REDIRECT_URI", url_for('auth_callback', _external=True))
+    return authentik.authorize_redirect(redirect_uri)
+
+authentik = oauth.register(
+    name='authentik',
+    client_id=os.environ.get("AUTHENTIK_CLIENT_ID", "CLIENT_ID"),
+    client_secret=os.environ.get("AUTHENTIK_CLIENT_SECRET", "CLIENT_SECRET"),
+    access_token_url=os.environ.get("AUTHENTIK_TOKEN_URL", "https://auth.example.com/application/o/token/"),
+    server_metadata_url=os.environ.get("AUTHENTIK_METADATA_URL", "https://auth.example.com/application/o/galleryweb.well-known/openid-configuration"),
+    authorize_url=os.environ.get("AUTHENTIK_AUTHORIZE_URL", "https://auth.example.com/application/o/authorize/"),
+    client_kwargs={
+        'scope': os.environ.get("AUTHENTIK_SCOPE", "openid email profile"),
+    },
+)
+
+@app.route('/auth/callback')
+def auth_callback():
+    token = authentik.authorize_access_token()
+    userinfo = authentik.userinfo()  # ← This is preferred for OIDC
+    session['user'] = userinfo
+    return redirect('/')
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0
