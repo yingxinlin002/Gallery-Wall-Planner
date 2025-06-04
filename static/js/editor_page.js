@@ -182,6 +182,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function makeArtworksDraggable() {
+            console.log('Attempting to make artworks draggable');
+            if (typeof interact === 'undefined') {
+                console.error('Interact.js not loaded!');
+                return;
+            }
+
+            const artworks = document.querySelectorAll('.canvas-artwork');
+            console.log(`Found ${artworks.length} artworks to make draggable`);
+            
             const scale = getScale();
             
             interact('.canvas-artwork').draggable({
@@ -248,6 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         target.style.zIndex = '2';
                     }
                 }
+            }).on('dragstart', function(event) {
+                console.log('Drag started for:', event.target);
             });
         }
 
