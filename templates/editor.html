@@ -110,8 +110,8 @@
         window.artworkManualUrl = "{{ url_for('artwork_manual') }}";
         window.currentWallData = {{ current_wall|tojson|safe }};
         window.currentWallArtworkData = {{ current_wall_artwork|tojson|safe }};
-        window.allArtworkData = {{ all_artwork|tojson|safe }};  // Changed from unplacedArtworkData
-        window.wallLinesData = {{ wall_lines|tojson|safe }};
+        window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};  // Added
+        window.allArtworkData = {{ all_artwork|tojson|safe }};
         window.csrfToken = "{{ csrf_token() }}";
         window.currentWallData.permanentObjects = {{ current_wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }};
     </script>

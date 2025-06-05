@@ -21,10 +21,10 @@ class Artwork(WallObject):
     nfs = db.Column(db.Boolean, default=False)
     notes = db.Column(db.String(500))
     image_path = db.Column(db.String(200))
-    wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'))
     gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
-    x_position = db.Column(db.Float)
-    y_position = db.Column(db.Float)
+    x_position = db.Column(db.Float, nullable=True)  # Allow null for unplaced artworks
+    y_position = db.Column(db.Float, nullable=True)
+    wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'), nullable=True)
     
 
     def __init__(self, name: str = "", medium: str = "", width: float = 0.0, height: float = 0.0,
@@ -60,17 +60,18 @@ class Artwork(WallObject):
         return {
             'id': self.id,
             'name': self.name,
-            'medium': self.medium,
             'width': self.width,
             'height': self.height,
+            'x_position': self.x_position,
+            'y_position': self.y_position,
+            'wall_id': self.wall_id,
+            'medium': self.medium,
             'depth': self.depth,
             'hanging_point': self.hanging_point,
             'price': self.price,
             'nfs': self.nfs,
             'image_path': self.image_path,
-            'notes': self.notes,
-            'wall_id': self.wall_id,
-            'position': {'x': self.x_position, 'y': self.y_position}
+            'notes': self.notes
         }
 
     @classmethod

@@ -23,8 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!canvas || !layer || !container || !wall) {
         console.error('Essential elements not found:', {canvas, layer, container, wall});
     } else {
+        // Initialize with only artworks that are actually placed on this wall
         let allArtworks = window.allArtworkData || [];
-        let placedArtworks = window.currentWallArtworkData || [];
+        let placedArtworks = (window.currentWallArtworkData || []).filter(
+            a => a.wall_id === window.currentWallData.id
+        );
         let permanentObjects = wall.permanentObjects || [];
 
         // Draw wall
@@ -144,38 +147,44 @@ document.addEventListener('DOMContentLoaded', function() {
             return Math.max(scale, 0.1); // Ensure it doesn't get too small
         }
 
+        // Modify renderArtworks to only show placed artworks
         function renderArtworks() {
             layer.innerHTML = '';
             const scale = getScale();
-            
+
             placedArtworks.forEach(artwork => {
-                const div = document.createElement('div');
-                div.className = 'canvas-artwork';
-                div.id = `artwork-${artwork.id}`;
-                
-                // Convert to bottom-left origin
-                const yPos = wall.height - artwork.y_position - artwork.height;
-                
-                div.style.left = `${artwork.x_position * scale}px`;
-                div.style.top = `${yPos * scale}px`;
-                div.style.width = `${artwork.width * scale}px`;
-                div.style.height = `${artwork.height * scale}px`;
-                div.textContent = artwork.name;
-                div.setAttribute('data-id', artwork.id);
-                div.setAttribute('data-x', artwork.x_position);
-                div.setAttribute('data-y', artwork.y_position);
-                div.setAttribute('data-width', artwork.width);
-                div.setAttribute('data-height', artwork.height);
-                
-                // Check for collisions
-                if (checkCollisions(artwork)) {
-                    div.style.border = '2px solid red';
+                // Only render if artwork has wall_id matching current wall
+                if (artwork.wall_id === window.currentWallData.id) {
+                    const div = document.createElement('div');
+                    div.className = 'canvas-artwork';
+                    div.id = `artwork-${artwork.id}`;
+
+                    // Use saved position, default to top-left if not set
+                    const xPos = artwork.x_position || 0;
+                    const yPos = artwork.y_position || (wall.height - artwork.height);
+
+                    // Convert to bottom-left origin
+                    const canvasY = wall.height - yPos - artwork.height;
+
+                    div.style.left = `${xPos * scale}px`;
+                    div.style.top = `${canvasY * scale}px`;
+                    div.style.width = `${artwork.width * scale}px`;
+                    div.style.height = `${artwork.height * scale}px`;
+                    div.textContent = artwork.name;
+                    div.setAttribute('data-id', artwork.id);
+                    div.setAttribute('data-x', xPos);
+                    div.setAttribute('data-y', yPos);
+                    div.setAttribute('data-width', artwork.width);
+                    div.setAttribute('data-height', artwork.height);
+
+                    if (checkCollisions(artwork)) {
+                        div.style.border = '2px solid red';
+                    }
+
+                    layer.appendChild(div);
                 }
-                
-                layer.appendChild(div);
             });
 
-            // Make artworks draggable
             makeArtworksDraggable();
         }
 
@@ -312,11 +321,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const artwork = allArtworks.find(a => a.id === artworkId);
                 
                 if (artwork) {
-                    // Default position (top-left corner)
-                    artwork.x_position = 0;
-                    artwork.y_position = wall.height - artwork.height;
-                    artwork.wall_id = wall.id;
+                    // Only set default position if not already placed
+                    if (artwork.x_position === null || artwork.y_position === null) {
+                        artwork.x_position = 0;
+                        artwork.y_position = wall.height - artwork.height;
+                    }
                     
+                    artwork.wall_id = wall.id;
                     placedArtworks.push(artwork);
                     renderArtworks();
                     
@@ -324,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.style.display = 'none';
                     this.nextElementSibling.style.display = 'block';
                     
-                    updateArtworkPosition(artwork.id, artwork.x_position, artwork.y_position);
+                    updateArtworkPosition(artwork.id, artwork.x_position, artwork.y_position, wall.id);
                 }
             });
         });
@@ -333,22 +344,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.remove-artwork-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const artworkId = parseInt(this.getAttribute('data-artwork-id'));
-                const index = placedArtworks.findIndex(a => a.id === artworkId);
+                const artwork = allArtworks.find(a => a.id === artworkId);
                 
-                if (index !== -1) {
-                    // Reset position when removing
-                    const artwork = placedArtworks[index];
+                if (artwork) {
+                    // Clear position and wall reference
                     artwork.x_position = null;
                     artwork.y_position = null;
                     artwork.wall_id = null;
                     
-                    placedArtworks.splice(index, 1);
+                    // Remove from placed artworks array
+                    placedArtworks = placedArtworks.filter(a => a.id !== artworkId);
                     renderArtworks();
                     
                     // Toggle button visibility
                     this.style.display = 'none';
                     this.previousElementSibling.style.display = 'block';
                     
+                    // Update in database
                     updateArtworkPosition(artworkId, null, null, null);
                 }
             });
