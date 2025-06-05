@@ -335,7 +335,7 @@ def update_object_position(obj_id):
 
 @app.route('/save_and_continue_permanent_objects', methods=['POST'])
 def save_and_continue_permanent_objects():
-    # You can add any save logic here if needed
+    # Add save logic
     return redirect(url_for('select_wall_space'))
 
 @app.route('/update_artwork_position/<int:artwork_id>', methods=['POST'])
@@ -370,7 +370,7 @@ authentik = oauth.register(
 @app.route('/auth/callback')
 def auth_callback():
     token = authentik.authorize_access_token()
-    userinfo = authentik.userinfo()  # ← This is preferred for OIDC
+    userinfo = authentik.userinfo()
     session['user'] = userinfo
     return redirect('/')
 
