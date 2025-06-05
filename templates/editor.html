@@ -32,13 +32,24 @@
                 </div>
                 <div class="sidebar-content" id="artwork-content" style="display: block;">
                     <div class="artwork-list">
-                        {% for artwork in unplaced_artwork %}
+                        {% for artwork in all_artwork %}
                         <div class="artwork-item">
                             <span>{{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")</span>
-                            <button class="btn btn-sm btn-primary add-artwork-btn" data-artwork-id="{{ artwork.id }}">Add</button>
+                            <div class="artwork-actions">
+                                <button class="btn btn-sm btn-primary add-artwork-btn" 
+                                        data-artwork-id="{{ artwork.id }}"
+                                        {% if artwork.id in current_wall_artwork|map(attribute='id') %}style="display: none;"{% endif %}>
+                                    Add
+                                </button>
+                                <button class="btn btn-sm btn-danger remove-artwork-btn" 
+                                        data-artwork-id="{{ artwork.id }}"
+                                        {% if artwork.id not in current_wall_artwork|map(attribute='id') %}style="display: none;"{% endif %}>
+                                    Remove
+                                </button>
+                            </div>
                         </div>
                         {% endfor %}
-                        {% if not unplaced_artwork %}
+                        {% if not all_artwork %}
                         <div class="empty-message">No artworks added yet</div>
                         {% endif %}
                     </div>
@@ -99,10 +110,9 @@
         window.artworkManualUrl = "{{ url_for('artwork_manual') }}";
         window.currentWallData = {{ current_wall|tojson|safe }};
         window.currentWallArtworkData = {{ current_wall_artwork|tojson|safe }};
-        window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};
+        window.allArtworkData = {{ all_artwork|tojson|safe }};  // Changed from unplacedArtworkData
         window.wallLinesData = {{ wall_lines|tojson|safe }};
         window.csrfToken = "{{ csrf_token() }}";
-        // Add permanent objects data
         window.currentWallData.permanentObjects = {{ current_wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }};
     </script>
     

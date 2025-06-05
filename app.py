@@ -239,14 +239,13 @@ def save_and_continue():
 def editor():
     from gallery.models.wall_line import SingleLine as WallLine
     current_wall = get_current_wall()
-    # Get artworks not placed on ANY wall (not just current wall)
-    unplaced_artwork = Artwork.query.filter(Artwork.wall_id.is_(None)).all()
+    all_artwork = Artwork.query.all()
     current_wall_artwork = Artwork.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
     wall_lines = WallLine.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
     return render_template(
         'editor.html',
         current_wall=current_wall.to_dict() if current_wall else None,
-        unplaced_artwork=[a.to_dict() for a in unplaced_artwork],
+        all_artwork=[a.to_dict() for a in all_artwork],  # Changed from unplaced_artwork
         current_wall_artwork=[a.to_dict() for a in current_wall_artwork],
         wall_lines=[l.to_dict() for l in wall_lines]
     )
@@ -344,7 +343,7 @@ def update_artwork_position(artwork_id):
     data = request.get_json()
     artwork.x_position = data.get('x_position', artwork.x_position)
     artwork.y_position = data.get('y_position', artwork.y_position)
-    artwork.wall_id = data.get('wall_id', artwork.wall_id)
+    artwork.wall_id = data.get('wall_id', artwork.wall_id)  # This can be null now
     db.session.commit()
     return jsonify({'success': True})
 

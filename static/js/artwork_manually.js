@@ -108,4 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.goBackToEditor = function() {
         window.location.href = window.goBackToEditorUrl + '?refresh=' + new Date().getTime();
     };
+
+    // Hotkey: Pressing Enter triggers Create Artwork
+    document.getElementById('artworkForm').addEventListener('keydown', function(e) {
+        // Only trigger if Enter is pressed and not on a textarea or button
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && e.target.type !== 'submit' && e.target.type !== 'button') {
+            e.preventDefault();
+            window.createArtwork();
+        }
+    });
 });

@@ -44,6 +44,20 @@ body.editor-bg {
     background-color: #d0d0d0;
 }
 
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.artwork-actions {
+    display: flex;
+    gap: 5px;
+}
+
 /* Main Content Layout */
 .d-flex {
     display: flex;
@@ -158,20 +172,43 @@ body.editor-bg {
 
 .wall-space {
     flex: 1;
-    background: #ffffff;
+    padding: 20px;
     overflow: auto;
-    position: relative;
-    background: #f5f5f5; /* Temporary background to see the area */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .canvas-container {
+    position: relative;
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow: visible;
+    margin: 0; /* Remove previous margin */
+}
+
+/* Add dimension label styles */
+.dimension-label {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: white; /* Temporary to see the canvas area */
-    border: 1px solid #ddd; /* Visual boundary */
+    font-size: 12px;
+    color: #666;
+    background: rgba(255,255,255,0.8);
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.width-label {
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.height-label {
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    transform-origin: right center;
 }
 
 #wall-canvas {

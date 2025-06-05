@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!canvas || !layer || !container || !wall) {
         console.error('Essential elements not found:', {canvas, layer, container, wall});
     } else {
+        let allArtworks = window.allArtworkData || [];
         let placedArtworks = window.currentWallArtworkData || [];
         let permanentObjects = wall.permanentObjects || [];
 
@@ -32,13 +33,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const ctx = canvas.getContext('2d');
             const scale = getScale();
-            console.log('Drawing wall with scale:', scale); // Debug log
-
+            
             // Set canvas dimensions in pixels
             canvas.width = wall.width * scale;
             canvas.height = wall.height * scale;
-            console.log('Canvas dimensions:', canvas.width, 'x', canvas.height); // Debug log
 
+            // Position the canvas container to match the scaled dimensions
+            container.style.width = `${canvas.width}px`;
+            container.style.height = `${canvas.height}px`;
+            
             // Clear canvas
             ctx.fillStyle = wall.color || '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -69,6 +72,26 @@ document.addEventListener('DOMContentLoaded', function() {
             permanentObjects.forEach(obj => {
                 drawObject(ctx, obj, scale, true);
             });
+
+            // Add dimension labels
+            addDimensionLabels(scale);
+        }
+
+        function addDimensionLabels(scale) {
+            // Remove existing labels if any
+            document.querySelectorAll('.dimension-label').forEach(el => el.remove());
+
+            // Create width label
+            const widthLabel = document.createElement('div');
+            widthLabel.className = 'dimension-label width-label';
+            widthLabel.textContent = `${wall.width}"`;
+            document.getElementById('canvas-container').appendChild(widthLabel);
+
+            // Create height label
+            const heightLabel = document.createElement('div');
+            heightLabel.className = 'dimension-label height-label';
+            heightLabel.textContent = `${wall.height}"`;
+            document.getElementById('canvas-container').appendChild(heightLabel);
         }
 
         function drawObject(ctx, obj, scale, isPermanent = false) {
@@ -105,19 +128,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return 1;
             }
             
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            const scaleX = containerWidth / wall.width;
-            const scaleY = containerHeight / wall.height;
+            // Get the wall-space container dimensions
+            const wallSpace = document.querySelector('.wall-space');
+            const availableWidth = wallSpace.clientWidth - 40; // Subtract padding
+            const availableHeight = wallSpace.clientHeight - 40; // Subtract padding
+            
+            // Calculate scale factors
+            const scaleX = availableWidth / wall.width;
+            const scaleY = availableHeight / wall.height;
+            
+            // Use the smaller scale to ensure everything fits
             const scale = Math.min(scaleX, scaleY);
             
-            console.log('Scaling:', {
-                containerSize: `${containerWidth}x${containerHeight}`,
-                wallSize: `${wall.width}x${wall.height}`,
-                calculatedScale: scale
-            });
-            
-            return scale;
+            // Add some minimum scale if needed
+            return Math.max(scale, 0.1); // Ensure it doesn't get too small
         }
 
         function renderArtworks() {
@@ -156,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function checkCollisions(artwork) {
-            // Check against other artworks
+            // Check against other placed artworks
             for (const other of placedArtworks) {
                 if (other.id !== artwork.id && 
                     checkRectOverlap(artwork, other)) {
@@ -212,7 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Calculate new position (in inches)
                         const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
-                        const newY = parseFloat(target.getAttribute('data-y')) + event.dy / scale;
+                        // Subtract dy instead of adding to account for bottom-left origin
+                        const newY = Math.max(0, Math.min(wall.height - height, 
+                            parseFloat(target.getAttribute('data-y')) - event.dy / scale));
                         
                         // Update position attributes
                         target.setAttribute('data-x', newX);
@@ -262,7 +288,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        function updateArtworkPosition(id, x, y) {
+        // Update the updateArtworkPosition function to handle removal
+        function updateArtworkPosition(id, x, y, wall_id = null) {
             fetch(`/update_artwork_position/${id}`, {
                 method: 'POST',
                 headers: {
@@ -272,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     x_position: x,
                     y_position: y,
-                    wall_id: wall.id
+                    wall_id: wall_id !== null ? wall_id : window.currentWallData.id
                 })
             }).catch(error => console.error('Error updating position:', error));
         }
@@ -281,19 +308,48 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add artwork to canvas
         document.querySelectorAll('.add-artwork-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const artworkId = this.getAttribute('data-artwork-id');
-                const artwork = window.unplacedArtworkData.find(a => a.id == artworkId);
+                const artworkId = parseInt(this.getAttribute('data-artwork-id'));
+                const artwork = allArtworks.find(a => a.id === artworkId);
+                
                 if (artwork) {
                     // Default position (top-left corner)
                     artwork.x_position = 0;
-                    artwork.y_position = wall.height - artwork.height; // Bottom-left origin
+                    artwork.y_position = wall.height - artwork.height;
                     artwork.wall_id = wall.id;
                     
                     placedArtworks.push(artwork);
                     renderArtworks();
                     
-                    // Save to DB
+                    // Toggle button visibility
+                    this.style.display = 'none';
+                    this.nextElementSibling.style.display = 'block';
+                    
                     updateArtworkPosition(artwork.id, artwork.x_position, artwork.y_position);
+                }
+            });
+        });
+
+        // Remove artwork from canvas
+        document.querySelectorAll('.remove-artwork-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const artworkId = parseInt(this.getAttribute('data-artwork-id'));
+                const index = placedArtworks.findIndex(a => a.id === artworkId);
+                
+                if (index !== -1) {
+                    // Reset position when removing
+                    const artwork = placedArtworks[index];
+                    artwork.x_position = null;
+                    artwork.y_position = null;
+                    artwork.wall_id = null;
+                    
+                    placedArtworks.splice(index, 1);
+                    renderArtworks();
+                    
+                    // Toggle button visibility
+                    this.style.display = 'none';
+                    this.previousElementSibling.style.display = 'block';
+                    
+                    updateArtworkPosition(artworkId, null, null, null);
                 }
             });
         });
@@ -301,6 +357,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // Initial render
         drawWall();
         renderArtworks();
+
+        // Add ResizeObserver for responsive resizing
+        const resizeObserver = new ResizeObserver(() => {
+            drawWall();
+            renderArtworks();
+        });
+
+        // Observe the wall-space container
+        const wallSpace = document.querySelector('.wall-space');
+        if (wallSpace) {
+            resizeObserver.observe(wallSpace);
+        }
+
+        // Clean up observer on unload
+        window.addEventListener('beforeunload', () => {
+            resizeObserver.disconnect();
+        });
+
+        // Still keep window resize event for extra safety (optional)
         window.addEventListener('resize', () => {
             drawWall();
             renderArtworks();
