@@ -1,5 +1,6 @@
 //import { EvenSpacing } from './even_spacing.js';
-//import { MeasurementLinesManager } from './measurement_lines_manager.js';
+import { MeasurementManager } from './modules/MeasurementManager.js';
+//import * as interact from 'https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Loaded: Starting wall editor setup');
@@ -215,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function makeArtworksDraggable() {
-            console.log('Attempting to make artworks draggable');
+            console.log('Attempting to make arstworks draggable');
             if (typeof interact === 'undefined') {
                 console.error('Interact.js not loaded!');
                 return;
@@ -225,6 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Found ${artworks.length} artworks to make draggable`);
             
             const scale = getScale();
+            const measurementManager = new MeasurementManager(document.getElementById('canvas-container'));
             
             interact('.canvas-artwork').draggable({
                 inertia: true,
@@ -237,6 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 listeners: {
                     start(event) {
                         event.target.style.zIndex = '3';
+                        measurementManager.clear(); // Clear any existing lines
                     },
                     move(event) {
                         const target = event.target;
@@ -257,6 +260,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         const yPos = wall.height - newY - height;
                         target.style.left = `${newX * scale}px`;
                         target.style.top = `${yPos * scale}px`;
+                        
+                        // Draw measurement lines
+                        measurementManager.drawMeasurements(
+                            newX, 
+                            newY, 
+                            width, 
+                            height, 
+                            wall.width, 
+                            wall.height, 
+                            scale
+                        );
                         
                         // Check for collisions
                         const artwork = {
@@ -290,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         target.style.zIndex = '2';
+                        measurementManager.clear(); // Clear lines when dragging ends
                     }
                 }
             }).on('dragstart', function(event) {

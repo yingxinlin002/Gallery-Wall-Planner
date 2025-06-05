@@ -12,7 +12,7 @@ from gallery.models.artwork import Artwork
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")  # Required for flashing messages ## Adding OAuth Support
+app.secret_key = os.environ.get("FLASK_SECRET_KcEY", "default_secret")  # Required for flashing messages ## Adding OAuth Support
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
