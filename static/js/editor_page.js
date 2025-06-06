@@ -1,5 +1,6 @@
-//import { EvenSpacing } from './even_spacing.js';
-//import { MeasurementLinesManager } from './measurement_lines_manager.js';
+import { EvenSpacing } from './even_spacing.js';
+import { MeasurementManager } from './modules/MeasurementManager.js';
+//import * as interact from 'https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Loaded: Starting wall editor setup');
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         offsetWidth: container.offsetWidth,
         offsetHeight: container.offsetHeight
     });
+    
     const wall = window.currentWallData;
 
     console.log('Canvas element:', canvas); // Should log the canvas element
@@ -215,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function makeArtworksDraggable() {
-            console.log('Attempting to make artworks draggable');
+            console.log('Attempting to make arstworks draggable');
             if (typeof interact === 'undefined') {
                 console.error('Interact.js not loaded!');
                 return;
@@ -225,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Found ${artworks.length} artworks to make draggable`);
             
             const scale = getScale();
+            const measurementManager = new MeasurementManager(document.getElementById('canvas-container'));
             
             interact('.canvas-artwork').draggable({
                 inertia: true,
@@ -237,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 listeners: {
                     start(event) {
                         event.target.style.zIndex = '3';
+                        measurementManager.clear(); // Clear any existing lines
                     },
                     move(event) {
                         const target = event.target;
@@ -257,6 +261,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         const yPos = wall.height - newY - height;
                         target.style.left = `${newX * scale}px`;
                         target.style.top = `${yPos * scale}px`;
+                        
+                        // Draw measurement lines
+                        measurementManager.drawMeasurements(
+                            newX, 
+                            newY, 
+                            width, 
+                            height, 
+                            wall.width, 
+                            wall.height, 
+                            scale
+                        );
                         
                         // Check for collisions
                         const artwork = {
@@ -290,6 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         target.style.zIndex = '2';
+                        measurementManager.clear(); // Clear lines when dragging ends
                     }
                 }
             }).on('dragstart', function(event) {
@@ -401,5 +417,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = window.artworkManualUrl || '/artwork-manual';
             });
         }
+
+        // --- EvenSpacing Integration ---
+        const editor = {
+            wall: window.currentWallData,
+            placedArtworks: placedArtworks,
+            updateArtworkPosition: updateArtworkPosition,
+            renderArtworks: renderArtworks
+        };
+
+        const evenSpacing = new EvenSpacing(editor);
+        evenSpacing.init();
+
+        // Connect the even spacing button
+        const evenSpacingBtn = document.getElementById('evenSpacingBtn');
+        if (evenSpacingBtn) {
+            evenSpacingBtn.addEventListener('click', function() {
+                evenSpacing.show();
+            });
+        }
+        // --- End EvenSpacing Integration ---
     }
 });

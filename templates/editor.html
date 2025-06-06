@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/editor.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="editor-bg">
     <!-- Header -->
@@ -106,27 +107,29 @@
         </div>
     </div>
 
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11/dist/interact.min.js"></script>
+
+    <script type="module">
+        // Set global variables first
         window.artworkManualUrl = "{{ url_for('artwork_manual') }}";
         window.currentWallData = {{ current_wall|tojson|safe }};
         window.currentWallArtworkData = {{ current_wall_artwork|tojson|safe }};
-        window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};  // Added
+        window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};
         window.allArtworkData = {{ all_artwork|tojson|safe }};
         window.csrfToken = "{{ csrf_token() }}";
         window.currentWallData.permanentObjects = {{ current_wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }};
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-    
-    <!-- Load collapsible.js first -->
-    <script type="module">
+
+        // Then import your modules
         import { setupCollapsibleMenus } from "{{ url_for('static', filename='js/collapsible.js') }}";
+        import { MeasurementManager } from "{{ url_for('static', filename='js/modules/MeasurementManager.js') }}";
+        
         document.addEventListener('DOMContentLoaded', function() {
             setupCollapsibleMenus();
         });
     </script>
-    
-    <!-- Then load editor_page.js as a regular script -->
-    <script src="{{ url_for('static', filename='js/editor_page.js') }}"></script>
+
+    <!-- Load editor_page.js as a module -->
+    <script type="module" src="{{ url_for('static', filename='js/editor_page.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
