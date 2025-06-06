@@ -154,12 +154,12 @@ def load_gallery():
 
         if not gallery_id:
             flash("No gallery selected.", "warning")
-            return redirect(url_for('load_gallery'))
+            return redirect(url_for('load_exhibity'))
 
         gallery = Gallery.query.get(gallery_id)
         if not gallery:
             flash("Gallery not found.", "danger")
-            return redirect(url_for('load_gallery'))
+            return redirect(url_for('load_exhibit'))
 
         session['current_gallery_id'] = gallery.id
         flash(f"Loaded exhibit: {gallery.name}", "success")
