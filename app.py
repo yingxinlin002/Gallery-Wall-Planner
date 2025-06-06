@@ -122,7 +122,7 @@ def continue_last_project():
 @app.route('/new-gallery', methods=['GET', 'POST'])
 def new_gallery():
     if request.method == 'POST':
-        gallery_name = request.form.get('gallery_name', '').strip()
+        gallery_name = request.form.get('exhibit_name', '').strip()
         user_id = session.get('user_id')
 
         if not gallery_name:
@@ -139,7 +139,7 @@ def new_gallery():
 
         # Save gallery_id to session so the next step (wall creation) knows where to attach
         session['current_gallery_id'] = gallery.id
-        return redirect(url_for('create_wall'))  # go to wall creation next
+        return redirect(url_for('load_gallery'))  # go to load_gallery after creating exhibit
 
     return render_template('new_gallery.html')
 

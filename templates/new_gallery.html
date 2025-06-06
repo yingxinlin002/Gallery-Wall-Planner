@@ -1,8 +1,107 @@
-<form method="POST" action="{{ url_for('new_gallery') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- filepath: c:\Users\yingx\OneDrive\Documents\GitHub\Gallery-Wall-Planner\templates\new_gallery.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Exhibit</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F0F0F0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    <label for="gallery_name">Gallery Name:</label>
-    <input type="text" name="gallery_name" id="gallery_name" required>
+        .main-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
 
-    <button type="submit">Create Gallery</button>
-</form>
+        h1 {
+            font-size: 24px;
+            color: #5F3FCA;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        label {
+            width: 120px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: #5F3FCA;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #4a30a0;
+        }
+
+        .btn-back {
+            background-color: #69718A;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .btn-back:hover {
+            background-color: #4d5462;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>New Exhibit</h1>
+        <form method="POST" action="{{ url_for('new_gallery') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="exhibit_name">Exhibit Name:</label>
+                <input type="text" name="exhibit_name" id="exhibit_name" required>
+            </div>
+            <div class="button-container">
+                <a href="{{ url_for('home') }}" class="btn btn-back">&lt; Back to Home</a>
+                <button type="submit" class="btn btn-submit">Create Exhibit</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

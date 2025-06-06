@@ -87,10 +87,8 @@
 <body>
     <div class="landing-container">
         <h1>Welcome to Gallery Wall Planner</h1>
-        <a href="{{ url_for('login') }}" class="login-btn">Log In</a>
-        <div class="guest-box">
-            <a href="{{ url_for('home') }}" class="guest-btn">Continue as Guest</a>
-        </div>
+        <a href="{{ url_for('login') }}" class="login-btn" target="_self">Log In</a>
+        <a href="{{ url_for('home') }}" class="guest-btn" target="_self">Continue as Guest</a>
     </div>
 </body>
 </html>
