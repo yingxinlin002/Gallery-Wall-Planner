@@ -143,13 +143,31 @@ def new_gallery():
 
     return render_template('new_exhibit.html')
 
-@app.route('/load-exhibit', methods=['GET'])
-def load_exhibit():
-    # You can fetch the current exhibit or all exhibits for the guest
+@app.route('/load-gallery', methods=['GET', 'POST'])
+def load_gallery():
     from gallery.models.exhibit import Gallery
-    gallery_id = session.get('current_gallery_id')
-    gallery = Gallery.query.get(gallery_id) if gallery_id else None
-    return render_template('load_exhibit.html', gallery=gallery)
+
+    user_id = session.get('user_id')
+
+    if request.method == 'POST':
+        gallery_id = request.form.get('gallery_id')
+
+        if not gallery_id:
+            flash("No gallery selected.", "warning")
+            return redirect(url_for('load_gallery'))
+
+        gallery = Gallery.query.get(gallery_id)
+        if not gallery:
+            flash("Gallery not found.", "danger")
+            return redirect(url_for('load_gallery'))
+
+        session['current_gallery_id'] = gallery.id
+        flash(f"Loaded exhibit: {gallery.name}", "success")
+        return redirect(url_for('select_wall_space'))
+
+    # GET request — just show the list
+    galleries = Gallery.query.filter_by(user_id=user_id).all() if user_id else []
+    return render_template('load_gallery.html', galleries=galleries)
 
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
