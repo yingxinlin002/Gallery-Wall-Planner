@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Landing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url("{{ url_for('static', filename='images/gallery_background.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .landing-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 60px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: #5F3FCA;
+        }
+
+        .login-btn {
+            font-size: 18px;
+            color: white;
+            background-color: #5F3FCA;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background-color: #4a30a0;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <h1>Welcome to Gallery Wall Planner</h1>
+        <a href="{{ url_for('login') }}" class="login-btn">Log In</a>
+        <a href="{{ url_for('home') }}">Continue as Guest</a>
+    </div>
+</body>
+</html>
