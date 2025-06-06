@@ -273,7 +273,7 @@ body.editor-bg {
     z-index: 10 !important;
 }
 
-/* Collapsible Content */
+/* Collapsible Content */c
 .collapse:not(.show) {
     display: none;
 }
@@ -281,4 +281,20 @@ body.editor-bg {
 /* Icons */
 .fas {
     margin-right: 5px;
+}
+
+/* Modal styling */
+.modal {
+    z-index: 1050;
+}
+
+/* Artwork list in modal */
+#artworkList {
+    cursor: pointer;
+}
+
+/* Info display at bottom of modal */
+.modal-body > div:last-child {
+    padding-top: 10px;
+    border-top: 1spx solid #dee2e6;
 }

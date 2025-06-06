@@ -1,4 +1,4 @@
-//import { EvenSpacing } from './even_spacing.js';
+import { EvenSpacing } from './even_spacing.js';
 import { MeasurementManager } from './modules/MeasurementManager.js';
 //import * as interact from 'https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js';
 
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         offsetWidth: container.offsetWidth,
         offsetHeight: container.offsetHeight
     });
+    
     const wall = window.currentWallData;
 
     console.log('Canvas element:', canvas); // Should log the canvas element
@@ -416,5 +417,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = window.artworkManualUrl || '/artwork-manual';
             });
         }
+
+        // --- EvenSpacing Integration ---
+        const editor = {
+            wall: window.currentWallData,
+            placedArtworks: placedArtworks,
+            updateArtworkPosition: updateArtworkPosition,
+            renderArtworks: renderArtworks
+        };
+
+        const evenSpacing = new EvenSpacing(editor);
+        evenSpacing.init();
+
+        // Connect the even spacing button
+        const evenSpacingBtn = document.getElementById('evenSpacingBtn');
+        if (evenSpacingBtn) {
+            evenSpacingBtn.addEventListener('click', function() {
+                evenSpacing.show();
+            });
+        }
+        // --- End EvenSpacing Integration ---
     }
 });
