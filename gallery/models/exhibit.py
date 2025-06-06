@@ -9,13 +9,17 @@ class Gallery(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user = db.relationship('User', back_populates='galleries')
     
     # Relationships
     walls = db.relationship('Wall', backref='gallery', lazy=True, cascade='all, delete-orphan')
-    unplaced_artworks = db.relationship('Artwork', 
-                                      primaryjoin='and_(Artwork.wall_id==None, Artwork.gallery_id==Gallery.id)',
-                                      backref='gallery',
-                                      lazy=True)
+    unplaced_artworks = db.relationship(
+        'Artwork',
+        primaryjoin='and_(Artwork.wall_id==None, Artwork.gallery_id==Gallery.id)',
+        backref='gallery',
+        lazy=True
+    )
 
     def __init__(self, name: str = "Gallery"):
         self.name = name
@@ -46,10 +50,10 @@ class Gallery(db.Model):
 
     def add_unplaced_artwork(self, title: str, medium: str = "", width: float = 0, 
                             height: float = 0, depth: float = 0, price: float = 0,
-                            nfs: bool = False, notes: str = "") -> Artwork:
-        """Add artwork that isn't placed on any wall"""
+                            nfs: bool = False, notes: str = "", user_id: Optional[int] = None) -> Artwork:
+        """Add artwork that isn't placed on any wall, optionally linked to a user"""
         artwork = Artwork(
-            title=title,
+            name=title,
             medium=medium,
             width=width,
             height=height,
@@ -57,10 +61,12 @@ class Gallery(db.Model):
             price=price,
             nfs=nfs,
             notes=notes,
-            gallery_id=self.id
+            gallery_id=self.id,
+            user_id=user_id
         )
         db.session.add(artwork)
         return artwork
+
 
     def get_unplaced_artworks(self) -> List[Artwork]:
         """Get all artworks not placed on any wall"""

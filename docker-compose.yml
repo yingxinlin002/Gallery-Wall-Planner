@@ -16,4 +16,11 @@ services:
       - AUTHENTIK_METADATA_URL=${AUTHENTIK_METADATA_URL}
       - AUTHENTIK_REDIRECT_URI=${AUTHENTIK_REDIRECT_URI}
       - AUTHENTIK_SCOPE=${AUTHENTIK_SCOPE}
+      # Optional MySQL support
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_PORT=${MYSQL_PORT}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB}
     restart: unless-stopped

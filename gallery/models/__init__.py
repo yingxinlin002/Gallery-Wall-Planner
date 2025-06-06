@@ -4,5 +4,6 @@ from .wall import Wall
 from .artwork import Artwork
 from .permanent_object import PermanentObject
 from .wall_line import SingleLine
+from .user import User
 
-__all__ = ['db', 'Gallery', 'Wall', 'Artwork', 'PermanentObject', 'SingleLine']
+__all__ = ['db', 'Gallery', 'Wall', 'Artwork', 'PermanentObject', 'SingleLine', 'User']

@@ -10,10 +10,46 @@ from gallery.models.project_exporter import export_gallery_to_excel, import_gall
 from flask_wtf import CSRFProtect
 from gallery.models.artwork import Artwork
 from authlib.integrations.flask_client import OAuth
+from sqlalchemy import create_engine
+from config import load_config
+from gallery.models.user import User
+from gallery.models.base import db
+from authlib.integrations.base_client.errors import MismatchingStateError
+import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db' # remove this line to add mysql integration support section
+def validate_mysql_config(conf):
+    required = ['user', 'password', 'host', 'db']
+    missing = [k for k in required if not conf.get(k)]
+    if missing:
+        raise EnvironmentError(f"Missing required MySQL config keys: {', '.join(missing)}")
+
+def make_mysql_url(conf, hide_password=True):
+    password = '***' if hide_password else conf['password']
+    port = conf.get('port', '3306')  # default fallback
+    return f"mysql+pymysql://{conf['user']}:{password}@{conf['host']}:{port}/{conf['db']}"
+
+config = load_config()
+auth_config = config['authentik']
+db_config = config['database']
+
+if db_config['type'] == 'mysql':
+    validate_mysql_config(db_config)
+    db_url = make_mysql_url(db_config, hide_password=False)
+    safe_url = make_mysql_url(db_config, hide_password=True)
+
+elif db_config['type'] == 'sqlite':
+    db_url = f"sqlite:///{db_config.get('path', './gallery.db')}"
+    safe_url = db_url
+
+else:
+    raise ValueError("Unsupported database type")
+
+engine = create_engine(db_url)
+print(f"Using {db_config['type'].upper()} database: {safe_url}")
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -27,6 +63,13 @@ USER_DIR = os.path.join(os.path.expanduser("~"), "GalleryWallPlanner")
 os.makedirs(USER_DIR, exist_ok=True)
 TEMP_FILE = os.path.join(USER_DIR, "_temp.xlsx")
 
+def load_projects_for_user(user_id):
+    from gallery.models.exhibit import Gallery
+    return Gallery.query.filter_by(user_id=user_id).all()
+
+def load_temp_projects_for_guest(guest_id):
+    # Placeholder until guest save logic is implemented
+    return []
 
 def get_current_wall():
     wall_id = session.get("current_wall_id")
@@ -45,9 +88,21 @@ def landing_page():
 
 @app.route("/home", methods=["GET"])
 def home():
-    # Allow access whether logged in or guest
     user = session.get('user')
-    last_project_exists = os.path.exists(TEMP_FILE) and os.path.getsize(TEMP_FILE) > 6144
+    user_id = session.get('user_id')
+
+    if user_id:
+        # Logged in user - fetch saved projects from DB
+        projects = load_projects_for_user(user_id)
+    else:
+        # Guest user - optionally assign temp guest ID to session for temp saves
+        if 'guest_id' not in session:
+            session['guest_id'] = str(uuid.uuid4())
+        guest_id = session['guest_id']
+        # Load temp data from session or a temporary store keyed by guest_id
+        projects = load_temp_projects_for_guest(guest_id)
+    
+    last_project_exists = bool(projects)
     return render_template("home.html", last_project_exists=last_project_exists, user=user)
 
 @app.route('/guest')
@@ -393,22 +448,50 @@ def logout():
 
 authentik = oauth.register(
     name='authentik',
-    client_id=os.environ.get("AUTHENTIK_CLIENT_ID", "CLIENT_ID"),
-    client_secret=os.environ.get("AUTHENTIK_CLIENT_SECRET", "CLIENT_SECRET"),
-    access_token_url=os.environ.get("AUTHENTIK_TOKEN_URL", "https://auth.example.com/application/o/token/"),
-    server_metadata_url=os.environ.get("AUTHENTIK_METADATA_URL", "https://auth.example.com/application/o/application-slug/.well-known/openid-configuration"),
-    authorize_url=os.environ.get("AUTHENTIK_AUTHORIZE_URL", "https://auth.example.com/application/o/authorize/"),
+    client_id=auth_config['client_id'],
+    client_secret=auth_config['client_secret'],
+    access_token_url=auth_config['token_url'],
+    server_metadata_url=auth_config['metadata_url'],
+    authorize_url=auth_config['authorize_url'],
     client_kwargs={
-        'scope': os.environ.get("AUTHENTIK_SCOPE", "openid email profile"),
+        'scope': auth_config['scope'],
     },
 )
 
 @app.route('/auth/callback')
 def auth_callback():
-    token = authentik.authorize_access_token()
+    try:
+        token = authentik.authorize_access_token()
+    except MismatchingStateError:
+        return "Error: State mismatch. Please try logging in again.", 400
+
     userinfo = authentik.userinfo()
-    session['user'] = userinfo
-    session['user_id'] = userinfo.get('sub')
+    sub = userinfo.get('sub')
+    if not sub:
+        return "Error: Missing user identifier in token.", 400
+
+    # Check if user already exists
+    user = User.query.filter_by(sub=sub).first()
+
+    if not user:
+        # Create new user record
+        user = User(
+            sub=sub,
+            email=userinfo.get('email'),
+            name=userinfo.get('name'),
+        )
+        db.session.add(user)
+        db.session.commit()
+    else:
+        # Optional: update existing user info
+        user.email = userinfo.get('email')
+        user.name = userinfo.get('name')
+        db.session.commit()
+
+    # Store internal DB user id in session for app use
+    session['user_id'] = user.id
+    session['user'] = userinfo  # if you want full user info in session
+
     return redirect(url_for('home'))
 
 if __name__ == "__main__":

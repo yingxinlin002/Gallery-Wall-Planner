@@ -6,6 +6,8 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 from openpyxl.drawing.image import Image
 from gallery.models import db
+from gallery.models.user import User
+from .base import db
 
 class Artwork(WallObject):
     __tablename__ = 'artworks'
@@ -22,15 +24,18 @@ class Artwork(WallObject):
     notes = db.Column(db.String(500))
     image_path = db.Column(db.String(200))
     gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
-    x_position = db.Column(db.Float, nullable=True)  # Allow null for unplaced artworks
+    x_position = db.Column(db.Float, nullable=True)
     y_position = db.Column(db.Float, nullable=True)
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'), nullable=True)
-    
+
+    # New user association
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user = db.relationship('User', back_populates='artworks')
 
     def __init__(self, name: str = "", medium: str = "", width: float = 0.0, height: float = 0.0,
                  depth: float = 0.0, hanging_point: float = 0.0, price: float = 0.0,
                  nfs: bool = False, image_path: str = "", notes: str = "", wall_id: Optional[int] = None,
-                 x: float = 0.0, y: float = 0.0):
+                 x: float = 0.0, y: float = 0.0, user_id: Optional[int] = None):
         self.name = name
         self.medium = medium
         self.width = width
@@ -44,6 +49,7 @@ class Artwork(WallObject):
         self.wall_id = wall_id
         self.x_position = x
         self.y_position = y
+        self.user_id = user_id
 
     @property
     def position(self) -> Position:
@@ -71,7 +77,8 @@ class Artwork(WallObject):
             'price': self.price,
             'nfs': self.nfs,
             'image_path': self.image_path,
-            'notes': self.notes
+            'notes': self.notes,
+            'user_id': self.user_id
         }
 
     @classmethod
@@ -89,7 +96,8 @@ class Artwork(WallObject):
             notes=data.get('notes', ''),
             wall_id=data.get('wall_id'),
             x=float(data.get('position', {}).get('x', 0)),
-            y=float(data.get('position', {}).get('y', 0))
+            y=float(data.get('position', {}).get('y', 0)),
+            user_id=data.get('user_id')
         )
 
     def export_to_excel(self, filename="artwork_export.xlsx"):
