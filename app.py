@@ -41,7 +41,7 @@ def get_current_wall():
 def landing_page():
     if 'user_id' in session:
         return redirect(url_for('home'))
-    return render_template("landing.html")
+    return render_template("landing_page.html")
 
 @app.route("/home", methods=["GET"])
 def home():
