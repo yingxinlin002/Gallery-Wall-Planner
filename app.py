@@ -19,6 +19,9 @@ import uuid
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")
+
+app.jinja_env.globals.update(min=min) # for min functionality
+
 def validate_mysql_config(conf):
     required = ['user', 'password', 'host', 'db']
     missing = [k for k in required if not conf.get(k)]
