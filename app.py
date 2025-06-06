@@ -59,10 +59,6 @@ csrf = CSRFProtect(app)
 with app.app_context():
     db.create_all()
 
-USER_DIR = os.path.join(os.path.expanduser("~"), "GalleryWallPlanner")
-os.makedirs(USER_DIR, exist_ok=True)
-TEMP_FILE = os.path.join(USER_DIR, "_temp.xlsx")
-
 def load_projects_for_user(user_id):
     from gallery.models.exhibit import Gallery
     return Gallery.query.filter_by(user_id=user_id).all()
@@ -126,35 +122,98 @@ def continue_last_project():
 @app.route('/new-gallery', methods=['GET', 'POST'])
 def new_gallery():
     if request.method == 'POST':
+        gallery_name = request.form.get('gallery_name', '').strip()
+        user_id = session.get('user_id')
+
+        if not gallery_name:
+            flash("Gallery name is required.")
+            return redirect(url_for('new_gallery'))
+
+        if not user_id:
+            flash("You must be logged in to create a gallery.")
+            return redirect(url_for('login'))
+
+        gallery = Gallery(name=gallery_name, user_id=user_id)
+        db.session.add(gallery)
+        db.session.commit()
+
+        # Save gallery_id to session so the next step (wall creation) knows where to attach
+        session['current_gallery_id'] = gallery.id
+        return redirect(url_for('create_wall'))  # go to wall creation next
+
+    return render_template('new_gallery.html')
+
+@app.route('/load-gallery', methods=['GET', 'POST'])
+def load_gallery():
+    user_id = session.get('user_id')
+
+    if not user_id:
+        flash("Please log in to view your galleries.")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        gallery_id = request.form.get('gallery_id')
+
+        gallery = Gallery.query.filter_by(id=gallery_id, user_id=user_id).first()
+
+        if not gallery:
+            flash("Gallery not found or it doesn't belong to you.")
+            return redirect(url_for('load_gallery'))
+
+        session['current_gallery_id'] = gallery.id
+        flash(f"Loaded gallery: {gallery.name}")
+        return redirect(url_for('select_wall_space'))  # Change this if your next step differs
+
+    # GET request: list all galleries for the current user
+    galleries = Gallery.query.filter_by(user_id=user_id).all()
+    return render_template('load_gallery.html', galleries=galleries)
+
+
+@app.route('/create-wall', methods=['GET', 'POST'])
+def create_wall():
+    gallery_id = session.get('current_gallery_id')
+
+    if not gallery_id:
+        flash("Please create a gallery first.")
+        return redirect(url_for('new_gallery'))
+
+    if request.method == 'POST':
         name = request.form.get('wall_name')
         width = float(request.form.get('wall_width'))
         height = float(request.form.get('wall_height'))
-        color = request.form.get('wall_color')
-        # Assume you have a gallery object or create one
-        gallery = Gallery.query.first()  # Or however you want to select
-        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery.id)
+        color = request.form.get('wall_color', 'White')
+
+        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery_id)
         db.session.add(wall)
         db.session.commit()
-        return redirect(url_for('select_wall_space'))
-    return render_template('new_gallery.html')
 
-@app.route('/submit_wall', methods=['POST'])
-def submit_wall():
-    name = request.form.get('wall_name')
-    width = float(request.form.get('wall_width'))
-    height = float(request.form.get('wall_height'))
-    color = request.form.get('wall_color')
-    gallery = Gallery.query.first()
-    if not gallery:
-        gallery = Gallery(name="Default Gallery")
-        db.session.add(gallery)
-        db.session.commit()
-    wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery.id)
-    db.session.add(wall)
-    db.session.commit()
-    session["current_wall_id"] = wall.id
-    # Redirect to permanent object placement page
-    return redirect(url_for('edit_permanent_objects'))
+        session['current_wall_id'] = wall.id
+        return redirect(url_for('edit_permanent_objects'))  # or whatever next step
+
+    return render_template('create_wall.html')
+
+@app.route('/select-wall-space', methods=['GET', 'POST'])
+def select_wall_space():
+    gallery_id = session.get('current_gallery_id')
+
+    if not gallery_id:
+        flash("Please load a gallery first.")
+        return redirect(url_for('load_gallery'))
+
+    if request.method == 'POST':
+        selected_wall_id = request.form.get('wall_id')
+        wall = Wall.query.filter_by(id=selected_wall_id, gallery_id=gallery_id).first()
+
+        if not wall:
+            flash("Wall not found or doesn't belong to this gallery.")
+            return redirect(url_for('select_wall_space'))
+
+        session['current_wall_id'] = wall.id
+        flash(f"Loaded wall: {wall.name}")
+        return redirect(url_for('edit_permanent_objects'))  # Or wherever you edit the wall
+
+    walls = Wall.query.filter_by(gallery_id=gallery_id).all()
+    return render_template('select_wall_space.html', walls=walls)
 
 @app.route('/add_permanent_object', methods=['POST'])
 def add_permanent_object():
@@ -271,35 +330,10 @@ def delete_permanent_object(obj_id):
     flash("Permanent object deleted.", "success")
     return redirect(url_for('lock_objects', wall_id=wall_id))
 
-@app.route('/select-wall-space', methods=['GET'])
-def select_wall_space():
-    current_wall = get_current_wall()
-    walls = Wall.query.all()
-    return render_template(
-        'select_wall_space.html',
-        walls=walls,
-        current_wall=current_wall,
-        min=min
-    )
-
 @app.route('/select-wall/<wall_id>')
 def select_wall(wall_id):
     session["current_wall_id"] = wall_id
     return redirect(url_for('select_wall_space'))
-
-@app.route('/create_wall', methods=['GET', 'POST'])
-def create_wall():
-    if request.method == 'POST':
-        name = request.form.get('wall_name')
-        width = float(request.form.get('wall_width'))
-        height = float(request.form.get('wall_height'))
-        color = request.form.get('wall_color')
-        wall = Wall(name=name, width=width, height=height, color=color)
-        db.session.add(wall)
-        db.session.commit()
-        session["current_wall_id"] = wall.id
-        return redirect(url_for('select_wall_space'))
-    return render_template('new_gallery.html')
 
 @app.route('/save_and_continue', methods=['POST'])
 def save_and_continue():
@@ -368,7 +402,8 @@ def artwork_manual():
                 depth=get_float(request.form, 'depth'),
                 price=get_float(request.form, 'price'),
                 nfs=bool(request.form.get('nfs')),
-                wall_id=None  # This is the key change - don't assign to wall immediately
+                wall_id=None,  # leave at None for now
+                user_id=session.get('user_id')
             )
             
             # Handle file upload

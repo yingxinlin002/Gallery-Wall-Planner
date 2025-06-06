@@ -9,8 +9,8 @@ class Gallery(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    user = db.relationship('User', back_populates='galleries')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', back_populates='galleries', lazy=True)
     
     # Relationships
     walls = db.relationship('Wall', backref='gallery', lazy=True, cascade='all, delete-orphan')
@@ -21,8 +21,10 @@ class Gallery(db.Model):
         lazy=True
     )
 
-    def __init__(self, name: str = "Gallery"):
+    def __init__(self, name: str = "Gallery", user_id: int = None):
         self.name = name
+        if user_id is not None:
+            self.user_id = user_id
 
     def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
         """Add a new wall to the gallery"""
