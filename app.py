@@ -139,7 +139,7 @@ def new_gallery():
         db.session.commit()
 
         session['current_gallery_id'] = gallery.id
-        return redirect(url_for('load_exhibit'))
+        return redirect(url_for('load_gallery'))
 
     return render_template('new_exhibit.html')
 
