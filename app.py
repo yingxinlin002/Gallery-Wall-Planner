@@ -154,12 +154,12 @@ def load_gallery():
 
         if not gallery_id:
             flash("No gallery selected.", "warning")
-            return redirect(url_for('load_exhibity'))
+            return redirect(url_for('load_gallery'))
 
         gallery = Gallery.query.get(gallery_id)
         if not gallery:
             flash("Gallery not found.", "danger")
-            return redirect(url_for('load_exhibit'))
+            return redirect(url_for('load_gallery'))
 
         session['current_gallery_id'] = gallery.id
         flash(f"Loaded exhibit: {gallery.name}", "success")
@@ -167,7 +167,7 @@ def load_gallery():
 
     # GET request — just show the list
     galleries = Gallery.query.filter_by(user_id=user_id).all() if user_id else []
-    return render_template('load_gallery.html', galleries=galleries)
+    return render_template('load_exhibit.html', galleries=galleries)
 
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
