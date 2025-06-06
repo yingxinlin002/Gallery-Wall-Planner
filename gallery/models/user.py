@@ -6,6 +6,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     sub = db.Column(db.String(255), unique=True, nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=True)
     name = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     artworks = db.relationship('Artwork', back_populates='user', lazy=True)
