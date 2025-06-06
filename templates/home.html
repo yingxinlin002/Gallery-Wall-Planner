@@ -84,7 +84,9 @@
     {% else %}
         <!-- Guest or no user -->
         <a href="{{ url_for('login') }}" class="login-btn">Log in</a>
-        <a href="{{ url_for('guest') }}" class="login-btn" style="margin-left: 10px;">Continue as Guest</a>
+        {% if show_guest_option %}
+            <a href="{{ url_for('guest') }}" class="login-btn" style="margin-left: 10px;">Continue as Guest</a>
+        {% endif %}
     {% endif %}
     </div>
     <div class="content">

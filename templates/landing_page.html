@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gallery - Landing</title>
     <style>
         body {
@@ -24,6 +24,7 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            width: 320px;
         }
 
         h1 {
@@ -33,18 +34,53 @@
         }
 
         .login-btn {
+            display: block;
             font-size: 18px;
             color: white;
             background-color: #5F3FCA;
             border: none;
-            padding: 15px 30px;
+            padding: 20px 30px;
             border-radius: 8px;
             text-decoration: none;
             transition: background-color 0.3s ease;
+            margin: 0 auto 20px auto;
+            width: 100%;
+            box-sizing: border-box;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         .login-btn:hover {
             background-color: #4a30a0;
+        }
+
+        .guest-box {
+            border: none;
+            padding: 0;
+            margin-top: 10px;
+            background-color: transparent;
+            width: 100%;
+        }
+
+        .guest-btn {
+            display: block;
+            font-size: 16px;
+            color: #5F3FCA;
+            background-color: #f0eaff;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            border: 2px solid #5F3FCA;
+        }
+
+        .guest-btn:hover {
+            background-color: #5F3FCA;
+            color: white;
         }
     </style>
 </head>
@@ -52,7 +88,9 @@
     <div class="landing-container">
         <h1>Welcome to Gallery Wall Planner</h1>
         <a href="{{ url_for('login') }}" class="login-btn">Log In</a>
-        <a href="{{ url_for('home') }}">Continue as Guest</a>
+        <div class="guest-box">
+            <a href="{{ url_for('home') }}" class="guest-btn">Continue as Guest</a>
+        </div>
     </div>
 </body>
 </html>
