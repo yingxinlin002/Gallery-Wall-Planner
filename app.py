@@ -12,8 +12,8 @@ from gallery.models.artwork import Artwork
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KcEY", "default_secret")  # Required for flashing messages ## Adding OAuth Support
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db'
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///gallery.db' # remove this line to add mysql integration support section
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -38,9 +38,25 @@ def get_current_wall():
     return wall
 
 @app.route("/", methods=["GET"])
+def landing_page():
+    if 'user_id' in session:
+        return redirect(url_for('home'))
+    return render_template("landing_page.html")
+
+@app.route("/home", methods=["GET"])
 def home():
+    # Allow access whether logged in or guest
+    user = session.get('user')
     last_project_exists = os.path.exists(TEMP_FILE) and os.path.getsize(TEMP_FILE) > 6144
-    return render_template("home.html", last_project_exists=last_project_exists)
+    return render_template("home.html", last_project_exists=last_project_exists, user=user)
+
+@app.route('/guest')
+def guest():
+    session.clear()
+    session['user'] = {'name': 'Guest'}
+    session['user_id'] = None 
+    return redirect(url_for('home'))
+
 
 @app.route("/continue", methods=["POST"])
 def continue_last_project():
@@ -370,6 +386,11 @@ def login():
     redirect_uri = os.environ.get("AUTHENTIK_REDIRECT_URI", url_for('auth_callback', _external=True))
     return authentik.authorize_redirect(redirect_uri)
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('landing_page'))
+
 authentik = oauth.register(
     name='authentik',
     client_id=os.environ.get("AUTHENTIK_CLIENT_ID", "CLIENT_ID"),
@@ -387,7 +408,8 @@ def auth_callback():
     token = authentik.authorize_access_token()
     userinfo = authentik.userinfo()
     session['user'] = userinfo
-    return redirect('/')
+    session['user_id'] = userinfo.get('sub')
+    return redirect(url_for('home'))
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0
