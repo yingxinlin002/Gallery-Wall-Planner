@@ -1,0 +1,116 @@
+<!-- filepath: c:\Users\yingx\OneDrive\Documents\GitHub\Gallery-Wall-Planner\templates\load_gallery.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Load Exhibit</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F0F0F0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #5F3FCA;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .gallery-name {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .btn-load {
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            background-color: #5F3FCA;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-load:hover {
+            background-color: #4a30a0;
+        }
+
+        .no-galleries {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        .btn-create {
+            display: inline-block;
+            margin-top: 10px;
+            background-color: #69718A;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-create:hover {
+            background-color: #4d5462;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>Load Exhibit</h1>
+        {% if galleries %}
+            <ul>
+                {% for gallery in galleries %}
+                    <li>
+                        <span class="gallery-name">{{ gallery.name }}</span>
+                        <form action="{{ url_for('load_gallery') }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="gallery_id" value="{{ gallery.id }}">
+                            <button type="submit" class="btn-load">Load</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="no-galleries">
+                No exhibits found.<br>
+                <a href="{{ url_for('new_gallery') }}" class="btn-create">Create one</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

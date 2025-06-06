@@ -126,48 +126,30 @@ def new_gallery():
         user_id = session.get('user_id')
 
         if not gallery_name:
-            flash("Gallery name is required.")
+            flash("Exhibit name is required.")
             return redirect(url_for('new_gallery'))
 
+        # Allow guests to create galleries (user_id will be None)
         if not user_id:
-            flash("You must be logged in to create a gallery.")
-            return redirect(url_for('login'))
+            flash("You are creating an exhibit as a guest. Log in to save your work.", "info")
 
+        from gallery.models.exhibit import Gallery
         gallery = Gallery(name=gallery_name, user_id=user_id)
         db.session.add(gallery)
         db.session.commit()
 
-        # Save gallery_id to session so the next step (wall creation) knows where to attach
         session['current_gallery_id'] = gallery.id
-        return redirect(url_for('load_gallery'))  # go to load_gallery after creating exhibit
+        return redirect(url_for('load_exhibit'))
 
-    return render_template('new_gallery.html')
+    return render_template('new_exhibit.html')
 
-@app.route('/load-gallery', methods=['GET', 'POST'])
-def load_gallery():
-    user_id = session.get('user_id')
-
-    if not user_id:
-        flash("Please log in to view your galleries.")
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        gallery_id = request.form.get('gallery_id')
-
-        gallery = Gallery.query.filter_by(id=gallery_id, user_id=user_id).first()
-
-        if not gallery:
-            flash("Gallery not found or it doesn't belong to you.")
-            return redirect(url_for('load_gallery'))
-
-        session['current_gallery_id'] = gallery.id
-        flash(f"Loaded gallery: {gallery.name}")
-        return redirect(url_for('select_wall_space'))  # Change this if your next step differs
-
-    # GET request: list all galleries for the current user
-    galleries = Gallery.query.filter_by(user_id=user_id).all()
-    return render_template('load_gallery.html', galleries=galleries)
-
+@app.route('/load-exhibit', methods=['GET'])
+def load_exhibit():
+    # You can fetch the current exhibit or all exhibits for the guest
+    from gallery.models.exhibit import Gallery
+    gallery_id = session.get('current_gallery_id')
+    gallery = Gallery.query.get(gallery_id) if gallery_id else None
+    return render_template('load_exhibit.html', gallery=gallery)
 
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
@@ -443,9 +425,9 @@ def artwork_manual():
         
     return render_template('artwork_manually.html', artworks=artworks)
 
-@app.route("/load", methods=["POST"])
-def load_exhibit():
-    return redirect(url_for('select_wall_space'))
+# @app.route("/load", methods=["POST"])
+# def load_wall():
+#     return redirect(url_for('select_wall_space'))
 
 @app.route('/delete-wall/<int:wall_id>', methods=['POST'])
 def delete_wall(wall_id):
