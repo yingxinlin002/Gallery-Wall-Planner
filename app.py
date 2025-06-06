@@ -210,10 +210,11 @@ def select_wall_space():
 
         session['current_wall_id'] = wall.id
         flash(f"Loaded wall: {wall.name}")
-        return redirect(url_for('edit_permanent_objects'))  # Or wherever you edit the wall
+        return redirect(url_for('edit_permanent_objects'))
 
     walls = Wall.query.filter_by(gallery_id=gallery_id).all()
-    return render_template('select_wall_space.html', walls=walls)
+    current_wall = get_current_wall()  # ✅ Add this
+    return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)  # ✅ And pass it in
 
 @app.route('/add_permanent_object', methods=['POST'])
 def add_permanent_object():

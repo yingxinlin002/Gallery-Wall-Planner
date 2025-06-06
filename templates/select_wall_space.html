@@ -40,8 +40,8 @@
                     {% for wall in walls %}
                         <div class="d-flex align-items-center mb-1">
                             <a href="{{ url_for('select_wall', wall_id=wall.id) }}"
-                               class="list-group-item list-group-item-action wall-btn flex-grow-1 {% if wall.id == current_wall.id %}active{% endif %}">
-                                {{ wall.name }}
+                                class="list-group-item list-group-item-action wall-btn flex-grow-1 {% if current_wall and wall.id == current_wall.id %}active{% endif %}">
+                                 {{ wall.name }}
                             </a>
                             <form action="{{ url_for('delete_wall', wall_id=wall.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this wall?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
