@@ -3,14 +3,18 @@ from openpyxl.styles import Font, PatternFill
 from typing import List, Optional
 from .base import db
 from .artwork import Artwork
+from datetime import datetime
 
 class Gallery(db.Model):
     __tablename__ = 'galleries'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # allow NULL for guests
     user = db.relationship('User', back_populates='galleries', lazy=True)
+    guest_id = db.Column(db.String(36), nullable=True, index=True)  # UUID string
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
     
     # Relationships
     walls = db.relationship('Wall', backref='gallery', lazy=True, cascade='all, delete-orphan')
@@ -21,10 +25,10 @@ class Gallery(db.Model):
         lazy=True
     )
 
-    def __init__(self, name: str = "Gallery", user_id: int = None):
+    def __init__(self, name: str = "Gallery", user_id: int = None, guest_id: str = None):
         self.name = name
-        if user_id is not None:
-            self.user_id = user_id
+        self.user_id = user_id
+        self.guest_id = guest_id
 
     def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
         """Add a new wall to the gallery"""

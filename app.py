@@ -67,8 +67,8 @@ def load_projects_for_user(user_id):
     return Gallery.query.filter_by(user_id=user_id).all()
 
 def load_temp_projects_for_guest(guest_id):
-    # Placeholder until guest save logic is implemented
-    return []
+    from gallery.models.exhibit import Gallery
+    return Gallery.query.filter_by(guest_id=guest_id).all()
 
 def get_current_wall():
     wall_id = session.get("current_wall_id")
@@ -111,7 +111,6 @@ def guest():
     session['user_id'] = None 
     return redirect(url_for('home'))
 
-
 @app.route("/continue", methods=["POST"])
 def continue_last_project():
     try:
@@ -121,6 +120,8 @@ def continue_last_project():
     except Exception as e:
         flash(str(e))
         return redirect(url_for("home"))
+
+from uuid import uuid4
 
 @app.route('/new-gallery', methods=['GET', 'POST'])
 def new_gallery():
@@ -132,12 +133,17 @@ def new_gallery():
             flash("Exhibit name is required.")
             return redirect(url_for('new_gallery'))
 
-        # Allow guests to create galleries (user_id will be None)
+        # Guest handling
+        guest_id = None
         if not user_id:
+            guest_id = session.get('guest_id')
+            if not guest_id:
+                guest_id = str(uuid4())
+                session['guest_id'] = guest_id
             flash("You are creating an exhibit as a guest. Log in to save your work.", "info")
 
         from gallery.models.exhibit import Gallery
-        gallery = Gallery(name=gallery_name, user_id=user_id)
+        gallery = Gallery(name=gallery_name, user_id=user_id, guest_id=guest_id)
         db.session.add(gallery)
         db.session.commit()
 
@@ -169,7 +175,12 @@ def load_gallery():
         return redirect(url_for('select_wall_space'))
 
     # GET request — just show the list
-    galleries = Gallery.query.filter_by(user_id=user_id).all() if user_id else []
+    if user_id:
+        galleries = Gallery.query.filter_by(user_id=user_id).all()
+    else:
+        guest_id = session.get('guest_id')
+        galleries = Gallery.query.filter_by(guest_id=guest_id).all() if guest_id else []
+
     return render_template('load_exhibit.html', galleries=galleries)
 
 @app.route('/create-wall', methods=['GET', 'POST'])
@@ -216,8 +227,8 @@ def select_wall_space():
         return redirect(url_for('edit_permanent_objects'))
 
     walls = Wall.query.filter_by(gallery_id=gallery_id).all()
-    current_wall = get_current_wall()  # ✅ Add this
-    return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)  # ✅ And pass it in
+    current_wall = get_current_wall()
+    return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
 
 @app.route('/add_permanent_object', methods=['POST'])
 def add_permanent_object():
@@ -472,6 +483,27 @@ def update_object_position(obj_id):
 def save_and_continue_permanent_objects():
     # Add save logic
     return redirect(url_for('select_wall_space'))
+
+@app.route('/admin/cleanup-guests', methods=['POST'])
+def cleanup_guest_galleries():
+    import datetime
+    from sqlalchemy import and_
+    
+    cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=1)  # or X minutes/hours
+
+    # Optionally: add a created_at column to filter old ones
+    guest_galleries = Gallery.query.filter(
+        Gallery.user_id.is_(None),
+        Gallery.guest_id.isnot(None)
+        # Add condition like: Gallery.created_at < cutoff
+    ).all()
+
+    count = len(guest_galleries)
+    for g in guest_galleries:
+        db.session.delete(g)
+
+    db.session.commit()
+    return jsonify({'deleted': count})
 
 oauth = OAuth(app)
 
