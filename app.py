@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from flask_migrate import Migrate
+from flask_wtf import CSRFProtect
 import os
 from werkzeug.utils import secure_filename
 from gallery.models.exhibit import db
@@ -7,15 +8,15 @@ from gallery.models.wall import Wall
 from gallery.models.exhibit import Gallery
 from gallery.models import db
 from gallery.models.project_exporter import export_gallery_to_excel, import_gallery_from_excel
-from flask_wtf import CSRFProtect
+from gallery.models.user import User
+from gallery.models.base import db
 from gallery.models.artwork import Artwork
 from authlib.integrations.flask_client import OAuth
 from sqlalchemy import create_engine
 from config import load_config
-from gallery.models.user import User
-from gallery.models.base import db
 from authlib.integrations.base_client.errors import MismatchingStateError
 import uuid
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")
@@ -85,31 +86,59 @@ def landing_page():
         return redirect(url_for('home'))
     return render_template("landing_page.html")
 
-@app.route("/home", methods=["GET"])
-def home():
-    user = session.get('user')
-    user_id = session.get('user_id')
+@app.route('/guest')
+def guest():
+    session.clear()
+    # Create a guest user record
+    guest_id = str(uuid.uuid4())
+    guest_user = User(
+        name='Guest',
+        is_guest=True,
+        session_id=guest_id
+    )
+    db.session.add(guest_user)
+    db.session.commit()
+    
+    session['user_id'] = guest_user.id
+    session['user'] = {'name': 'Guest'}
+    session['guest_id'] = guest_id
+    
+    return redirect(url_for('home'))
 
-    if user_id:
-        # Logged in user - fetch saved projects from DB
-        projects = load_projects_for_user(user_id)
+@app.route('/home', methods=["GET"])
+def home():
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return redirect(url_for('landing_page'))
+    
+    user = User.query.get(user_id)
+    if not user:
+        session.clear()
+        return redirect(url_for('landing_page'))
+    
+    # Load projects based on user type
+    if user.is_guest:
+        projects = load_temp_projects_for_guest(user.id)
+        flash("You are using a guest session. Log in to save your work permanently.", "info")
     else:
-        # Guest user - optionally assign temp guest ID to session for temp saves
-        if 'guest_id' not in session:
-            session['guest_id'] = str(uuid.uuid4())
-        guest_id = session['guest_id']
-        # Load temp data from session or a temporary store keyed by guest_id
-        projects = load_temp_projects_for_guest(guest_id)
+        projects = load_projects_for_user(user.id)
     
     last_project_exists = bool(projects)
     return render_template("home.html", last_project_exists=last_project_exists, user=user)
 
-@app.route('/guest')
-def guest():
-    session.clear()
-    session['user'] = {'name': 'Guest'}
-    session['user_id'] = None 
-    return redirect(url_for('home'))
+# Add a cleanup task for guest data
+@app.route('/cleanup-guests', methods=['POST'])
+def cleanup_guests():
+    from datetime import datetime, timedelta
+    # Delete guest accounts older than 24 hours
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    deleted = User.query.filter(
+        User.is_guest == True,
+        User.created_at < cutoff
+    ).delete()
+    db.session.commit()
+    return jsonify({'deleted': deleted})
 
 @app.route("/continue", methods=["POST"])
 def continue_last_project():
@@ -564,6 +593,20 @@ def auth_callback():
     session['user'] = userinfo  # if you want full user info in session
 
     return redirect(url_for('home'))
+
+# Initialize scheduler for guest data cleanup
+def schedule_cleanup():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=lambda: Gallery.cleanup_guest_galleries(),
+        trigger='interval',
+        hours=6
+    )
+    scheduler.start()
+
+# Only start the scheduler when not in debug mode or when running directly
+if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    schedule_cleanup()
 
 if __name__ == "__main__":
     host = os.environ.get("HOST", "0.0.0.0")  # Default to 0.0.0.0

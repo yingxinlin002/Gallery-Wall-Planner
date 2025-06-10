@@ -30,6 +30,24 @@ class Gallery(db.Model):
         self.user_id = user_id
         self.guest_id = guest_id
 
+    @classmethod
+    def cleanup_guest_galleries(cls, hours=24):
+        """Clean up guest galleries older than specified hours"""
+        from datetime import datetime, timedelta
+        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        
+        # Find guest users who haven't converted to real accounts
+        guest_users = User.query.filter(
+            User.is_guest == True,
+            User.created_at < cutoff
+        ).all()
+        
+        for user in guest_users:
+            # Delete all galleries associated with this guest user
+            cls.query.filter_by(user_id=user.id).delete()
+        
+        db.session.commit()
+    
     def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
         """Add a new wall to the gallery"""
         from .wall import Wall
