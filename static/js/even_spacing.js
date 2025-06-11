@@ -13,54 +13,55 @@ export class EvenSpacing {
     }
 
     setupUI() {
-        // Create modal container
         this.modal = document.createElement('div');
         this.modal.className = 'modal fade';
         this.modal.id = 'evenSpacingModal';
         this.modal.innerHTML = `
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header py-2">
                         <h5 class="modal-title">Even Spacing</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Spacing Boundaries (inches)</label>
-                            <div class="input-group mb-2">
-                                <span class="input-group-text">Left Boundary:</span>
-                                <input type="number" class="form-control" id="leftBoundary" value="0" step="0.1">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="row g-3">
+                            <!-- Left: Spacing controls -->
+                            <div class="col-md-6">
+                                <label class="form-label mb-1">Spacing Boundaries (inches)</label>
+                                <div class="input-group input-group-sm mb-1">
+                                    <span class="input-group-text">Left:</span>
+                                    <input type="number" class="form-control" id="leftBoundary" value="0" step="0.1">
+                                </div>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text">Right:</span>
+                                    <input type="number" class="form-control" id="rightBoundary" value="${this.editor.wall.width}" step="0.1">
+                                </div>
+                                <label class="form-label mb-1">Center height from floor</label>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="number" class="form-control" id="yPosition" value="${this.DEFAULT_Y_POSITION}" step="0.1">
+                                    <span class="input-group-text">inches</span>
+                                </div>
+                                <div class="form-text small mb-1">Standard: 62" from floor</div>
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span id="selectedCount">Selected: 0</span>
+                                    <span id="totalWidth">Total Width: 0.0"</span>
+                                    <span id="spacingInfo">Spacing: -</span>
+                                </div>
                             </div>
-                            <div class="input-group">
-                                <span class="input-group-text">Right Boundary:</span>
-                                <input type="number" class="form-control" id="rightBoundary" value="${this.editor.wall.width}" step="0.1">
+                            <!-- Right: Select Artworks -->
+                            <div class="col-md-6">
+                                <label class="form-label mb-1">Select Artworks (click to select order left to right)</label>
+                                <select multiple class="form-select form-select-sm" id="artworkList" size="14" style="width: 100%;">
+                                    ${this.editor.placedArtworks.map(artwork => 
+                                        `<option value="${artwork.id}">${artwork.name} (${artwork.width}" × ${artwork.height}")</option>`
+                                    ).join('')}
+                                </select>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Center height from floor (standard: 62")</label>
-                            <input type="number" class="form-control" id="yPosition" value="${this.DEFAULT_Y_POSITION}" step="0.1">
-                            <div class="form-text">Distance from bottom of wall</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Select Artworks (click to select order)</label>
-                            <select multiple class="form-select" id="artworkList" size="10">
-                                ${this.editor.placedArtworks.map(artwork => 
-                                    `<option value="${artwork.id}">${artwork.name} (${artwork.width}" × ${artwork.height}")</option>`
-                                ).join('')}
-                            </select>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <span id="selectedCount">Selected: 0</span>
-                            <span id="totalWidth">Total Width: 0.0"</span>
-                            <span id="spacingInfo">Spacing: -</span>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="applySpacing">Apply Spacing</button>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-sm btn-primary" id="applySpacing">Apply Spacing</button>
                     </div>
                 </div>
             </div>
@@ -71,10 +72,33 @@ export class EvenSpacing {
     }
 
     bindEvents() {
-        // Artwork selection
-        this.modal.querySelector('#artworkList').addEventListener('change', (e) => {
-            this.updateSelection();
-            this.updateDisplay();
+        const artworkList = this.modal.querySelector('#artworkList');
+        
+        // Artwork selection - handle Ctrl/Cmd+click
+        artworkList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'OPTION') {
+                e.preventDefault();
+                const option = e.target;
+                const artworkId = parseInt(option.value);
+                
+                // Find if this artwork is already selected
+                const existingIndex = this.selectedArtworks.findIndex(a => a.id === artworkId);
+                
+                if (existingIndex >= 0) {
+                    // Remove from selection
+                    this.selectedArtworks.splice(existingIndex, 1);
+                    option.selected = false;
+                } else {
+                    // Add to selection (at end)
+                    const artwork = this.editor.placedArtworks.find(a => a.id == artworkId);
+                    if (artwork) {
+                        this.selectedArtworks.push(artwork);
+                        option.selected = true;
+                    }
+                }
+                
+                this.updateDisplay();
+            }
         });
 
         // Boundary inputs
@@ -100,22 +124,26 @@ export class EvenSpacing {
         });
     }
 
+    // updateDisplay() method to show selection order
     updateDisplay() {
         const select = this.modal.querySelector('#artworkList');
         const options = Array.from(select.options);
         
-        // Update order indicators in list
+        // Update all options to show selection order
         options.forEach(option => {
             const artworkId = parseInt(option.value);
             const index = this.selectedArtworks.findIndex(a => a.id === artworkId);
             
             // Remove any existing order number
-            option.text = option.text.replace(/ \(\d+\)$/, '');
+            let text = option.text.replace(/ \(\d+\)$/, '');
             
             // Add order number if selected
             if (index >= 0) {
-                option.text += ` (${index + 1})`;
+                text += ` (${index + 1})`;
             }
+            
+            option.text = text;
+            option.selected = index >= 0;
         });
 
         // Update info labels
