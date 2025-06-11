@@ -8,6 +8,11 @@ export class EvenSpacing {
     }
 
     init() {
+        // Remove old modal if it exists
+        const oldModal = document.getElementById('evenSpacingModal');
+        if (oldModal) {
+            oldModal.parentNode.removeChild(oldModal);
+        }
         this.setupUI();
         this.bindEvents();
     }

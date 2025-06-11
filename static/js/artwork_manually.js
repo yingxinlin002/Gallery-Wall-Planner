@@ -49,29 +49,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) return;
 
-        fetch('/artwork-manual', {
-            method: 'POST',
+        fetch(window.location.pathname, {
+            method: "POST",
             body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { "X-Requested-With": "XMLHttpRequest" }
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                addArtworkToList(data.artwork);
-                form.reset();
-                // Reset file name display
-                document.getElementById('fileName').textContent = 'No file selected';
-                // Show success message
-                alert('Artwork created successfully!');
-                //refresh the page to show the new artwork
-                window.location.reload();
+                // Reload artworks in the editor (assuming you have a method for this)
+                if (window.editor && typeof window.editor.reloadArtworks === "function") {
+                    window.editor.reloadArtworks().then(() => {
+                        // Optionally, refresh the EvenSpacing modal if open
+                        if (window.evenSpacingModal && window.evenSpacingModal.modalInstance._isShown) {
+                            window.evenSpacingModal.init(); // or .show() if you want to reopen
+                        }
+                    });
+                } else {
+                    // fallback: reload the page
+                    window.location.reload();
+                }
+            } else {
+                alert(data.error || "Failed to create artwork.");
             }
         })
         .catch(error => {
