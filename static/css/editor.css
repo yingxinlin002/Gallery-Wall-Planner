@@ -298,3 +298,18 @@ body.editor-bg {
     padding-top: 10px;
     border-top: 1spx solid #dee2e6;
 }
+
+/* Installation Instruction Modal */
+#installationInstructionModal .modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#installationInstructionModal .form-label {
+    margin-bottom: 0.5rem;
+}
+
+#installationInstructionModal .form-check {
+    margin-bottom: 0.25rem;
+    margin-left: 1rem;
+}

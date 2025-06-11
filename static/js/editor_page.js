@@ -1,6 +1,6 @@
 import { EvenSpacing } from './even_spacing.js';
 import { MeasurementManager } from './modules/MeasurementManager.js';
-//import * as interact from 'https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js';
+import { InstallationInstruction } from './modules/InstallationInstruction.js'; // <-- Add this import
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Loaded: Starting wall editor setup');
@@ -437,5 +437,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         // --- End EvenSpacing Integration ---
+
+        // --- Installation Instruction Integration ---
+        const calcInstructionBtn = document.getElementById('calcInstructionBtn');
+        if (calcInstructionBtn) {
+            calcInstructionBtn.addEventListener('click', () => {
+                const instruction = new InstallationInstruction(
+                    window.currentWallData,
+                    window.currentWallArtworkData
+                );
+                instruction.show();
+            });
+        }
+        // --- End Installation Instruction Integration ---
     }
 });
