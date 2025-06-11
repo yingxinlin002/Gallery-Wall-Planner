@@ -31,7 +31,7 @@ export class MeasurementManager {
         const canvasY = wallHeight - y - height;
         
         const left = x * scale;
-        const top = canvasY * scale; // Now using canvasY instead of y
+        const top = canvasY * scale;
         const right = (x + width) * scale;
         const bottom = (canvasY + height) * scale;
         const canvasWidth = wallWidth * scale;
@@ -43,11 +43,11 @@ export class MeasurementManager {
         // Right measurement (distance from right edge)
         this.createMeasurementLine(right, top, right, 0, 'right', `${(wallWidth - x - width).toFixed(1)}"`);
         
-        // Top measurement (distance from top edge - canvasY is already correct)
-        this.createMeasurementLine(left, top, 0, top, 'top', `${y.toFixed(1)}"`);
+        // Top measurement (distance from top edge)
+        this.createMeasurementLine(left, top, 0, top, 'top', `${(wallHeight - y - height).toFixed(1)}"`);
         
         // Bottom measurement (distance from bottom edge)
-        this.createMeasurementLine(left, bottom, 0, bottom, 'bottom', `${(wallHeight - y - height).toFixed(1)}"`);
+        this.createMeasurementLine(left, bottom, 0, bottom, 'bottom', `${y.toFixed(1)}"`);
     }
 
     createMeasurementLine(x1, y1, x2, y2, position, text) {
