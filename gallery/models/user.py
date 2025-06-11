@@ -13,7 +13,7 @@ class User(db.Model):
     session_id = db.Column(db.String(36))  # For guest sessions
     
     artworks = db.relationship('Artwork', back_populates='user', lazy=True)
-    galleries = db.relationship('Gallery', back_populates='user', lazy=True)
+    exhibits = db.relationship('Exhibit', back_populates='user', lazy=True)
 
     def __repr__(self):
         return f"<User {self.email or self.sub}>"

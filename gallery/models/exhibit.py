@@ -5,69 +5,59 @@ from .base import db
 from .artwork import Artwork
 from datetime import datetime
 
-class Gallery(db.Model):
-    __tablename__ = 'galleries'
+class Exhibit(db.Model):
+    __tablename__ = 'exhibits'
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)  # allow NULL for guests
-    user = db.relationship('User', back_populates='galleries', lazy=True)
-    guest_id = db.Column(db.String(36), nullable=True, index=True)  # UUID string
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user = db.relationship('User', back_populates='exhibits', lazy=True)  # Changed from 'galleries'
+    guest_id = db.Column(db.String(36), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    
     # Relationships
-    walls = db.relationship('Wall', backref='gallery', lazy=True, cascade='all, delete-orphan')
+    walls = db.relationship('Wall', backref='exhibit', lazy=True, cascade='all, delete-orphan')  # Changed from 'gallery'
     unplaced_artworks = db.relationship(
         'Artwork',
-        primaryjoin='and_(Artwork.wall_id==None, Artwork.gallery_id==Gallery.id)',
-        backref='gallery',
+        primaryjoin='and_(Artwork.wall_id==None, Artwork.exhibit_id==Exhibit.id)',  # Changed gallery_id to exhibit_id
+        back_populates='exhibit',  # Use back_populates, not backref
         lazy=True
     )
 
-    def __init__(self, name: str = "Gallery", user_id: int = None, guest_id: str = None):
+    def __init__(self, name: str = "Exhibit", user_id: int = None, guest_id: str = None):  # Changed default name
         self.name = name
         self.user_id = user_id
         self.guest_id = guest_id
 
     @classmethod
-    def cleanup_guest_galleries(cls, hours=24):
-        """Clean up guest galleries older than specified hours"""
+    def cleanup_guest_exhibits(cls, hours=24):  # Renamed from cleanup_guest_galleries
+        """Clean up guest exhibits older than specified hours"""
         from datetime import datetime, timedelta
         cutoff = datetime.utcnow() - timedelta(hours=hours)
-        
-        # Find guest users who haven't converted to real accounts
         guest_users = User.query.filter(
             User.is_guest == True,
             User.created_at < cutoff
         ).all()
-        
         for user in guest_users:
-            # Delete all galleries associated with this guest user
             cls.query.filter_by(user_id=user.id).delete()
-        
         db.session.commit()
-    
+
     def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
-        """Add a new wall to the gallery"""
         from .wall import Wall
-        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=self.id)
+        wall = Wall(name=name, width=width, height=height, color=color, exhibit_id=self.id)
         db.session.add(wall)
         return wall
 
     def get_walls(self) -> list["Wall"]:
-        """Get all walls in this gallery"""
         return self.walls
 
     def get_wall_by_name(self, name: str) -> "Wall | None":
-        """Find a wall by its name"""
         from .wall import Wall
-        return Wall.query.filter_by(name=name, gallery_id=self.id).first()
+        return Wall.query.filter_by(name=name, exhibit_id=self.id).first()
 
     def remove_wall(self, wall_id: int) -> bool:
-        """Remove a wall from the gallery"""
         wall = Wall.query.get(wall_id)
-        if wall and wall.gallery_id == self.id:
+        if wall and wall.exhibit_id == self.id:
             db.session.delete(wall)
             return True
         return False
@@ -75,7 +65,6 @@ class Gallery(db.Model):
     def add_unplaced_artwork(self, title: str, medium: str = "", width: float = 0, 
                             height: float = 0, depth: float = 0, price: float = 0,
                             nfs: bool = False, notes: str = "", user_id: Optional[int] = None) -> Artwork:
-        """Add artwork that isn't placed on any wall, optionally linked to a user"""
         artwork = Artwork(
             name=title,
             medium=medium,
@@ -85,37 +74,32 @@ class Gallery(db.Model):
             price=price,
             nfs=nfs,
             notes=notes,
-            gallery_id=self.id,
+            exhibit_id=self.id,  # Changed from gallery_id
             user_id=user_id
         )
         db.session.add(artwork)
         return artwork
 
-
     def get_unplaced_artworks(self) -> List[Artwork]:
-        """Get all artworks not placed on any wall"""
         return self.unplaced_artworks
 
     def place_artwork(self, artwork_id: int, wall_id: int) -> bool:
-        """Move artwork from unplaced to a specific wall"""
         artwork = Artwork.query.get(artwork_id)
         wall = Wall.query.get(wall_id)
-        
-        if artwork and wall and artwork.gallery_id == self.id and wall.gallery_id == self.id:
+        if artwork and wall and artwork.exhibit_id == self.id and wall.exhibit_id == self.id:
             artwork.wall_id = wall_id
             return True
         return False
 
     def unplace_artwork(self, artwork_id: int) -> bool:
-        """Remove artwork from a wall and make it unplaced"""
         artwork = Artwork.query.get(artwork_id)
-        if artwork and artwork.gallery_id == self.id:
+        if artwork and artwork.exhibit_id == self.id:
             artwork.wall_id = None
             return True
         return False
 
-    def export_to_excel(self, filename: str = "gallery_export.xlsx") -> str:
-        """Export gallery data to Excel file"""
+    def export_to_excel(self, filename: str = "exhibit_export.xlsx") -> str:  # Changed from gallery_export        """Export gallery data to Excel file"""
+        """Export exhibit data to Excel file"""
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "Artworks"
@@ -204,15 +188,16 @@ class Gallery(db.Model):
         return filename
 
     @classmethod
-    def import_from_excel(cls, filename: str = "gallery_export.xlsx") -> 'Gallery':
-        """Import gallery data from Excel file"""
+    def import_from_excel(cls, filename: str = "exhibit_export.xlsx") -> 'Exhibit':  # Changed return type
+        """Import exhibit data from Excel file"""
         try:
             wb = openpyxl.load_workbook(filename)
         except FileNotFoundError:
             raise FileNotFoundError(f"Excel file not found: {filename}")
 
         ws = wb["Artworks"]
-        gallery = cls()
+        exhibit = cls()  # Changed from gallery
+        exhibit.name = ws.cell(row=row_idx, column=1).value or "Imported Exhibit"  # Changed from "Imported Gallery"
 
         # Read wall information
         row_idx = 1
@@ -221,16 +206,16 @@ class Gallery(db.Model):
             wall_width = float(ws.cell(row=row_idx, column=2).value)
             wall_height = float(ws.cell(row=row_idx, column=3).value)
             wall_color = ws.cell(row=row_idx, column=4).value or "White"
-            gallery.add_wall(name=wall_name, width=wall_width, height=wall_height, color=wall_color)
+            exhibit.add_wall(name=wall_name, width=wall_width, height=wall_height, color=wall_color)
             row_idx += 1
         
         # Skip empty rows and get gallery name
         row_idx += 1
-        gallery.name = ws.cell(row=row_idx, column=1).value or "Imported Gallery"
+        exhibit.name = ws.cell(row=row_idx, column=1).value or "Imported Gallery"
         row_idx += 2  # Skip empty row and headers
 
         reading_unplaced = False
-        current_wall = gallery.walls[-1] if gallery.walls else None
+        current_wall = exhibit.walls[-1] if exhibit.walls else None
 
         for row in ws.iter_rows(min_row=row_idx, values_only=True):
             if not any(row):
@@ -252,16 +237,16 @@ class Gallery(db.Model):
                 'price': float(price or 0),
                 'nfs': bool(nfs),
                 'notes': notes or "",
-                'gallery_id': gallery.id
+                'exhibit_id': exhibit.id
             }
 
             if reading_unplaced:
-                gallery.add_unplaced_artwork(**artwork_data)
+                exhibit.add_unplaced_artwork(**artwork_data)
             elif current_wall:
                 artwork = Artwork(**artwork_data, wall_id=current_wall.id)
                 db.session.add(artwork)
 
-        return gallery
+        return exhibit
 
     def __repr__(self):
-        return f"<Gallery {self.name} ({len(self.walls)} walls, {len(self.unplaced_artworks)} unplaced artworks)>"
+        return f"<Exhibit {self.name} ({len(self.walls)} walls, {len(self.unplaced_artworks)} unplaced artworks)>"

@@ -15,7 +15,7 @@ from gallery.models.artwork import Artwork
 from gallery.models.permanent_object import PermanentObject
 from gallery.models.structures import Position
 from .wall_line import SingleLine
-from gallery.models.exhibit import Gallery
+from gallery.models.exhibit import Exhibit
 from gallery.models.wall_line import Orientation
 from typing import Dict
 
@@ -147,10 +147,10 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
 
     print(f"[INFO] Project exported to Excel at {filepath}")
 
-    def import_gallery_from_excel(filepath):
+    def import_exhibit_from_excel(filepath):
         print(f"[INFO] Importing gallery from {filepath}")
         xls = pd.ExcelFile(filepath)
-        gallery = Gallery(name="Imported Gallery")
+        exhibit = Exhibit(name="Imported Exhibit")
     
         walls = {}
     
@@ -204,14 +204,14 @@ def _project_to_excel(filepath, wall=None, artworks=None, permanent_objects=None
                 else:
                     print(f"[ERROR] Wall '{wall_name}' not found in Walls sheet.")
     
-        gallery.walls = list(walls.values())
-        print(f"[DONE] Imported gallery with {len(gallery.walls)} walls.")
-        return gallery
+        exhibit.walls = list(walls.values())
+        print(f"[DONE] Imported exhibit with {len(exhibit.walls)} walls.")
+        return exhibit
 
 
 
-def export_gallery_to_excel(filepath: str, gallery: Gallery):
-    print(f"[INFO] Exporting gallery to {filepath}")
+def export_exhibit_to_excel(filepath: str, exhibit: Exhibit):
+    print(f"[INFO] Exporting exhibit to {filepath}")
     writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
 
     # Sheet: ExportInfo
@@ -219,7 +219,7 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
 
     # NEW Sheet: Walls
     wall_rows = []
-    for wall in gallery.walls:
+    for wall in exhibit.walls:
         wall_rows.append({
             "name": wall.name,
             "width": wall.width,
@@ -229,7 +229,7 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
     pd.DataFrame(wall_rows).to_excel(writer, index=False, sheet_name="Walls")
 
     # Export each wall's elements
-    for wall in gallery.walls:
+    for wall in exhibit.walls:
         # Artwork
         if wall.artwork:
             def artwork_to_export_dict(artwork):
@@ -269,15 +269,12 @@ def export_gallery_to_excel(filepath: str, gallery: Gallery):
             )
 
     writer.close()
-    print("[DONE] Finished exporting gallery.")
+    print("[DONE] Finished exporting exhibit.")
 
-
-from gallery.models.exhibit import Gallery  # assuming this exists
-
-def import_gallery_from_excel(filepath: str) -> Gallery:
-    print(f"[INFO] Importing gallery from {filepath}")
+def import_exhibit_from_excel(filepath: str) -> Exhibit:
+    print(f"[INFO] Importing exhibit from {filepath}")
     wb: Workbook = openpyxl.load_workbook(filepath, data_only=True)
-    gallery = Gallery("Imported Gallery")
+    exhibit = Exhibitt("Imported exhibit")
 
     wall_map: Dict[str, Wall] = {}  # name -> Wall object
 
@@ -288,12 +285,12 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
             name, width, height, color = row[:4]
             if name:
                 wall = Wall(name=name, width=width, height=height, color=color)
-                gallery.add_wall(wall)
+                exhibit.add_wall(wall)
                 wall_map[name] = wall
                 print(f"[INFO] Loaded wall: {name}")
     else:
         print("[ERROR] 'Walls' sheet not found.")
-        return gallery
+        return exhibit
 
     # Step 2: Loop through each sheet and map to walls
     for sheet_name in wb.sheetnames:
@@ -388,19 +385,183 @@ def import_gallery_from_excel(filepath: str) -> Gallery:
         except Exception as e:
             print(f"[ERROR] Failed to load sheet '{sheet_name}': {e}")
 
-    print(f"[DONE] Finished importing gallery with {len(gallery.walls)} walls.")
-    return gallery
+    print(f"[DONE] Finished importing exhibit with {len(exhibit.walls)} walls.")
+    return exhibit
 
-    gallery.walls = list(walls.values())
-    print(f"[DONE] Finished importing gallery with {len(gallery.walls)} walls.")
-    return gallery
+def export_exhibit_to_excel(filepath: str, exhibit: Exhibit):
+    print(f"[INFO] Exporting exhibit to {filepath}")
+    writer = pd.ExcelWriter(filepath, engine='xlsxwriter')
+
+    # Sheet: ExportInfo
+    pd.DataFrame([{"Export status": "Initialized"}]).to_excel(writer, index=False, sheet_name="ExportInfo")
+
+    # Sheet: Walls
+    wall_rows = []
+    for wall in exhibit.walls:
+        wall_rows.append({
+            "name": wall.name,
+            "width": wall.width,
+            "height": wall.height,
+            "color": wall.color
+        })
+    pd.DataFrame(wall_rows).to_excel(writer, index=False, sheet_name="Walls")
+
+    # Export each wall's elements
+    for wall in exhibit.walls:
+        # Artwork
+        if hasattr(wall, "artwork") and wall.artwork:
+            pd.DataFrame([a.to_dict() for a in wall.artwork]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Art"
+            )
+        else:
+            pd.DataFrame([{"info": "No artworks"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Art"
+            )
+
+        # Wall Lines
+        if hasattr(wall, "wall_lines") and wall.wall_lines:
+            pd.DataFrame([l.to_dict() for l in wall.wall_lines]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Lines"
+            )
+        else:
+            pd.DataFrame([{"info": "No wall lines"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Lines"
+            )
+
+        # Permanent Objects
+        if hasattr(wall, "permanent_objects") and wall.permanent_objects:
+            pd.DataFrame([p.to_dict() for p in wall.permanent_objects]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Perm"
+            )
+        else:
+            pd.DataFrame([{"info": "No permanent objects"}]).to_excel(
+                writer, index=False, sheet_name=f"{wall.name} - Perm"
+            )
+
+    writer.close()
+    print("[DONE] Finished exporting exhibit.")
+
+def import_exhibit_from_excel(filepath: str) -> Exhibit:
+    print(f"[INFO] Importing exhibit from {filepath}")
+    wb: Workbook = openpyxl.load_workbook(filepath, data_only=True)
+    exhibit = Exhibit(name="Imported Exhibit")
+
+    wall_map: Dict[str, Wall] = {}
+
+    # Step 1: Load walls from "Walls" sheet
+    if "Walls" in wb.sheetnames:
+        sheet: Worksheet = wb["Walls"]
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            name, width, height, color = row[:4]
+            if name:
+                wall = Wall(name=name, width=width, height=height, color=color)
+                exhibit.add_wall(wall.name, wall.width, wall.height, wall.color)
+                wall_map[name] = wall
+                print(f"[INFO] Loaded wall: {name}")
+    else:
+        print("[ERROR] 'Walls' sheet not found.")
+        return exhibit
+
+    # Step 2: Loop through each sheet and map to walls
+    for sheet_name in wb.sheetnames:
+        if sheet_name in ["Walls", "ExportInfo"]:
+            continue
+
+        try:
+            if " - Art" in sheet_name:
+                wall_name = sheet_name.replace(" - Art", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Art sheet found for unknown wall '{wall_name}' — skipping")
+                    continue
+                sheet: Worksheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    name, width, height, hanging_point, medium, depth, image_path, nfs, notes, price, x, y = row[:12]
+                    if name:
+                        artwork = Artwork(name=name, width=width, height=height,
+                                          hanging_point=hanging_point,
+                                          medium=medium or "",
+                                          depth=depth or 0.0,
+                                          image_path=image_path if isinstance(image_path, str) else None,
+                                          nfs=(str(nfs).strip().upper() == "Y"))
+
+                        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
+                            artwork.position = Position(x, y)
+
+                        wall.add_artwork(artwork)
+                print(f"[INFO] Imported artwork for wall '{wall_name}'")
+
+            elif " - Lines" in sheet_name:
+                wall_name = sheet_name.replace(" - Lines", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Line sheet found for unknown wall '{wall_name}' — skipping")
+                    continue
+                sheet: Worksheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    x_cord, y_cord, length, angle, snap_to, moveable, orientation, alignment, distance = row[:9]
+                    line_orientation: Orientation = Orientation.HORIZONTAL if orientation == "horizontal" else Orientation.VERTICAL
+                    if x_cord is not None and y_cord is not None:
+                        wall_line = SingleLine(distance=distance, orientation=line_orientation)
+                        wall.add_wall_line(wall_line)
+                        print(f"[DEBUG] Adding wall line to wall: {wall_line}")
+                print(f"[INFO] Imported wall lines for wall '{wall_name}'")
+
+            elif " - Perm" in sheet_name:
+                wall_name = sheet_name.replace(" - Perm", "")
+                wall = wall_map.get(wall_name)
+                if not wall:
+                    print(f"[WARN] Perm sheet found for unknown wall '{wall_name}' — skipping")
+                    continue
+                sheet: Worksheet = wb[sheet_name]
+                for row in sheet.iter_rows(min_row=2, values_only=True):
+                    values = list(row)
+                    if len(values) < 5:
+                        print(f"[WARN] Skipping incomplete permanent object row: {values}")
+                        continue
+                
+                    name = values[0]
+                    
+                    # Try parsing (x, y) from a single string
+                    x = y = None
+                    if isinstance(values[2], str) and "(" in values[2] and "," in values[2]:
+                        try:
+                            coord_str = values[2].strip("() ")
+                            x_str, y_str = coord_str.split(",")
+                            x = float(x_str.strip())
+                            y = float(y_str.strip())
+                        except Exception as e:
+                            print(f"[ERROR] Could not parse position from '{values[2]}': {e}")
+                    else:
+                        x = values[1]
+                        y = values[2]
+                    
+                    width = float(values[3]) if values[3] is not None else None
+                    height = float(values[4]) if values[4] is not None else None
+                    image_path = values[5] if len(values) > 5 else None
+                
+                    if name and x is not None and y is not None:
+                        safe_image_path = image_path if isinstance(image_path, str) and image_path.strip() else None
+                        perm = PermanentObject(name=name, width=width, height=height, image_path=safe_image_path)
+                        perm.position = Position(x, y)
+                        wall.add_permanent_object(perm)
+
+                        print(f"[DEBUG] Adding permanent object to wall: {perm}")
+                    
+                print(f"[INFO] Imported permanent objects for wall '{wall_name}'")
+                print(f"[DEBUG] Total permanent objects: {len(wall.permanent_objects)}")
+
+
+        except Exception as e:
+            print(f"[ERROR] Failed to load sheet '{sheet_name}': {e}")
+
+    print(f"[DONE] Finished importing exhibit with {len(exhibit.walls)} walls.")
+    return exhibit
 
 # All available methods    
 __all__ = [
     "export_project",
     "import_project",
-    "export_project_to_excel",
-    "import_project_from_excel",
-    "export_gallery_to_excel",
-    "import_gallery_from_excel"
+    "export_exhibit_to_excel",
+    "import_exhibit_from_excel"
 ]

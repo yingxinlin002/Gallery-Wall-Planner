@@ -23,7 +23,7 @@ class Artwork(WallObject):
     nfs = db.Column(db.Boolean, default=False)
     notes = db.Column(db.String(500))
     image_path = db.Column(db.String(200))
-    gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
+    exhibit_id = db.Column(db.Integer, db.ForeignKey('exhibits.id'))
     x_position = db.Column(db.Float, nullable=True)
     y_position = db.Column(db.Float, nullable=True)
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'), nullable=True)
@@ -31,6 +31,7 @@ class Artwork(WallObject):
     # New user association
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     user = db.relationship('User', back_populates='artworks')
+    exhibit = db.relationship('Exhibit', back_populates='unplaced_artworks')
 
     def __init__(self, name: str = "", medium: str = "", width: float = 0.0, height: float = 0.0,
                  depth: float = 0.0, hanging_point: float = 0.0, price: float = 0.0,

@@ -7,7 +7,7 @@ class Wall(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
-    gallery_id = db.Column(db.Integer, db.ForeignKey('galleries.id'))
+    exhibit_id = db.Column(db.Integer, db.ForeignKey('exhibits.id'))  # Changed from gallery_id/galleries.id
     width = db.Column(db.Float)
     height = db.Column(db.Float)
     color = db.Column(db.String(32))
@@ -17,12 +17,12 @@ class Wall(db.Model):
     artworks = db.relationship('Artwork', backref='wall', lazy=True, cascade='all, delete-orphan')
     snap_lines = db.relationship('SingleLine', backref='wall', lazy=True, cascade='all, delete-orphan')
     
-    def __init__(self, name: str, width: float, height: float, color: str = "White", gallery_id: Optional[int] = None):
+    def __init__(self, name: str, width: float, height: float, color: str = "White", exhibit_id: Optional[int] = None):  # Changed from gallery_id
         self.name = name
         self.width = width
         self.height = height
         self.color = color
-        self.gallery_id = gallery_id
+        self.exhibit_id = exhibit_id  # Changed from gallery_id
 
     def add_permanent_object(self, name: str, width: float, height: float, 
                            x: float = 0, y: float = 0, image_path: Optional[str] = None):

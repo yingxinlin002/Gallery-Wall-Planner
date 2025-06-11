@@ -5,9 +5,9 @@ import os
 from werkzeug.utils import secure_filename
 from gallery.models.exhibit import db
 from gallery.models.wall import Wall
-from gallery.models.exhibit import Gallery
+from gallery.models.exhibit import Exhibit
 from gallery.models import db
-from gallery.models.project_exporter import export_gallery_to_excel, import_gallery_from_excel
+from gallery.models.project_exporter import export_exhibit_to_excel, import_exhibit_from_excel
 from gallery.models.user import User
 from gallery.models.base import db
 from gallery.models.artwork import Artwork
@@ -64,12 +64,10 @@ with app.app_context():
     db.create_all()
 
 def load_projects_for_user(user_id):
-    from gallery.models.exhibit import Gallery
-    return Gallery.query.filter_by(user_id=user_id).all()
+    return Exhibit.query.filter_by(user_id=user_id).all()
 
 def load_temp_projects_for_guest(guest_id):
-    from gallery.models.exhibit import Gallery
-    return Gallery.query.filter_by(guest_id=guest_id).all()
+    return Exhibit.query.filter_by(guest_id=guest_id).all()
 
 def get_current_wall():
     wall_id = session.get("current_wall_id")
@@ -144,7 +142,7 @@ def cleanup_guests():
 def continue_last_project():
     try:
         # Import from Excel and add to the database
-        import_gallery_from_excel(TEMP_FILE, db)  # Pass db if your function needs it
+        import_exhibit_from_excel(TEMP_FILE, db)  # Pass db if your function needs it
         return redirect(url_for('select_wall_space'))
     except Exception as e:
         flash(str(e))
@@ -152,15 +150,15 @@ def continue_last_project():
 
 from uuid import uuid4
 
-@app.route('/new-gallery', methods=['GET', 'POST'])
-def new_gallery():
+@app.route('/new-exhibit', methods=['GET', 'POST'])
+def new_exhibit():
     if request.method == 'POST':
-        gallery_name = request.form.get('exhibit_name', '').strip()
+        exhibit_name = request.form.get('exhibit_name', '').strip()
         user_id = session.get('user_id')
 
-        if not gallery_name:
+        if not exhibit_name:
             flash("Exhibit name is required.")
-            return redirect(url_for('new_gallery'))
+            return redirect(url_for('new_exhibit'))
 
         # Guest handling
         guest_id = None
@@ -171,54 +169,51 @@ def new_gallery():
                 session['guest_id'] = guest_id
             flash("You are creating an exhibit as a guest. Log in to save your work.", "info")
 
-        from gallery.models.exhibit import Gallery
-        gallery = Gallery(name=gallery_name, user_id=user_id, guest_id=guest_id)
-        db.session.add(gallery)
+        exhibit = Exhibit(name=exhibit_name, user_id=user_id, guest_id=guest_id)
+        db.session.add(exhibit)
         db.session.commit()
 
-        session['current_gallery_id'] = gallery.id
-        return redirect(url_for('load_gallery'))
+        session['current_exhibit_id'] = exhibit.id
+        return redirect(url_for('load_exhibit'))
 
     return render_template('new_exhibit.html')
 
-@app.route('/load-gallery', methods=['GET', 'POST'])
-def load_gallery():
-    from gallery.models.exhibit import Gallery
-
+@app.route('/load-exhibit', methods=['GET', 'POST'])
+def load_exhibit():
     user_id = session.get('user_id')
 
     if request.method == 'POST':
-        gallery_id = request.form.get('gallery_id')
+        exhibit_id = request.form.get('exhibit_id')
 
-        if not gallery_id:
-            flash("No gallery selected.", "warning")
-            return redirect(url_for('load_gallery'))
+        if not exhibit_id:
+            flash("No exhibit selected.", "warning")
+            return redirect(url_for('load_exhibit'))
 
-        gallery = Gallery.query.get(gallery_id)
-        if not gallery:
-            flash("Gallery not found.", "danger")
-            return redirect(url_for('load_gallery'))
+        exhibit = Exhibit.query.get(exhibit_id)
+        if not exhibit:
+            flash("Exhibit not found.", "danger")
+            return redirect(url_for('load_exhibit'))
 
-        session['current_gallery_id'] = gallery.id
-        flash(f"Loaded exhibit: {gallery.name}", "success")
+        session['current_exhibit_id'] = exhibit.id
+        flash(f"Loaded exhibit: {exhibit.name}", "success")
         return redirect(url_for('select_wall_space'))
 
     # GET request — just show the list
     if user_id:
-        galleries = Gallery.query.filter_by(user_id=user_id).all()
+        exhibits = Exhibit.query.filter_by(user_id=user_id).all()
     else:
         guest_id = session.get('guest_id')
-        galleries = Gallery.query.filter_by(guest_id=guest_id).all() if guest_id else []
+        exhibits = Exhibit.query.filter_by(guest_id=guest_id).all() if guest_id else []
 
-    return render_template('load_exhibit.html', galleries=galleries)
+    return render_template('load_exhibit.html', exhibits=exhibits)
 
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
-    gallery_id = session.get('current_gallery_id')
+    exhibit_id = session.get('current_exhibit_id')
 
-    if not gallery_id:
-        flash("Please create a gallery first.")
-        return redirect(url_for('new_gallery'))
+    if not exhibit_id:
+        flash("Please create an exhibit first.")
+        return redirect(url_for('new_exhibit'))
 
     if request.method == 'POST':
         name = request.form.get('wall_name')
@@ -226,36 +221,36 @@ def create_wall():
         height = float(request.form.get('wall_height'))
         color = request.form.get('wall_color', 'White')
 
-        wall = Wall(name=name, width=width, height=height, color=color, gallery_id=gallery_id)
+        wall = Wall(name=name, width=width, height=height, color=color, exhibit_id=exhibit_id)
         db.session.add(wall)
         db.session.commit()
 
         session['current_wall_id'] = wall.id
-        return redirect(url_for('edit_permanent_objects'))  # or whatever next step
+        return redirect(url_for('edit_permanent_objects'))
 
     return render_template('create_wall.html')
 
 @app.route('/select-wall-space', methods=['GET', 'POST'])
 def select_wall_space():
-    gallery_id = session.get('current_gallery_id')
+    exhibit_id = session.get('current_exhibit_id')
 
-    if not gallery_id:
-        flash("Please load a gallery first.")
-        return redirect(url_for('load_gallery'))
+    if not exhibit_id:
+        flash("Please load an exhibit first.")
+        return redirect(url_for('load_exhibit'))
 
     if request.method == 'POST':
         selected_wall_id = request.form.get('wall_id')
-        wall = Wall.query.filter_by(id=selected_wall_id, gallery_id=gallery_id).first()
+        wall = Wall.query.filter_by(id=selected_wall_id, exhibit_id=exhibit_id).first()
 
         if not wall:
-            flash("Wall not found or doesn't belong to this gallery.")
+            flash("Wall not found or doesn't belong to this exhibit.")
             return redirect(url_for('select_wall_space'))
 
         session['current_wall_id'] = wall.id
         flash(f"Loaded wall: {wall.name}")
         return redirect(url_for('edit_permanent_objects'))
 
-    walls = Wall.query.filter_by(gallery_id=gallery_id).all()
+    walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
     current_wall = get_current_wall()
     return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
 
@@ -521,10 +516,9 @@ def cleanup_guest_galleries():
     cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=1)  # or X minutes/hours
 
     # Optionally: add a created_at column to filter old ones
-    guest_galleries = Gallery.query.filter(
-        Gallery.user_id.is_(None),
-        Gallery.guest_id.isnot(None)
-        # Add condition like: Gallery.created_at < cutoff
+    guest_galleries = Exhibit.query.filter(
+        Exhibit.user_id.is_(None),
+        Exhibit.guest_id.isnot(None)
     ).all()
 
     count = len(guest_galleries)
@@ -598,7 +592,7 @@ def auth_callback():
 def schedule_cleanup():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
-        func=lambda: Gallery.cleanup_guest_galleries(),
+        func=lambda: Exhibit.cleanup_guest_galleries(),
         trigger='interval',
         hours=6
     )

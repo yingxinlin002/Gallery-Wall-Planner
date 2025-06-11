@@ -1,4 +1,3 @@
-<!-- filepath: c:\Users\yingx\OneDrive\Documents\GitHub\Gallery-Wall-Planner\templates\new_gallery.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,7 +90,7 @@
 <body>
     <div class="main-container">
         <h1>New Exhibit</h1>
-        <form method="POST" action="{{ url_for('new_gallery') }}">
+        <form method="POST" action="{{ url_for('new_exhibit') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="exhibit_name">Exhibit Name:</label>

@@ -1,4 +1,3 @@
-<!-- filepath: c:\Users\yingx\OneDrive\Documents\GitHub\Gallery-Wall-Planner\templates\load_gallery.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -45,7 +44,7 @@
             border-bottom: 1px solid #eee;
         }
 
-        .gallery-name {
+        .exhibit-name {
             font-size: 16px;
             color: #333;
         }
@@ -66,7 +65,7 @@
             background-color: #4a30a0;
         }
 
-        .no-galleries {
+        .no-exhibits {
             text-align: center;
             color: #888;
             margin-top: 20px;
@@ -92,23 +91,23 @@
 <body>
     <div class="main-container">
         <h1>Load Exhibit</h1>
-        {% if galleries %}
+        {% if exhibits %}
             <ul>
-                {% for gallery in galleries %}
+                {% for exhibit in exhibits %}
                     <li>
-                        <span class="gallery-name">{{ gallery.name }}</span>
-                        <form action="{{ url_for('load_gallery') }}" method="POST" style="display:inline;">
+                        <span class="exhibit-name">{{ exhibit.name }}</span>
+                        <form action="{{ url_for('load_exhibit') }}" method="POST" style="display:inline;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="gallery_id" value="{{ gallery.id }}">
+                            <input type="hidden" name="exhibit_id" value="{{ exhibit.id }}">
                             <button type="submit" class="btn-load">Load</button>
                         </form>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <div class="no-galleries">
+            <div class="no-exhibits">
                 No exhibits found.<br>
-                <a href="{{ url_for('new_gallery') }}" class="btn-create">Create one</a>
+                <a href="{{ url_for('new_exhibit') }}" class="btn-create">Create one</a>
             </div>
         {% endif %}
     </div>
