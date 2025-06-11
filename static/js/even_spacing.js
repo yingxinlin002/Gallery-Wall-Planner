@@ -193,7 +193,7 @@ export class EvenSpacing {
         }
     }
 
-    getYPosition() {
+        getYPosition() {
         try {
             const yPos = parseFloat(this.modal.querySelector('#yPosition').value);
             const wallHeight = this.editor.wall.height;
@@ -202,9 +202,8 @@ export class EvenSpacing {
                 alert(`Y position must be between 0 and ${wallHeight} inches`);
                 return null;
             }
-
-            // Convert from floor distance to wall coordinates (from bottom)
-            return wallHeight - yPos;
+            
+            return yPos;
         } catch (e) {
             alert('Please enter a valid number for Y position');
             return null;
