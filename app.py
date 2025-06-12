@@ -73,10 +73,15 @@ def get_current_wall():
     wall_id = session.get("current_wall_id")
     if wall_id is not None:
         wall = db.session.get(Wall, wall_id)
-        return wall
-    # Optionally, return the first wall if no wall is selected
-    wall = Wall.query.first()
-    return wall
+        if wall:
+            # Verify the wall belongs to the user's exhibit
+            exhibit = Exhibit.query.get(wall.exhibit_id)
+            user_id = session.get('user_id')
+            guest_id = session.get('guest_id')
+            
+            if (user_id and exhibit.user_id == user_id) or (guest_id and exhibit.guest_id == guest_id):
+                return wall
+    return None
 
 @app.route("/", methods=["GET"])
 def landing_page():
@@ -233,24 +238,28 @@ def create_wall():
 @app.route('/select-wall-space', methods=['GET', 'POST'])
 def select_wall_space():
     exhibit_id = session.get('current_exhibit_id')
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_id')
 
     if not exhibit_id:
         flash("Please load an exhibit first.")
         return redirect(url_for('load_exhibit'))
 
-    if request.method == 'POST':
-        selected_wall_id = request.form.get('wall_id')
-        wall = Wall.query.filter_by(id=selected_wall_id, exhibit_id=exhibit_id).first()
+    # Get the current user
+    user = User.query.get(user_id) if user_id else None
 
-        if not wall:
-            flash("Wall not found or doesn't belong to this exhibit.")
-            return redirect(url_for('select_wall_space'))
+    # Query walls based on user type
+    if user and not user.is_guest:
+        # Logged-in user - show walls from their exhibit
+        walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
+    else:
+        # Guest user - verify the exhibit belongs to their session
+        exhibit = Exhibit.query.get(exhibit_id)
+        if not exhibit or (exhibit.guest_id != guest_id and exhibit.user_id != user_id):
+            flash("Access to this exhibit is not allowed.", "error")
+            return redirect(url_for('load_exhibit'))
+        walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
 
-        session['current_wall_id'] = wall.id
-        flash(f"Loaded wall: {wall.name}")
-        return redirect(url_for('edit_permanent_objects'))
-
-    walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
     current_wall = get_current_wall()
     return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
 
