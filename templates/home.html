@@ -78,9 +78,14 @@
 <body>
     <div class="top-bar">
         {% if user %}
-            <!-- Logged in user or guest -->
-            <span>Welcome, {{ user.name if user.name else 'Guest' }}</span>
-            <a href="{{ url_for('logout') }}" class="login-btn">Logout</a>
+            {% if not user.is_guest %}
+                <!-- Logged in regular user -->
+                <span>Welcome, {{ user.name if user.name else 'User' }}</span>
+                <a href="{{ url_for('logout') }}" class="login-btn">Logout</a>
+            {% else %}
+                <!-- Guest user - show only login button -->
+                <a href="{{ url_for('login') }}" class="login-btn">Log in</a>
+            {% endif %}
         {% else %}
             <!-- No user session -->
             <a href="{{ url_for('login') }}" class="login-btn">Log in</a>
