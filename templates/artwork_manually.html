@@ -6,6 +6,36 @@
     <title>Enter Artwork Manually</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/artwork_manually.css') }}">
+    <style>
+        /* Additional styles to match new_exhibit.html */
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-success {
+            background-color: #5F3FCA;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #4a30a0;
+        }
+
+        .btn-secondary {
+            background-color: #69718A;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4d5462;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -16,7 +46,7 @@
                     <h2 class="form-title">Enter Artwork Manually</h2>
                     <p class="text-muted">Please enter artwork details:</p>
                     
-                    <form id="artworkForm" enctype="multipart/form-data" method="post">
+                    <form id="artworkForm" enctype="multipart/form-data" method="post" onsubmit="return validateForm()">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Required Fields -->
                         <div class="mb-3">
@@ -31,7 +61,7 @@
                             </div>
                             <div class="col">
                                 <label for="height" class="form-label">Height* (inches)</label>
-                                <input type="number" class="form-control" id="height" name="height" placeholder="e.g., 36.0" step="0.1" mini="0.1" required>
+                                <input type="number" class="form-control" id="height" name="height" placeholder="e.g., 36.0" step="0.1" min="0.1" required>
                             </div>
                         </div>
                         
@@ -79,7 +109,7 @@
                         
                         <!-- Form Buttons -->
                         <div class="d-flex justify-content-between mt-4">
-                            <button type="button" class="btn btn-success" onclick="createArtwork()">
+                            <button type="submit" class="btn btn-success">
                                 Create Artwork
                             </button>
                             <button type="button" class="btn btn-secondary" onclick="goBackToEditor()">
@@ -118,7 +148,36 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.goBackToEditorUrl = "{{ url_for('editor') }}";
+        
+        function validateForm() {
+            // Basic validation - the required fields are already handled by HTML5 validation
+            // Show confirmation dialog
+            const confirmation = confirm("Are you sure you want to create this artwork?");
+            return confirmation;
+        }
+        
+        function toggleOptionalFields() {
+            const optionalFields = document.getElementById('optionalFields');
+            const toggleBtn = document.getElementById('toggleOptionalBtn');
+            
+            if (optionalFields.style.display === 'none') {
+                optionalFields.style.display = 'block';
+                toggleBtn.textContent = '- Hide Options';
+            } else {
+                optionalFields.style.display = 'none';
+                toggleBtn.textContent = '+ Additional Options';
+            }
+        }
+        
+        function goBackToEditor() {
+            window.location.href = window.goBackToEditorUrl;
+        }
+        
+        // Handle file input display
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+            document.getElementById('fileName').textContent = fileName;
+        });
     </script>
-    <script src="{{ url_for('static', filename='js/artwork_manually.js') }}"></script>
 </body>
 </html>
