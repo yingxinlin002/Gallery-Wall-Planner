@@ -117,21 +117,33 @@ body {
     user-select: none;
     transition: all 0.2s ease;
     z-index: 2;
-    /* Remove the CSS variables if not needed */
-    width: 100px; /* This will be overridden by JS */
-    height: 100px; /* This will be overridden by JS */
-    left: 0; /* This will be overridden by JS */
-    top: 0; /* This will be overridden by JS */
+}
+
+.dimension-label {
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #333;
+}
+
+.width-label {
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.height-label {
+    right: -25px;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: left center;
 }
 
 .canvas-object.collision-highlight {
     background: rgba(255, 0, 0, 0.5) !important;
     border: 2px solid red !important;
-}
-
-/* Debug styles */
-.canvas-object {
-    box-shadow: 0 0 0 1px red; /* Visual outline */
 }
 
 .canvas-object.dragging {

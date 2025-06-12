@@ -1,9 +1,12 @@
-// Initialize canvas and wall dimensions
+// lock_objects.js
 const canvas = document.getElementById('wall-canvas');
 const ctx = canvas.getContext('2d');
-const wallWidth = window.wallWidth;
-const wallHeight = window.wallHeight;
-const wallColor = window.wallColor;
+const wallWidth = window.wallData.width;
+const wallHeight = window.wallData.height;
+const wallColor = window.wallData.color || '#ffffff';
+
+// Measurement lines manager
+const measurementManager = new MeasurementLinesManager(document.querySelector('.canvas-container'));
 
 // Set canvas dimensions
 function resizeCanvas() {
@@ -22,159 +25,168 @@ function resizeCanvas() {
 
 // Draw the wall background
 function drawWall() {
-    ctx.fillStyle = wallColor || '#ffffff';
+    ctx.fillStyle = wallColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.strokeStyle = '#cccccc';
+    // Draw grid
+    ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 1;
     const gridSize = 12;
     const scale = canvas.width / wallWidth;
     
+    // Vertical lines
     for (let x = 0; x <= wallWidth; x += gridSize) {
+        const xPos = x * scale;
         ctx.beginPath();
-        ctx.moveTo(x * scale, 0);
-        ctx.lineTo(x * scale, canvas.height);
+        ctx.moveTo(xPos, 0);
+        ctx.lineTo(xPos, canvas.height);
         ctx.stroke();
     }
+    
+    // Horizontal lines
     for (let y = 0; y <= wallHeight; y += gridSize) {
+        const yPos = y * scale;
         ctx.beginPath();
-        ctx.moveTo(0, y * scale);
-        ctx.lineTo(canvas.width, y * scale);
+        ctx.moveTo(0, yPos);
+        ctx.lineTo(canvas.width, yPos);
         ctx.stroke();
     }
 }
 
-// Draw all permanent objects (names and rectangles)
-// You may need to fetch object data via AJAX or embed as JSON in a <script> tag if you want to avoid Jinja here.
-
+// Draw all permanent objects
 function drawObjects() {
-    // This function should be updated to use JS data, not Jinja.
-    // For now, you can leave it empty or implement AJAX fetching if needed.
-}
-
-// Position canvas objects based on data attributes
-function positionCanvasObjects() {
     const scale = canvas.width / wallWidth;
-    document.querySelectorAll('.canvas-object').forEach(div => {
-        const x = parseFloat(div.getAttribute('data-x')) * scale;
-        const y = parseFloat(div.getAttribute('data-y')) * scale;
-        const width = parseFloat(div.getAttribute('data-width')) * scale;
-        const height = parseFloat(div.getAttribute('data-height')) * scale;
-        div.style.left = x + 'px';
-        div.style.top = y + 'px';
-        div.style.width = width + 'px';
-        div.style.height = height + 'px';
-        div.style.lineHeight = height + 'px';
-        div.style.textAlign = 'center';
+    window.wallData.permanentObjects.forEach(obj => {
+        drawObject(obj, scale);
     });
 }
 
-// Make objects draggable
+function drawObject(obj, scale) {
+    const yPos = wallHeight - obj.y - obj.height; // Convert to bottom-left origin
+    
+    ctx.fillStyle = 'rgba(200, 200, 255, 0.7)';
+    ctx.strokeStyle = '#0000aa';
+    ctx.lineWidth = 2;
+    
+    ctx.beginPath();
+    ctx.rect(
+        obj.x * scale,
+        yPos * scale,
+        obj.width * scale,
+        obj.height * scale
+    );
+    ctx.fill();
+    ctx.stroke();
+    
+    // Draw object name
+    ctx.fillStyle = '#000';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+        obj.name,
+        (obj.x + obj.width/2) * scale,
+        (yPos + obj.height/2) * scale
+    );
+}
+
+// Make objects draggable with measurement lines
 function makeObjectsDraggable() {
-    // First remove any existing interact instances
-    interact('.canvas-object').unset();
+    const scale = canvas.width / wallWidth;
     
     interact('.canvas-object').draggable({
-        // Enable inertial throwing
         inertia: true,
-        // Keep the element within the parent
         modifiers: [
-            interact.modifiers.restrict({
+            interact.modifiers.restrictRect({
                 restriction: 'parent',
-                endOnly: true,
-                elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
+                endOnly: true
             })
         ],
-        // Enable autoScroll
-        autoScroll: true,
-
-        // Callback functions
         listeners: {
             start(event) {
-                console.log('Drag started', event.target);
                 event.target.style.zIndex = '10';
-                event.target.classList.add('dragging');
+                measurementManager.clearMeasurementLines();
             },
-            
             move(event) {
-                console.log('Dragging', event.dx, event.dy);
                 const target = event.target;
-                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-                // Update the element's style
-                target.style.transform = `translate(${x}px, ${y}px)`;
+                const width = parseFloat(target.getAttribute('data-width'));
+                const height = parseFloat(target.getAttribute('data-height'));
                 
-                // Update the posiion attributes
-                target.setAttribute('data-x', x);
-                target.setAttribute('data-y', y);
+                // Calculate new position in inches
+                const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
+                // Subtract dy to account for bottom-left origin
+                const newY = Math.max(0, Math.min(wallHeight - height, 
+                    parseFloat(target.getAttribute('data-y')) - event.dy / scale));
+                
+                // Update position attributes
+                target.setAttribute('data-x', newX);
+                target.setAttribute('data-y', newY);
+                
+                // Update visual position (convert to bottom-left origin)
+                const canvasY = wallHeight - newY - height;
+                target.style.left = `${newX * scale}px`;
+                target.style.top = `${canvasY * scale}px`;
+                
+                // Draw measurement lines
+                measurementManager.drawMeasurementLines(
+                    newX, 
+                    newY, 
+                    width, 
+                    height, 
+                    wallWidth, 
+                    wallHeight, 
+                    scale
+                );
+                
+                // Check for collisions
+                if (checkCollisions(target)) {
+                    target.classList.add('collision-highlight');
+                } else {
+                    target.classList.remove('collision-highlight');
+                }
             },
-
             end(event) {
-                console.log('Drag ended');
-                event.target.style.zIndex = '2';
-                event.target.classList.remove('dragging');
+                const target = event.target;
+                const id = target.getAttribute('data-id');
+                const x = parseFloat(target.getAttribute('data-x'));
+                const y = parseFloat(target.getAttribute('data-y'));
                 
-                // Convert pixel positions back to inches and save
-                const scale = canvas.width / wallWidth;
-                const x = parseFloat(event.target.getAttribute('data-x')) / scale;
-                const y = parseFloat(event.target.getAttribute('data-y')) / scale;
-                updateObjectPosition(event.target.id.replace('object-', ''), x, y);
+                // Save position to database
+                updateObjectPosition(id, x, y);
+                
+                target.style.zIndex = '2';
+                measurementManager.clearMeasurementLines();
             }
         }
     });
 }
-// function makeObjectsDraggable() {
-//     const scale = canvas.width / wallWidth;
 
-//     interact('.canvas-object').draggable({
-//         inertia: true,
-//         modifiers: [
-//             interact.modifiers.restrictRect({
-//                 restriction: 'parent',
-//                 endOnly: true
-//             })
-//         ],
-//         listeners: {
-//             start: function(event) {
-//                 measurementManager.clearMeasurementLines();
-//                 // Bring the dragged element to the front
-//                 event.target.style.zIndex = '10';
-//             },
-//             move: function(event) {
-//                 const target = event.target;
-//                 // Get current position in inches (from data attributes)
-//                 let x = parseFloat(target.getAttribute('data-x')) || 0;
-//                 let y = parseFloat(target.getAttribute('data-y')) || 0;
-                
-//                 // Update position in inches
-//                 x += event.dx / scale;
-//                 y += event.dy / scale;
-                
-//                 // Update data attributes
-//                 target.setAttribute('data-x', x);
-//                 target.setAttribute('data-y', y);
-                
-//                 // Update CSS position (convert inches to pixels)
-//                 target.style.left = `${x * scale}px`;
-//                 target.style.top = `${y * scale}px`;
-                
-//                 // Update server position
-//                 updateObjectPosition(target.id.replace('object-', ''), x, y);
+function checkCollisions(target) {
+    const id = target.getAttribute('data-id');
+    const x = parseFloat(target.getAttribute('data-x'));
+    const y = parseFloat(target.getAttribute('data-y'));
+    const width = parseFloat(target.getAttribute('data-width'));
+    const height = parseFloat(target.getAttribute('data-height'));
+    
+    // Check against other objects
+    const objects = window.wallData.permanentObjects;
+    for (const obj of objects) {
+        if (obj.id != id && checkRectOverlap(
+            {x, y, width, height},
+            obj
+        )) {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
-//                 // Update measurement lines
-//                 const width = parseFloat(target.getAttribute('data-width'));
-//                 const height = parseFloat(target.getAttribute('data-height'));
-//                 measurementManager.drawMeasurementLines(x, y, width, height, scale);
-//             },
-//             end: function(event) {
-//                 measurementManager.clearMeasurementLines();
-//                 // Reset z-index after dragging
-//                 event.target.style.zIndex = '2';
-//             }
-//         }
-//     });
-// }
+function checkRectOverlap(a, b) {
+    return a.x < b.x + b.width &&
+           a.x + a.width > b.x &&
+           a.y < b.y + b.height &&
+           a.y + a.height > b.y;
+}
 
 function updateObjectPosition(objId, x, y) {
     fetch(`${window.urls.updatePosition}/${objId}`, {
@@ -183,242 +195,37 @@ function updateObjectPosition(objId, x, y) {
             'Content-Type': 'application/json',
             'X-CSRFToken': window.csrfToken
         },
-        body: JSON.stringify({ x: x, y: y })
-    });
+        body: JSON.stringify({ x, y })
+    }).catch(error => console.error('Error updating position:', error));
 }
-
-// Collapsible menu
-document.querySelectorAll('.collapsible').forEach(button => {
-    const content = button.nextElementSibling;
-    const chevron = button.querySelector('.bi');
-
-    // If already active, ensure content is visible and chevron is up
-    if (button.classList.contains('active')) {
-        content.style.display = 'block';
-        if (chevron) {
-            chevron.classList.remove('bi-chevron-down');
-            chevron.classList.add('bi-chevron-up');
-        }
-    }
-
-    // Always add the click event to allow toggling
-    button.addEventListener('click', () => {
-        button.classList.toggle('active');
-        if (content.style.display === 'block') {
-            content.style.display = 'none';
-            if (chevron) {
-                chevron.classList.remove('bi-chevron-up');
-                chevron.classList.add('bi-chevron-down');
-            }
-        } else {
-            content.style.display = 'block';
-            if (chevron) {
-                chevron.classList.remove('bi-chevron-down');
-                chevron.classList.add('bi-chevron-up');
-            }
-        }
-    });
-});
-
-// Save button
-document.getElementById('save-btn').addEventListener('click', () => {
-    const hasCollisions = false; // Replace with actual collision detection
-    if (hasCollisions) {
-        const collisionModal = new bootstrap.Modal(document.getElementById('collisionModal'));
-        collisionModal.show();
-    } else {
-        window.location.href = window.editorUrl;
-    }
-});
-
-// Continue anyway button
-document.getElementById('continueAnywayBtn').addEventListener('click', () => {
-    window.location.href = window.editorUrl;
-});
-
-// Edit buttons
-document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const itemId = btn.getAttribute('data-id');
-        const editModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-        editModal.show();
-    });
-});
-
-// Delete buttons
-document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const itemId = btn.getAttribute('data-id');
-        if (confirm('Are you sure you want to delete this item?')) {
-            fetch(`/delete_permanent_object/${itemId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': window.csrfToken
-                }
-            }).then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                }
-            });
-        }
-    });
-});
 
 function updateDimensionLabels() {
     const widthLabel = document.querySelector('.width-label');
     const heightLabel = document.querySelector('.height-label');
     widthLabel.textContent = `${wallWidth.toFixed(1)} in`;
     heightLabel.textContent = `${wallHeight.toFixed(1)} in`;
+    
     const canvasRect = canvas.getBoundingClientRect();
     const containerRect = canvas.parentElement.getBoundingClientRect();
+    
     widthLabel.style.left = `${canvasRect.left - containerRect.left + canvasRect.width/2}px`;
     widthLabel.style.bottom = `${containerRect.bottom - canvasRect.bottom - 5}px`;
-    widthLabel.style.top = '';
-    widthLabel.style.right = '';
     widthLabel.style.transform = 'translateX(-50%)';
+    
     heightLabel.style.right = `${containerRect.right - canvasRect.right - 5}px`;
     heightLabel.style.top = `${canvasRect.top - containerRect.top + canvasRect.height/2}px`;
-    heightLabel.style.left = '';
-    heightLabel.style.bottom = '';
     heightLabel.style.transform = 'translateY(-50%) rotate(-90deg)';
     heightLabel.style.transformOrigin = 'left center';
 }
 
-// Measurement Lines Manager class
-class MeasurementLinesManager {
-    constructor(canvasContainer) {
-        this.canvasContainer = canvasContainer;
-        this.measurementLines = [];
-        this.measurementTexts = [];
-        this.container = null;
-    }
-
-    clearMeasurementLines() {
-        this.measurementLines.forEach(line => line.remove());
-        this.measurementTexts.forEach(text => text.remove());
-        this.measurementLines = [];
-        this.measurementTexts = [];
-        if (this.container) {
-            this.container.remove();
-            this.container = null;
-        }
-    }
-
-    drawMeasurementLines(x, y, width, height, scale) {
-        this.clearMeasurementLines();
-
-        // Create container for measurement elements
-        this.container = document.createElement('div');
-        this.container.style.position = 'absolute';
-        this.container.style.top = '0';
-        this.container.style.left = '0';
-        this.container.style.width = '100%';
-        this.container.style.height = '100%';
-        this.container.style.pointerEvents = 'none';
-        this.container.style.zIndex = '1'; // Lower than draggable objects
-        this.canvasContainer.appendChild(this.container);
-
-        // Calculate positions
-        const left = x * scale;
-        const top = y * scale;
-        const right = (x + width) * scale;
-        const bottom = (y + height) * scale;
-
-        // Left measurement line
-        const leftLine = this.createLine(left, top, left, 0, 'left', 'vertical');
-        const leftText = this.createText(left / 2, top / 2, `${x.toFixed(1)}"`, 'vertical');
-
-        // Right measurement line
-        const rightLine = this.createLine(right, top, right, 0, 'right', 'vertical');
-        const rightText = this.createText((right + canvas.width) / 2, top / 2, `${(wallWidth - x - width).toFixed(1)}"`, 'vertical');
-
-        // Top measurement line
-        const topLine = this.createLine(left, top, 0, top, 'top', 'horizontal');
-        const topText = this.createText(left / 2, top / 2, `${(wallHeight - y - height).toFixed(1)}"`, 'horizontal');
-
-        // Bottom measurement line
-        const bottomLine = this.createLine(left, bottom, 0, bottom, 'bottom', 'horizontal');
-        const bottomText = this.createText(left / 2, (bottom + canvas.height) / 2, `${y.toFixed(1)}"`, 'horizontal');
-
-        this.measurementLines.push(leftLine, rightLine, topLine, bottomLine);
-        this.measurementTexts.push(leftText, rightText, topText, bottomText);
-    }
-
-    createLine(x1, y1, x2, y2, position, orientation) {
-        const line = document.createElement('div');
-        line.style.position = 'absolute';
-        line.style.backgroundColor = 'rgba(100, 100, 100, 0.5)';
-
-        if (orientation === 'vertical') {
-            line.style.left = `${x1}px`;
-            line.style.top = `${y2}px`;
-            line.style.width = '1px';
-            line.style.height = `${y1 - y2}px`;
-            line.style.borderLeft = '1px dashed gray';
-        } else {
-            line.style.left = `${x2}px`;
-            line.style.top = `${y1}px`;
-            line.style.width = `${x1 - x2}px`;
-            line.style.height = '1px';
-            line.style.borderTop = '1px dashed gray';
-        }
-
-        this.container.appendChild(line);
-        return line;
-    }
-
-    createText(x, y, text, orientation) {
-        const textEl = document.createElement('div');
-        textEl.style.position = 'absolute';
-        textEl.style.left = `${x}px`;
-        textEl.style.top = `${y}px`;
-        textEl.style.color = 'black';
-        textEl.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-        textEl.style.padding = '2px 5px';
-        textEl.style.borderRadius = '3px';
-        textEl.style.fontSize = '12px';
-        textEl.textContent = text;
-
-        if (orientation === 'vertical') {
-            textEl.style.transform = 'translate(-50%, -50%)';
-        } else {
-            textEl.style.transform = 'translate(-50%, -50%) rotate(-90deg)';
-        }
-
-        this.container.appendChild(textEl);
-        return textEl;
-    }
-}
-
-// Initialize measurement lines manager
-const measurementManager = new MeasurementLinesManager(document.querySelector('.canvas-container'));
-
 // Initialize on load/resize
 window.addEventListener('load', () => {
     resizeCanvas();
-    positionCanvasObjects();
-
-    // Set z-index for proper layering
-    document.getElementById('canvas-objects-layer').style.zIndex = '1';
-    document.querySelectorAll('.canvas-object').forEach(obj => {
-        obj.style.zIndex = '2';
-    });
-
-    // --- Debug lines ---
-    console.log("Interact.js loaded:", typeof interact !== 'undefined');
-    console.log("Canvas objects found:", document.querySelectorAll('.canvas-object').length);
-    // -------------------
-
     makeObjectsDraggable();
     updateDimensionLabels();
-    checkCollisions();
-    setInterval(checkCollisions, 500);
 });
 
 window.addEventListener('resize', () => {
     resizeCanvas();
-    positionCanvasObjects();
     updateDimensionLabels();
 });
-
