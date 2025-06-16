@@ -429,6 +429,12 @@ def update_artwork_position(artwork_id):
         'artwork': artwork.to_dict()
     })
 
+@app.route('/check-auth-status')
+def check_auth_status():
+    return jsonify({
+        'authenticated': 'user_id' in session and not session.get('is_guest', True)
+    })
+
 @app.route('/artwork-manual', methods=['GET', 'POST'])
 def artwork_manual():
     wall = get_current_wall()
@@ -542,6 +548,8 @@ oauth = OAuth(app)
 @app.route('/login')
 def login():
     redirect_uri = os.environ.get("AUTHENTIK_REDIRECT_URI", url_for('auth_callback', _external=True))
+    if 'redirect' in request.args:
+        session['login_redirect'] = request.args['redirect']
     return authentik.authorize_redirect(redirect_uri)
 
 @app.route('/logout')
@@ -582,6 +590,7 @@ def auth_callback():
             sub=sub,
             email=userinfo.get('email'),
             name=userinfo.get('name'),
+            is_guest=False
         )
         db.session.add(user)
         db.session.commit()
@@ -589,13 +598,17 @@ def auth_callback():
         # Optional: update existing user info
         user.email = userinfo.get('email')
         user.name = userinfo.get('name')
+        user.is_guest = False
         db.session.commit()
 
     # Store internal DB user id in session for app use
     session['user_id'] = user.id
-    session['user'] = userinfo  # if you want full user info in session
+    session['user'] = userinfo
+    session['is_guest'] = False
 
-    return redirect(url_for('home'))
+    # Handle redirect if present
+    redirect_url = session.pop('login_redirect', None) or url_for('home')
+    return redirect(redirect_url)
 
 # Initialize scheduler for guest data cleanup
 def schedule_cleanup():

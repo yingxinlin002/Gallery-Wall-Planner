@@ -418,6 +418,32 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
+        // Save Changes button handler
+        const saveChangesBtn = document.getElementById('saveChangesBtn');
+        if (saveChangesBtn) {
+            saveChangesBtn.addEventListener('click', async function() {
+                try {
+                    // Check if user is logged in (has user_id in session)
+                    const response = await fetch('/check-auth-status');
+                    const authStatus = await response.json();
+                    
+                    if (authStatus.authenticated) {
+                        // User is logged in - save changes
+                        await saveAllChanges();
+                        alert('Changes saved successfully!');
+                    } else {
+                        // Guest user - prompt to log in
+                        if (confirm('Please log in to save your changes. Would you like to log in now?')) {
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving changes:', error);
+                    alert('Failed to save changes. Please try again.');
+                }
+            });
+        }
+
         // --- EvenSpacing Integration ---
         const editor = {
             wall: window.currentWallData,
@@ -452,3 +478,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // --- End Installation Instruction Integration ---
     }
 });
+
+async function saveAllChanges() {
+    // Since we're already saving positions when they're changed (via updateArtworkPosition),
+    // this function can just confirm everything is saved
+    return Promise.resolve();
+}

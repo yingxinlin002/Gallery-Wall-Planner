@@ -26,6 +26,10 @@ body.editor-bg {
     margin: 0;
 }
 
+.save-buttons {
+    margin-left: auto; /* Push to the right */
+}
+
 .btn {
     padding: 8px 16px;
     border-radius: 4px;
