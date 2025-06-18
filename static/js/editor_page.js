@@ -476,6 +476,98 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         // --- End Installation Instruction Integration ---
+
+        // Save Temporary Work button handler
+        const saveGuestBtn = document.getElementById('saveGuestBtn');
+        if (saveGuestBtn) {
+            saveGuestBtn.addEventListener('click', async function() {
+                try {
+                    const currentState = getCurrentWallState(); // You must implement this function!
+                    const response = await fetch('/save-guest-work', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': window.csrfToken
+                        },
+                        body: JSON.stringify(currentState)
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Work saved temporarily!');
+                    } else {
+                        alert('Error saving work: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error saving work: ' + error.message);
+                }
+            });
+        }
+
+        // Create Account & Save button handler
+        const convertBtn = document.getElementById('convertAndSaveBtn');
+        if (convertBtn) {
+            convertBtn.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('accountCreationModal'));
+                modal.show();
+            });
+        }
+
+        // Modal "Create Account" button handler
+        const confirmRegBtn = document.getElementById('confirmRegistrationBtn');
+        if (confirmRegBtn) {
+            confirmRegBtn.addEventListener('click', async function() {
+                const form = document.getElementById('registrationForm');
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    return;
+                }
+                try {
+                    const currentState = getCurrentWallState();
+                    const registrationData = {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    };
+                    const response = await fetch('/save-guest-work', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': window.csrfToken
+                        },
+                        body: JSON.stringify({
+                            convert_to_user: true,
+                            ...registrationData,
+                            ...currentState
+                        })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        alert('Account created and work saved permanently!');
+                        bootstrap.Modal.getInstance(document.getElementById('accountCreationModal')).hide();
+                        window.location.reload();
+                    } else {
+                        alert('Error creating account: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error creating account: ' + error.message);
+                }
+            });
+        }
+
+        // Helper function to get current wall state
+        function getCurrentWallState() {
+            return {
+                wall: window.currentWallData,
+                artworks: Array.from(document.querySelectorAll('#canvas-artwork-layer .artwork')).map(el => ({
+                    id: el.dataset.artworkId,
+                    x: parseFloat(el.style.left),
+                    y: parseFloat(el.style.top),
+                    width: parseFloat(el.dataset.width),
+                    height: parseFloat(el.dataset.height)
+                })),
+                snapLines: window.currentWallData.wall_lines || []
+            };
+        }
     }
 });
 
