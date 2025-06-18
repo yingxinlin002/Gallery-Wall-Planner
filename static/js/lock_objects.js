@@ -4,23 +4,32 @@ const ctx = canvas.getContext('2d');
 const wallWidth = window.wallData.width;
 const wallHeight = window.wallData.height;
 const wallColor = window.wallData.color || '#ffffff';
-
-// Measurement lines manager
-const measurementManager = new MeasurementLinesManager(document.querySelector('.canvas-container'));
+const container = document.querySelector('.canvas-container');
+const objectsLayer = document.getElementById('canvas-objects-layer');
 
 // Set canvas dimensions
 function resizeCanvas() {
-    const container = canvas.parentElement;
-    const scale = Math.min(
-        container.clientWidth / wallWidth,
-        container.clientHeight / wallHeight
-    );
+    const scale = getScale();
     
     canvas.width = wallWidth * scale;
     canvas.height = wallHeight * scale;
+    container.style.width = `${canvas.width}px`;
+    container.style.height = `${canvas.height}px`;
+    
     drawWall();
-    drawObjects();
-    updateDimensionLabels();
+    renderObjects();
+    updateDimensionLabels(scale);
+}
+
+function getScale() {
+    const wallSpace = document.querySelector('.wall-space');
+    const availableWidth = wallSpace.clientWidth - 40;
+    const availableHeight = wallSpace.clientHeight - 40;
+    
+    const scaleX = availableWidth / wallWidth;
+    const scaleY = availableHeight / wallHeight;
+    
+    return Math.min(scaleX, scaleY);
 }
 
 // Draw the wall background
@@ -53,45 +62,59 @@ function drawWall() {
     }
 }
 
-// Draw all permanent objects
-function drawObjects() {
-    const scale = canvas.width / wallWidth;
+// Render all objects on the canvas
+function renderObjects() {
+    objectsLayer.innerHTML = '';
+    const scale = getScale();
+    
     window.wallData.permanentObjects.forEach(obj => {
-        drawObject(obj, scale);
+        const div = document.createElement('div');
+        div.className = 'canvas-object';
+        div.id = `object-${obj.id}`;
+        
+        // Y is now measured from the floor up
+        div.style.left = `${obj.x * scale}px`;
+        div.style.top = `${(wallHeight - obj.y - obj.height) * scale}px`;
+        div.style.width = `${obj.width * scale}px`;
+        div.style.height = `${obj.height * scale}px`;
+        div.textContent = obj.name;
+        div.setAttribute('data-id', obj.id);
+        div.setAttribute('data-x', obj.x);
+        div.setAttribute('data-y', obj.y);
+        div.setAttribute('data-width', obj.width);
+        div.setAttribute('data-height', obj.height);
+        
+        if (checkCollisions(obj)) {
+            div.style.border = '2px solid red';
+        }
+        
+        objectsLayer.appendChild(div);
     });
+    
+    makeObjectsDraggable();
 }
 
-function drawObject(obj, scale) {
-    const yPos = wallHeight - obj.y - obj.height; // Convert to bottom-left origin
-    
-    ctx.fillStyle = 'rgba(200, 200, 255, 0.7)';
-    ctx.strokeStyle = '#0000aa';
-    ctx.lineWidth = 2;
-    
-    ctx.beginPath();
-    ctx.rect(
-        obj.x * scale,
-        yPos * scale,
-        obj.width * scale,
-        obj.height * scale
-    );
-    ctx.fill();
-    ctx.stroke();
-    
-    // Draw object name
-    ctx.fillStyle = '#000';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(
-        obj.name,
-        (obj.x + obj.width/2) * scale,
-        (yPos + obj.height/2) * scale
-    );
+function updateDimensionLabels(scale) {
+    // Remove existing labels if any
+    document.querySelectorAll('.dimension-label').forEach(el => el.remove());
+
+    // Create width label
+    const widthLabel = document.createElement('div');
+    widthLabel.className = 'dimension-label width-label';
+    widthLabel.textContent = `${wallWidth.toFixed(1)} in`;
+    container.appendChild(widthLabel);
+
+    // Create height label
+    const heightLabel = document.createElement('div');
+    heightLabel.className = 'dimension-label height-label';
+    heightLabel.textContent = `${wallHeight.toFixed(1)} in`;
+    container.appendChild(heightLabel);
 }
 
 // Make objects draggable with measurement lines
 function makeObjectsDraggable() {
-    const scale = canvas.width / wallWidth;
+    const scale = getScale();
+    const measurementManager = new MeasurementLinesManager(container);
     
     interact('.canvas-object').draggable({
         inertia: true,
@@ -113,18 +136,17 @@ function makeObjectsDraggable() {
                 
                 // Calculate new position in inches
                 const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
-                // Subtract dy to account for bottom-left origin
+                // For Y position: subtract from wall height since we're measuring from floor
                 const newY = Math.max(0, Math.min(wallHeight - height, 
-                    parseFloat(target.getAttribute('data-y')) - event.dy / scale));
+                    parseFloat(target.getAttribute('data-y')) + event.dy / scale));
                 
                 // Update position attributes
                 target.setAttribute('data-x', newX);
                 target.setAttribute('data-y', newY);
                 
-                // Update visual position (convert to bottom-left origin)
-                const canvasY = wallHeight - newY - height;
+                // Update visual position (convert to top-left origin for display)
                 target.style.left = `${newX * scale}px`;
-                target.style.top = `${canvasY * scale}px`;
+                target.style.top = `${(wallHeight - newY - height) * scale}px`;
                 
                 // Draw measurement lines
                 measurementManager.drawMeasurementLines(
@@ -138,10 +160,18 @@ function makeObjectsDraggable() {
                 );
                 
                 // Check for collisions
-                if (checkCollisions(target)) {
-                    target.classList.add('collision-highlight');
+                const obj = {
+                    id: target.getAttribute('data-id'),
+                    x: newX,
+                    y: newY,
+                    width: width,
+                    height: height
+                };
+                
+                if (checkCollisions(obj)) {
+                    target.style.border = '2px solid red';
                 } else {
-                    target.classList.remove('collision-highlight');
+                    target.style.border = 'none';
                 }
             },
             end(event) {
@@ -160,20 +190,11 @@ function makeObjectsDraggable() {
     });
 }
 
-function checkCollisions(target) {
-    const id = target.getAttribute('data-id');
-    const x = parseFloat(target.getAttribute('data-x'));
-    const y = parseFloat(target.getAttribute('data-y'));
-    const width = parseFloat(target.getAttribute('data-width'));
-    const height = parseFloat(target.getAttribute('data-height'));
-    
+function checkCollisions(obj) {
     // Check against other objects
     const objects = window.wallData.permanentObjects;
-    for (const obj of objects) {
-        if (obj.id != id && checkRectOverlap(
-            {x, y, width, height},
-            obj
-        )) {
+    for (const other of objects) {
+        if (other.id != obj.id && checkRectOverlap(obj, other)) {
             return true;
         }
     }
@@ -199,33 +220,26 @@ function updateObjectPosition(objId, x, y) {
     }).catch(error => console.error('Error updating position:', error));
 }
 
-function updateDimensionLabels() {
-    const widthLabel = document.querySelector('.width-label');
-    const heightLabel = document.querySelector('.height-label');
-    widthLabel.textContent = `${wallWidth.toFixed(1)} in`;
-    heightLabel.textContent = `${wallHeight.toFixed(1)} in`;
-    
-    const canvasRect = canvas.getBoundingClientRect();
-    const containerRect = canvas.parentElement.getBoundingClientRect();
-    
-    widthLabel.style.left = `${canvasRect.left - containerRect.left + canvasRect.width/2}px`;
-    widthLabel.style.bottom = `${containerRect.bottom - canvasRect.bottom - 5}px`;
-    widthLabel.style.transform = 'translateX(-50%)';
-    
-    heightLabel.style.right = `${containerRect.right - canvasRect.right - 5}px`;
-    heightLabel.style.top = `${canvasRect.top - containerRect.top + canvasRect.height/2}px`;
-    heightLabel.style.transform = 'translateY(-50%) rotate(-90deg)';
-    heightLabel.style.transformOrigin = 'left center';
-}
-
 // Initialize on load/resize
 window.addEventListener('load', () => {
     resizeCanvas();
     makeObjectsDraggable();
-    updateDimensionLabels();
 });
 
 window.addEventListener('resize', () => {
     resizeCanvas();
-    updateDimensionLabels();
+});
+
+// Add ResizeObserver for responsive resizing
+const resizeObserver = new ResizeObserver(() => {
+    resizeCanvas();
+});
+
+const wallSpace = document.querySelector('.wall-space');
+if (wallSpace) {
+    resizeObserver.observe(wallSpace);
+}
+
+window.addEventListener('beforeunload', () => {
+    resizeObserver.disconnect();
 });

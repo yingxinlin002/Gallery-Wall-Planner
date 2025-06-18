@@ -163,32 +163,11 @@
 
             <!-- Canvas Area -->
             <div class="col-md-9">
-                <div class="canvas-container">
-                    <canvas id="wall-canvas"></canvas>
-                    <div id="canvas-overlay" class="canvas-overlay">
-                        <div id="dimension-labels">
-                            <div class="dimension-label width-label"></div>
-                            <div class="dimension-label height-label"></div>
-                        </div>
-                        <div id="canvas-objects-layer">
-                            {% for obj in wall.permanent_objects %}
-                                <div class="canvas-object"
-                                    id="object-{{ obj.id }}"
-                                    data-id="{{ obj.id }}"
-                                    data-x="{{ obj.x }}"
-                                    data-y="{{ obj.y }}"
-                                    data-width="{{ obj.width }}"
-                                    data-height="{{ obj.height }}"
-                                    style="--obj-width: {{ obj.width }}; --obj-height: {{ obj.height }}; --obj-x: {{ obj.x }}; --obj-y: {{ obj.y }};">
-                                    <div class="object-content">
-                                        <span class="object-name">{{ obj.name }}</span>
-                                        {% if obj.image_path %}
-                                        <img src="{{ url_for('static', filename=obj.image_path) }}" alt="{{ obj.name }}" class="object-image">
-                                        {% endif %}
-                                    </div>
-                                    <div class="object-handle object-handle-resize"></div>
-                                </div>
-                            {% endfor %}
+                <div class="wall-space">
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="wall-canvas"></canvas>
+                        <div id="canvas-overlay" class="canvas-overlay">
+                            <div id="canvas-objects-layer"></div>
                         </div>
                     </div>
                 </div>
@@ -244,12 +223,14 @@
                                 <div class="position-controls">
                                     <h6>Position</h6>
                                     <div class="mb-3">
-                                        <label for="itemX" class="form-label">X Position (inches)</label>
+                                        <label for="itemX" class="form-label">X Position (inches from left wall edge)</label>
                                         <input type="number" class="form-control" id="itemX" name="x" min="0" step="0.1" value="0">
+                                        <div class="form-text">Distance from the left side of the wall</div>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="itemY" class="form-label">Y Position (inches)</label>
-                                        <input type="number" class="form-control" id="itemY" name="y" min="0" step="0.1" value="0">
+                                        <label for="itemY" class="form-label">Y Position (inches from floor)</label>
+                                        <input type="number" class="form-control" id="itemY" name="y" min="0" max="{{ wallHeight }}" step="0.1" value="0">
+                                        <div class="form-text">Distance from the floor (bottom of the wall)</div>
                                     </div>
                                 </div>
                             </div>

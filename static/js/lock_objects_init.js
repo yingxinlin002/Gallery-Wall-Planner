@@ -166,12 +166,14 @@ class LockObjectsApp {
                     <div class="position-controls">
                         <h6>Position</h6>
                         <div class="mb-3">
-                            <label for="editItemX" class="form-label">X Position (inches)</label>
+                            <label for="editItemX" class="form-label">X Position (inches from left wall edge)</label>
                             <input type="number" class="form-control" id="editItemX" name="x" min="0" step="0.1" value="${object.x}">
+                            <div class="form-text">Distance from the left side of the wall</div>
                         </div>
                         <div class="mb-3">
-                            <label for="editItemY" class="form-label">Y Position (inches)</label>
+                            <label for="editItemY" class="form-label">Y Position (inches from floor)</label>
                             <input type="number" class="form-control" id="editItemY" name="y" min="0" step="0.1" value="${object.y}">
+                            <div class="form-text">Distance from the floor (bottom of the wall)</div>
                         </div>
                     </div>
                 </div>

@@ -15,8 +15,12 @@ from authlib.integrations.flask_client import OAuth
 from sqlalchemy import create_engine
 from config import load_config
 from authlib.integrations.base_client.errors import MismatchingStateError
-import uuid
 from apscheduler.schedulers.background import BackgroundScheduler
+from uuid import uuid4
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "default_secret")
@@ -63,6 +67,15 @@ csrf = CSRFProtect(app)
 with app.app_context():
     db.create_all()
 
+# Import or define RedisSessionManager before using it
+from gallery.models.redis_manager import RedisSessionManager  # Adjust the import path as needed
+
+# Initialize Redis after config loading
+redis_manager = RedisSessionManager(
+    host=config['redis']['host'],
+    port=config['redis']['port']
+)
+
 def load_projects_for_user(user_id):
     return Exhibit.query.filter_by(user_id=user_id).all()
 
@@ -89,71 +102,141 @@ def landing_page():
         return redirect(url_for('home'))
     return render_template("landing_page.html")
 
+# Modify the guest route
 @app.route('/guest')
 def guest():
     session.clear()
-    # Create a guest user record
-    guest_id = str(uuid.uuid4())
-    guest_user = User(
-        name='Guest',
-        is_guest=True,
-        session_id=guest_id
-    )
-    db.session.add(guest_user)
-    db.session.commit()
-    
-    session['user_id'] = guest_user.id
-    session['user'] = {'name': 'Guest'}
-    session['guest_id'] = guest_id
-    
+    guest_session_id = redis_manager.create_guest_session()
+    session['guest_session_id'] = guest_session_id
+    session['user'] = {'name': 'Guest', 'is_guest': True}
+    logger.info(f"[GUEST] New guest login, session_id={guest_session_id}")
     return redirect(url_for('home'))
 
-@app.route('/home', methods=["GET"])
+@app.route('/home')
 def home():
-    user_id = session.get('user_id')
+    # Regular user session
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        if user:
+            projects = Exhibit.query.filter_by(user_id=user.id).all()
+            return render_template('home.html', projects=projects, user=user)
     
-    if not user_id:
-        return redirect(url_for('landing_page'))
+    # Guest session
+    if 'guest_session_id' in session:
+        guest_data = redis_manager.get_session(session['guest_session_id'])
+        if guest_data:
+            projects = []  # Or load from Redis if you store projects there
+            return render_template('home.html', 
+                                projects=projects, 
+                                user={'name': 'Guest', 'is_guest': True})
     
-    user = User.query.get(user_id)
-    if not user:
-        session.clear()
-        return redirect(url_for('landing_page'))
-    
-    # Load projects based on user type
-    if user.is_guest:
-        projects = load_temp_projects_for_guest(user.id)
-        flash("You are using a guest session. Log in to save your work permanently.", "info")
-    else:
-        projects = load_projects_for_user(user.id)
-    
-    last_project_exists = bool(projects)
-    return render_template("home.html", last_project_exists=last_project_exists, user=user)
+    return redirect(url_for('landing_page'))
 
-# Add a cleanup task for guest data
-@app.route('/cleanup-guests', methods=['POST'])
-def cleanup_guests():
-    from datetime import datetime, timedelta
-    # Delete guest accounts older than 24 hours
-    cutoff = datetime.utcnow() - timedelta(hours=24)
-    deleted = User.query.filter(
-        User.is_guest == True,
-        User.created_at < cutoff
-    ).delete()
-    db.session.commit()
-    return jsonify({'deleted': deleted})
-
-@app.route("/continue", methods=["POST"])
-def continue_last_project():
+# Add save endpoint for guests
+@app.route('/save-guest-work', methods=['POST'])
+def save_guest_work():
+    if 'guest_session_id' not in session:
+        return jsonify({'error': 'No guest session'}), 400
+    
+    guest_data = redis_manager.get_session(session['guest_session_id'])
+    if not guest_data:
+        return jsonify({'error': 'Session expired'}), 400
+    
     try:
-        # Import from Excel and add to the database
-        import_exhibit_from_excel(TEMP_FILE, db)  # Pass db if your function needs it
-        return redirect(url_for('select_wall_space'))
+        # Convert to registered user
+        if 'convert_to_user' in request.form:
+            # Handle user registration
+            user = User(...)  # Create new user
+            db.session.add(user)
+            db.session.commit()
+            
+            # Migrate data from Redis to database
+            exhibits = migrate_guest_data(session['guest_session_id'], user.id)
+            
+            # Update session
+            session.pop('guest_session_id')
+            session['user_id'] = user.id
+            session['user'] = {'name': user.name, 'is_guest': False}
+            
+            return jsonify({
+                'success': True,
+                'message': 'Account created and work saved',
+                'user_id': user.id
+            })
+        
+        # Or just save temporary work
+        else:
+            exhibit_data = request.get_json()
+            redis_manager.update_session(
+                session['guest_session_id'],
+                exhibit_data
+            )
+            return jsonify({'success': True})
+            
     except Exception as e:
-        flash(str(e))
-        return redirect(url_for("home"))
+        return jsonify({'error': str(e)}), 500
+    
+def migrate_guest_data(guest_session_id, user_id):
+    """Move guest data from Redis to database"""
+    guest_data = redis_manager.get_session(guest_session_id)
+    if not guest_data:
+        return []
+    exhibits = []
+    for exhibit in guest_data.get('data', {}).get('exhibits', []):
+        new_exhibit = Exhibit(
+            name=exhibit.get('name', 'Untitled'),
+            user_id=user_id,
+            guest_id=None
+        )
+        db.session.add(new_exhibit)
+        db.session.flush()  # Get new_exhibit.id
 
-from uuid import uuid4
+        # Migrate walls if present
+        for wall in exhibit.get('walls', []):
+            from gallery.models.wall import Wall
+            new_wall = Wall(
+                name=wall.get('name', 'Wall'),
+                width=wall.get('width', 0),
+                height=wall.get('height', 0),
+                color=wall.get('color', 'White'),
+                exhibit_id=new_exhibit.id
+            )
+            db.session.add(new_wall)
+            db.session.flush()  # Get new_wall.id
+
+            # Migrate artworks placed on this wall
+            for artwork in wall.get('artworks', []):
+                from gallery.models.artwork import Artwork
+                new_artwork = Artwork(
+                    name=artwork.get('name', 'Artwork'),
+                    width=artwork.get('width', 0),
+                    height=artwork.get('height', 0),
+                    wall_id=new_wall.id,
+                    exhibit_id=new_exhibit.id,
+                    user_id=user_id
+                )
+                db.session.add(new_artwork)
+
+        # Migrate unplaced artworks
+        for artwork in exhibit.get('artworks', []):
+            from gallery.models.artwork import Artwork
+            new_artwork = Artwork(
+                name=artwork.get('name', 'Artwork'),
+                width=artwork.get('width', 0),
+                height=artwork.get('height', 0),
+                wall_id=None,
+                exhibit_id=new_exhibit.id,
+                user_id=user_id
+            )
+            db.session.add(new_artwork)
+
+        exhibits.append(new_exhibit)
+        logger.info(f"[DB] Migrated guest exhibit to user: {new_exhibit.name} (user_id={user_id})")
+
+    db.session.commit()
+    redis_manager.delete_session(guest_session_id)
+    logger.info(f"[REDIS] Deleted guest session after migration: {guest_session_id}")
+    return exhibits  
 
 @app.route('/new-exhibit', methods=['GET', 'POST'])
 def new_exhibit():
@@ -177,6 +260,7 @@ def new_exhibit():
         exhibit = Exhibit(name=exhibit_name, user_id=user_id, guest_id=guest_id)
         db.session.add(exhibit)
         db.session.commit()
+        logger.info(f"[DB] Created exhibit: {exhibit.id} ({exhibit.name}), user_id={user_id}, guest_id={guest_id}")
 
         session['current_exhibit_id'] = exhibit.id
         return redirect(url_for('load_exhibit'))
@@ -229,6 +313,7 @@ def create_wall():
         wall = Wall(name=name, width=width, height=height, color=color, exhibit_id=exhibit_id)
         db.session.add(wall)
         db.session.commit()
+        logger.info(f"[DB] Created wall: {wall.id} ({wall.name}) for exhibit {exhibit_id}")
 
         session['current_wall_id'] = wall.id
         return redirect(url_for('edit_permanent_objects'))
@@ -297,6 +382,7 @@ def add_permanent_object():
         )
         db.session.add(obj)
         db.session.commit()
+        logger.info(f"[DB] Created permanent object: {obj.id} ({obj.name}) on wall {wall_id}")
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
@@ -393,6 +479,14 @@ def editor():
     from gallery.models.wall_line import SingleLine as WallLine
     current_wall = get_current_wall()
     
+    # Get user information from session
+    user_info = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+        user_info = {'name': user.name, 'is_guest': False} if user else None
+    elif 'guest_session_id' in session:
+        user_info = {'name': 'Guest', 'is_guest': True}
+    
     # Get all artworks
     all_artwork = Artwork.query.all()
     
@@ -407,10 +501,11 @@ def editor():
     return render_template(
         'editor.html',
         current_wall=current_wall.to_dict() if current_wall else None,
-        all_artwork=[a.to_dict() for a in all_artwork],  # For complete list
-        current_wall_artwork=[a.to_dict() for a in current_wall_artwork],  # Artworks on wall
-        unplaced_artwork=[a.to_dict() for a in unplaced_artwork],  # Artworks not on wall
-        wall_lines=[l.to_dict() for l in wall_lines]
+        all_artwork=[a.to_dict() for a in all_artwork],
+        current_wall_artwork=[a.to_dict() for a in current_wall_artwork],
+        unplaced_artwork=[a.to_dict() for a in unplaced_artwork],
+        wall_lines=[l.to_dict() for l in wall_lines],
+        user=user_info
     )
 
 @app.route('/update_artwork_position/<int:artwork_id>', methods=['POST'])
@@ -424,6 +519,7 @@ def update_artwork_position(artwork_id):
     artwork.wall_id = data.get('wall_id')  # This can be None when removing
     
     db.session.commit()
+    logger.info(f"[DB] Updated artwork position: {artwork.id} (x={artwork.x_position}, y={artwork.y_position}, wall_id={artwork.wall_id})")
     return jsonify({
         'success': True,
         'artwork': artwork.to_dict()
@@ -473,7 +569,7 @@ def artwork_manual():
             
             db.session.add(artwork)
             db.session.commit()
-            app.logger.info(f"Created artwork: {artwork.id}, wall_id: {artwork.wall_id}")
+            logger.info(f"[DB] Created artwork: {artwork.id} ({artwork.name}), wall_id: {artwork.wall_id}")
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({
@@ -495,10 +591,6 @@ def artwork_manual():
         artworks += wall.artworks
         
     return render_template('artwork_manually.html', artworks=artworks)
-
-# @app.route("/load", methods=["POST"])
-# def load_wall():
-#     return redirect(url_for('select_wall_space'))
 
 @app.route('/delete-wall/<int:wall_id>', methods=['POST'])
 def delete_wall(wall_id):

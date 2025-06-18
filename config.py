@@ -34,8 +34,13 @@ def load_config():
         'scope': os.getenv("AUTHENTIK_SCOPE", config.get("authentik", "AUTHENTIK_SCOPE", fallback="openid email profile")),
     }
 
-    return {
-        'database': db_config,
-        'authentik': authentik_config
+    redis_config = {
+        'host': os.getenv('REDIS_HOST', 'localhost'),
+        'port': int(os.getenv('REDIS_PORT', 6379))
     }
 
+    return {
+        'database': db_config,
+        'authentik': authentik_config,
+        'redis': redis_config
+    }

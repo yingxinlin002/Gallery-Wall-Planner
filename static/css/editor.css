@@ -317,3 +317,28 @@ body.editor-bg {
     margin-bottom: 0.25rem;
     margin-left: 1rem;
 }
+
+.guest-save-options {
+    display: flex;
+    gap: 10px;
+}
+
+#saveGuestBtn {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #333;
+}
+#saveGuestBtn:hover {
+    background-color: #e0a800;
+    border-color: #e0a800;
+}
+
+#convertAndSaveBtn {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+#convertAndSaveBtn:hover {
+    background-color: #157347;
+    border-color: #157347;
+}
