@@ -463,8 +463,11 @@ def select_wall_space():
             return redirect(url_for('load_exhibit'))
         # Walls for guests are stored in the exhibit dict in Redis
         walls = exhibit.get('walls', [])
-        # You may need to adapt current_wall logic for guests
-        current_wall = None  # Or set from session if you track it
+        # --- FIX: Set current_wall for guests ---
+        current_wall_id = session.get('current_wall_id')
+        current_wall = None
+        if current_wall_id:
+            current_wall = next((w for w in walls if str(w.get('id')) == str(current_wall_id)), None)
         return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
     else:
         flash("Access denied.", "error")
@@ -600,14 +603,13 @@ def save_and_continue():
 
 @app.route('/editor')
 def editor():
+    current_wall = get_current_wall()
 
     # Check if there's a current wall selected
     if not current_wall:
         return redirect(url_for('select_wall_space', error='no_wall'))
     
     from gallery.models.wall_line import SingleLine as WallLine
-    current_wall = get_current_wall()
-    
     # Get user information from session
     user_info = None
     if 'user_id' in session:
@@ -616,24 +618,27 @@ def editor():
     elif 'guest_session_id' in session:
         user_info = {'name': 'Guest', 'is_guest': True}
     
-    # Get all artworks
-    all_artwork = Artwork.query.all()
-    
-    # Get only artworks placed on current wall
-    current_wall_artwork = Artwork.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
-    
-    # Get unplaced artworks (wall_id is None or not current wall)
-    unplaced_artwork = [a for a in all_artwork if a.wall_id != current_wall.id] if current_wall else all_artwork
-    
-    wall_lines = WallLine.query.filter_by(wall_id=current_wall.id).all() if current_wall else []
+    # Branch logic for guest vs user
+    if isinstance(current_wall, dict):
+        # Guest: get artworks from Redis wall dict
+        all_artwork = current_wall.get('artworks', [])
+        current_wall_artwork = all_artwork  # All artworks are on this wall in guest mode
+        unplaced_artwork = []  # Or handle as needed
+        wall_lines = current_wall.get('wall_lines', [])
+    else:
+        # Logged-in user: get from DB
+        all_artwork = Artwork.query.all()
+        current_wall_artwork = Artwork.query.filter_by(wall_id=current_wall.id).all()
+        unplaced_artwork = [a for a in all_artwork if a.wall_id != current_wall.id]
+        wall_lines = WallLine.query.filter_by(wall_id=current_wall.id).all()
     
     return render_template(
         'editor.html',
-        current_wall=current_wall.to_dict() if current_wall else None,
-        all_artwork=[a.to_dict() for a in all_artwork],
-        current_wall_artwork=[a.to_dict() for a in current_wall_artwork],
-        unplaced_artwork=[a.to_dict() for a in unplaced_artwork],
-        wall_lines=[l.to_dict() for l in wall_lines],
+        current_wall=current_wall if isinstance(current_wall, dict) else current_wall.to_dict(),
+        all_artwork=[a if isinstance(a, dict) else a.to_dict() for a in all_artwork],
+        current_wall_artwork=[a if isinstance(a, dict) else a.to_dict() for a in current_wall_artwork],
+        unplaced_artwork=[a if isinstance(a, dict) else a.to_dict() for a in unplaced_artwork],
+        wall_lines=[l if isinstance(l, dict) else l.to_dict() for l in wall_lines],
         user=user_info
     )
 
@@ -717,8 +722,13 @@ def artwork_manual():
     
     artworks = Artwork.query.filter_by(wall_id=None).all()
     if wall:
-        artworks += wall.artworks
-        
+        if isinstance(wall, dict):
+            # Guest: wall is a dict from Redis
+            artworks += wall.get('artworks', [])
+        else:
+            # Logged-in user: wall is a SQLAlchemy object
+            artworks += wall.artworks
+
     return render_template('artwork_manually.html', artworks=artworks)
 
 @app.route('/select-wall/<wall_id>')
