@@ -11,23 +11,21 @@ class Exhibit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
-    user = db.relationship('User', back_populates='exhibits', lazy=True)  # Changed from 'galleries'
-    guest_id = db.Column(db.String(36), nullable=True, index=True)
+    user = db.relationship('User', back_populates='exhibits', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    walls = db.relationship('Wall', backref='exhibit', lazy=True, cascade='all, delete-orphan')  # Changed from 'gallery'
+    walls = db.relationship('Wall', backref='exhibit', lazy=True, cascade='all, delete-orphan')
     unplaced_artworks = db.relationship(
         'Artwork',
-        primaryjoin='and_(Artwork.wall_id==None, Artwork.exhibit_id==Exhibit.id)',  # Changed gallery_id to exhibit_id
-        back_populates='exhibit',  # Use back_populates, not backref
+        primaryjoin='and_(Artwork.wall_id==None, Artwork.exhibit_id==Exhibit.id)',
+        back_populates='exhibit',
         lazy=True
     )
 
     def __init__(self, name: str = "Exhibit", user_id: int = None, guest_id: str = None):  # Changed default name
         self.name = name
         self.user_id = user_id
-        self.guest_id = guest_id
 
     @classmethod
     def cleanup_guest_exhibits(cls, hours=24):  # Renamed from cleanup_guest_galleries

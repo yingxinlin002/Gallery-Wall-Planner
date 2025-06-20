@@ -248,19 +248,13 @@ def new_exhibit():
             flash("Exhibit name is required.")
             return redirect(url_for('new_exhibit'))
 
-        # Guest handling
-        guest_id = None
         if not user_id:
-            guest_id = session.get('guest_id')
-            if not guest_id:
-                guest_id = str(uuid4())
-                session['guest_id'] = guest_id
             flash("You are creating an exhibit as a guest. Log in to save your work.", "info")
 
-        exhibit = Exhibit(name=exhibit_name, user_id=user_id, guest_id=guest_id)
+        exhibit = Exhibit(name=exhibit_name, user_id=user_id)
         db.session.add(exhibit)
         db.session.commit()
-        logger.info(f"[DB] Created exhibit: {exhibit.id} ({exhibit.name}), user_id={user_id}, guest_id={guest_id}")
+        logger.info(f"[DB] Created exhibit: {exhibit.id} ({exhibit.name}), user_id={user_id}")
 
         session['current_exhibit_id'] = exhibit.id
         return redirect(url_for('load_exhibit'))
@@ -273,7 +267,6 @@ def load_exhibit():
 
     if request.method == 'POST':
         exhibit_id = request.form.get('exhibit_id')
-
         if not exhibit_id:
             flash("No exhibit selected.", "warning")
             return redirect(url_for('load_exhibit'))
@@ -289,12 +282,22 @@ def load_exhibit():
 
     # GET request — just show the list
     if user_id:
+        # Logged-in user: load from DB
         exhibits = Exhibit.query.filter_by(user_id=user_id).all()
+        return render_template('load_exhibit.html', exhibits=exhibits)
+    elif 'guest_session_id' in session:
+        # Guest: load from Redis
+        guest_data = redis_manager.get_session(session['guest_session_id'])
+        exhibits = []
+        if guest_data:
+            for idx, ex in enumerate(guest_data.get('data', {}).get('exhibits', [])):
+                # Add an 'id' field if not present, for selection
+                ex = ex.copy()
+                ex['id'] = ex.get('id', str(idx))
+                exhibits.append(ex)
+        return render_template('load_exhibit.html', exhibits=exhibits, is_guest=True)
     else:
-        guest_id = session.get('guest_id')
-        exhibits = Exhibit.query.filter_by(guest_id=guest_id).all() if guest_id else []
-
-    return render_template('load_exhibit.html', exhibits=exhibits)
+        return render_template('load_exhibit.html', exhibits=[])
 
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
