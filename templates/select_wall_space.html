@@ -39,11 +39,12 @@
                 <div class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
                     {% for wall in walls %}
                         <div class="d-flex align-items-center mb-1">
-                            <a href="{{ url_for('select_wall', wall_id=wall.id) }}"
-                                class="list-group-item list-group-item-action wall-btn flex-grow-1 {% if current_wall and wall.id == current_wall.id %}active{% endif %}">
-                                 {{ wall.name }}
+                            <a href="{{ url_for('select_wall', wall_id=wall.id if wall.id is defined else wall['id']) }}"
+                                class="list-group-item list-group-item-action wall-btn flex-grow-1 
+                                {% if current_wall and (wall.id == current_wall.id if current_wall.id is defined else wall['id'] == current_wall['id']) %}active{% endif %}">
+                                {{ wall.name if wall.name is defined else wall['name'] }}
                             </a>
-                            <form action="{{ url_for('delete_wall', wall_id=wall.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this wall?');">
+                            <form action="{{ url_for('delete_wall', wall_id=wall.id if wall.id is defined else wall['id']) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this wall?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger ms-2" title="Delete wall">&times;</button>
                             </form>
@@ -106,8 +107,18 @@
     <!-- Bottom Buttons -->
     <div class="d-flex justify-content-between align-items-center mt-4">
         <a href="{{ url_for('home') }}" class="btn btn-secondary">&lt; Back to Home</a>
-        <a href="{{ url_for('editor') }}" class="btn btn-primary">Continue &gt;</a>
+        {% if current_wall %}
+            <a href="{{ url_for('editor') }}" class="btn btn-primary">Continue &gt;</a>
+        {% else %}
+            <button class="btn btn-primary" disabled title="Select a wall to continue">Continue &gt;</button>
+        {% endif %}
     </div>
+
+    {% if request.args.get('error') == 'no_wall' %}
+        <div class="alert alert-danger mt-3">
+            Please select or create a wall before continuing to the editor.
+        </div>
+    {% endif %}
 
     <!-- Back to Load Exhibit Button -->
     {% if current_wall %}

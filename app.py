@@ -84,16 +84,29 @@ def load_temp_projects_for_guest(guest_id):
 
 def get_current_wall():
     wall_id = session.get("current_wall_id")
-    if wall_id is not None:
+    if wall_id is None:
+        return None
+        
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+    
+    if user_id:
+        # Regular user - get from DB
         wall = db.session.get(Wall, wall_id)
         if wall:
-            # Verify the wall belongs to the user's exhibit
             exhibit = Exhibit.query.get(wall.exhibit_id)
-            user_id = session.get('user_id')
-            guest_id = session.get('guest_id')
-            
-            if (user_id and exhibit.user_id == user_id) or (guest_id and exhibit.guest_id == guest_id):
+            if exhibit and exhibit.user_id == user_id:
                 return wall
+    elif guest_id:
+        # Guest user - get from Redis
+        guest_data = redis_manager.get_session(guest_id)
+        if guest_data:
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if exhibit:
+                walls = exhibit.get('walls', [])
+                return next((w for w in walls if str(w.get('id')) == str(wall_id)), None)
     return None
 
 @app.route("/", methods=["GET"])
@@ -342,6 +355,7 @@ def load_exhibit():
 @app.route('/create-wall', methods=['GET', 'POST'])
 def create_wall():
     exhibit_id = session.get('current_exhibit_id')
+    user_id = session.get('user_id')
 
     if not exhibit_id:
         flash("Please create an exhibit first.")
@@ -353,15 +367,74 @@ def create_wall():
         height = float(request.form.get('wall_height'))
         color = request.form.get('wall_color', 'White')
 
-        wall = Wall(name=name, width=width, height=height, color=color, exhibit_id=exhibit_id)
-        db.session.add(wall)
-        db.session.commit()
-        logger.info(f"[DB] Created wall: {wall.id} ({wall.name}) for exhibit {exhibit_id}")
+        if user_id:
+            # Logged-in user: store in DB
+            wall = Wall(name=name, width=width, height=height, color=color, exhibit_id=exhibit_id, user_id=user_id)
+            db.session.add(wall)
+            db.session.commit()
+            logger.info(f"[DB] Created wall: {wall.id} ({wall.name}) for exhibit {exhibit_id}")
+            session['current_wall_id'] = wall.id
+        elif 'guest_session_id' in session:
+            # Guest: store in Redis
+            import uuid
+            guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if not exhibit:
+                flash("No exhibit found.", "error")
+                return redirect(url_for('new_exhibit'))
 
-        session['current_wall_id'] = wall.id
+            wall_id = str(uuid.uuid4())
+            new_wall = {
+                'id': wall_id,
+                'name': name,
+                'width': width,
+                'height': height,
+                'color': color,
+                'permanent_objects': [],
+                'artworks': []
+            }
+            exhibit.setdefault('walls', []).append(new_wall)
+            redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+            session['current_wall_id'] = wall_id
+            logger.info(f"[REDIS] Created guest wall: {name} (id={wall_id}) in exhibit {exhibit_id}")
+        else:
+            flash("Session expired. Please start again.", "error")
+            return redirect(url_for('landing_page'))
+
         return redirect(url_for('edit_permanent_objects'))
 
     return render_template('create_wall.html')
+
+@app.route('/delete-wall/<wall_id>', methods=['POST'])
+def delete_wall(wall_id):
+    user_id = session.get('user_id')
+    if user_id:
+        # Logged-in user: wall_id is int
+        wall = Wall.query.get_or_404(wall_id)
+        db.session.delete(wall)
+        db.session.commit()
+        flash(f'Wall "{wall.name}" deleted.', "success")
+        return redirect(url_for('select_wall_space'))
+    elif 'guest_session_id' in session:
+        # Guest: wall_id is a string (UUID)
+        guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+        exhibit_id = session.get('current_exhibit_id')
+        exhibits = guest_data.get('data', {}).get('exhibits', [])
+        exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+        if not exhibit:
+            flash("No exhibit found.", "error")
+            return redirect(url_for('select_wall_space'))
+        walls = exhibit.get('walls', [])
+        # Remove wall with matching id
+        new_walls = [w for w in walls if str(w.get('id')) != str(wall_id)]
+        exhibit['walls'] = new_walls
+        redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+        flash("Wall deleted.", "success")
+        return redirect(url_for('select_wall_space'))
+    else:
+        flash("Session expired. Please start again.", "error")
+        return redirect(url_for('landing_page'))
 
 @app.route('/select-wall-space', methods=['GET', 'POST'])
 def select_wall_space():
@@ -458,12 +531,20 @@ def edit_permanent_objects():
     if not wall:
         flash("No wall selected", "error")
         return redirect(url_for('select_wall_space'))
-    
-    permanent_objects = [obj.to_dict() for obj in wall.permanent_objects]
-    
-    return render_template('lock_objects.html', 
-                           wall=wall, 
-                           permanent_objects=permanent_objects)
+
+    # Branch for SQLAlchemy object vs dict
+    if isinstance(wall, dict):
+        # Guest: wall is a dict from Redis
+        permanent_objects = wall.get('permanent_objects', [])
+    else:
+        # Logged-in user: wall is a SQLAlchemy object
+        permanent_objects = [obj.to_dict() for obj in wall.permanent_objects]
+
+    return render_template(
+        'lock_objects.html',
+        wall=wall,
+        permanent_objects=permanent_objects
+    )
 
 @app.route('/update_permanent_object', methods=['POST'])
 def update_permanent_object():
@@ -513,18 +594,17 @@ def delete_permanent_object(obj_id):
     flash("Permanent object deleted.", "success")
     return redirect(url_for('lock_objects', wall_id=wall_id))
 
-@app.route('/select-wall/<wall_id>')
-def select_wall(wall_id):
-    session["current_wall_id"] = wall_id
-    return redirect(url_for('select_wall_space'))
-
 @app.route('/save_and_continue', methods=['POST'])
 def save_and_continue():
-    # Implement save logic if needed
     return redirect(url_for('editor'))
 
 @app.route('/editor')
 def editor():
+
+    # Check if there's a current wall selected
+    if not current_wall:
+        return redirect(url_for('select_wall_space', error='no_wall'))
+    
     from gallery.models.wall_line import SingleLine as WallLine
     current_wall = get_current_wall()
     
@@ -641,12 +721,22 @@ def artwork_manual():
         
     return render_template('artwork_manually.html', artworks=artworks)
 
-@app.route('/delete-wall/<int:wall_id>', methods=['POST'])
-def delete_wall(wall_id):
-    wall = Wall.query.get_or_404(wall_id)
-    db.session.delete(wall)
-    db.session.commit()
-    flash(f'Wall "{wall.name}" deleted.', "success")
+@app.route('/select-wall/<wall_id>')
+def select_wall(wall_id):
+    session["current_wall_id"] = wall_id
+    # For guests, we need to verify the wall exists in their session
+    if 'guest_session_id' in session:
+        guest_data = redis_manager.get_session(session['guest_session_id'])
+        if guest_data:
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if exhibit:
+                walls = exhibit.get('walls', [])
+                wall = next((w for w in walls if str(w.get('id')) == str(wall_id)), None)
+                if not wall:
+                    flash("Wall not found in your exhibit", "error")
+                    return redirect(url_for('select_wall_space'))
     return redirect(url_for('select_wall_space'))
 
 @app.route('/update_object_position/<int:obj_id>', methods=['POST'])
