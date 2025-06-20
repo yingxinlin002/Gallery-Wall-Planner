@@ -23,22 +23,9 @@ class Exhibit(db.Model):
         lazy=True
     )
 
-    def __init__(self, name: str = "Exhibit", user_id: int = None, guest_id: str = None):  # Changed default name
+    def __init__(self, name: str = "Exhibit", user_id: int = None):
         self.name = name
         self.user_id = user_id
-
-    @classmethod
-    def cleanup_guest_exhibits(cls, hours=24):  # Renamed from cleanup_guest_galleries
-        """Clean up guest exhibits older than specified hours"""
-        from datetime import datetime, timedelta
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
-        guest_users = User.query.filter(
-            User.is_guest == True,
-            User.created_at < cutoff
-        ).all()
-        for user in guest_users:
-            cls.query.filter_by(user_id=user.id).delete()
-        db.session.commit()
 
     def add_wall(self, name: str, width: float, height: float, color: str = "White") -> "Wall":
         from .wall import Wall
@@ -54,6 +41,7 @@ class Exhibit(db.Model):
         return Wall.query.filter_by(name=name, exhibit_id=self.id).first()
 
     def remove_wall(self, wall_id: int) -> bool:
+        from .wall import Wall
         wall = Wall.query.get(wall_id)
         if wall and wall.exhibit_id == self.id:
             db.session.delete(wall)
@@ -82,6 +70,7 @@ class Exhibit(db.Model):
         return self.unplaced_artworks
 
     def place_artwork(self, artwork_id: int, wall_id: int) -> bool:
+        from .wall import Wall
         artwork = Artwork.query.get(artwork_id)
         wall = Wall.query.get(wall_id)
         if artwork and wall and artwork.exhibit_id == self.id and wall.exhibit_id == self.id:

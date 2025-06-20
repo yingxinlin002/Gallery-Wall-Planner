@@ -248,15 +248,39 @@ def new_exhibit():
             flash("Exhibit name is required.")
             return redirect(url_for('new_exhibit'))
 
-        if not user_id:
-            flash("You are creating an exhibit as a guest. Log in to save your work.", "info")
+        if user_id:
+            # Logged-in user: store in DB
+            exhibit = Exhibit(name=exhibit_name, user_id=user_id)
+            db.session.add(exhibit)
+            db.session.commit()
+            logger.info(f"[DB] Created exhibit: {exhibit.id} ({exhibit.name}), user_id={user_id}")
+            session['current_exhibit_id'] = exhibit.id
+        elif 'guest_session_id' in session:
+            # Guest: store in Redis
+            guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            # Assign a unique id (use uuid4 for uniqueness)
+            import uuid
+            exhibit_id = str(uuid.uuid4())
+            new_exhibit = {
+                'id': exhibit_id,
+                'name': exhibit_name,
+                'walls': [],
+                'artworks': []
+            }
+            exhibits.append(new_exhibit)
+            # Save back to Redis
+            if 'exhibits' not in guest_data.get('data', {}):
+                guest_data['data']['exhibits'] = exhibits
+            else:
+                guest_data['data']['exhibits'] = exhibits
+            redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+            logger.info(f"[REDIS] Created guest exhibit: {exhibit_name} (id={exhibit_id}) in session {session['guest_session_id']}")
+            session['current_exhibit_id'] = exhibit_id
+        else:
+            flash("Session expired. Please start again.", "error")
+            return redirect(url_for('landing_page'))
 
-        exhibit = Exhibit(name=exhibit_name, user_id=user_id)
-        db.session.add(exhibit)
-        db.session.commit()
-        logger.info(f"[DB] Created exhibit: {exhibit.id} ({exhibit.name}), user_id={user_id}")
-
-        session['current_exhibit_id'] = exhibit.id
         return redirect(url_for('load_exhibit'))
 
     return render_template('new_exhibit.html')
@@ -271,14 +295,31 @@ def load_exhibit():
             flash("No exhibit selected.", "warning")
             return redirect(url_for('load_exhibit'))
 
-        exhibit = Exhibit.query.get(exhibit_id)
-        if not exhibit:
-            flash("Exhibit not found.", "danger")
-            return redirect(url_for('load_exhibit'))
-
-        session['current_exhibit_id'] = exhibit.id
-        flash(f"Loaded exhibit: {exhibit.name}", "success")
-        return redirect(url_for('select_wall_space'))
+        if user_id:
+            # Logged-in user: load from DB
+            exhibit = Exhibit.query.get(exhibit_id)
+            if not exhibit:
+                flash("Exhibit not found.", "danger")
+                return redirect(url_for('load_exhibit'))
+            session['current_exhibit_id'] = exhibit.id
+            flash(f"Loaded exhibit: {exhibit.name}", "success")
+            return redirect(url_for('select_wall_space'))
+        elif 'guest_session_id' in session:
+            # Guest: load from Redis
+            guest_data = redis_manager.get_session(session['guest_session_id'])
+            exhibits = guest_data.get('data', {}).get('exhibits', []) if guest_data else []
+            selected = None
+            for ex in exhibits:
+                if str(ex.get('id')) == str(exhibit_id):
+                    selected = ex
+                    break
+            if selected:
+                session['current_exhibit_id'] = selected['id']
+                flash(f"Loaded exhibit: {selected.get('name', 'Untitled')}", "success")
+                return redirect(url_for('select_wall_space'))
+            else:
+                flash("Exhibit not found.", "danger")
+                return redirect(url_for('load_exhibit'))
 
     # GET request — just show the list
     if user_id:
@@ -291,7 +332,6 @@ def load_exhibit():
         exhibits = []
         if guest_data:
             for idx, ex in enumerate(guest_data.get('data', {}).get('exhibits', [])):
-                # Add an 'id' field if not present, for selection
                 ex = ex.copy()
                 ex['id'] = ex.get('id', str(idx))
                 exhibits.append(ex)
