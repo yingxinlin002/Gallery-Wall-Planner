@@ -367,7 +367,6 @@ def create_wall():
 def select_wall_space():
     exhibit_id = session.get('current_exhibit_id')
     user_id = session.get('user_id')
-    guest_id = session.get('guest_id')
 
     if not exhibit_id:
         flash("Please load an exhibit first.")
@@ -376,20 +375,27 @@ def select_wall_space():
     # Get the current user
     user = User.query.get(user_id) if user_id else None
 
-    # Query walls based on user type
     if user and not user.is_guest:
         # Logged-in user - show walls from their exhibit
         walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
-    else:
-        # Guest user - verify the exhibit belongs to their session
-        exhibit = Exhibit.query.get(exhibit_id)
-        if not exhibit or (exhibit.guest_id != guest_id and exhibit.user_id != user_id):
+        current_wall = get_current_wall()
+        return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
+    elif 'guest_session_id' in session:
+        # Guest user - load exhibit from Redis
+        guest_data = redis_manager.get_session(session['guest_session_id'])
+        exhibits = guest_data.get('data', {}).get('exhibits', []) if guest_data else []
+        exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+        if not exhibit:
             flash("Access to this exhibit is not allowed.", "error")
             return redirect(url_for('load_exhibit'))
-        walls = Wall.query.filter_by(exhibit_id=exhibit_id).all()
-
-    current_wall = get_current_wall()
-    return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
+        # Walls for guests are stored in the exhibit dict in Redis
+        walls = exhibit.get('walls', [])
+        # You may need to adapt current_wall logic for guests
+        current_wall = None  # Or set from session if you track it
+        return render_template('select_wall_space.html', walls=walls, current_wall=current_wall)
+    else:
+        flash("Access denied.", "error")
+        return redirect(url_for('load_exhibit'))
 
 @app.route('/add_permanent_object', methods=['POST'])
 def add_permanent_object():
