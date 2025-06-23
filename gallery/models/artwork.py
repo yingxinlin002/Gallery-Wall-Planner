@@ -26,10 +26,9 @@ class Artwork(WallObject):
     exhibit_id = db.Column(db.Integer, db.ForeignKey('exhibits.id'))
     x_position = db.Column(db.Float, nullable=True)
     y_position = db.Column(db.Float, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     wall_id = db.Column(db.Integer, db.ForeignKey('wall.id'), nullable=True)
 
-    # New user association
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     user = db.relationship('User', back_populates='artworks')
     exhibit = db.relationship('Exhibit', back_populates='unplaced_artworks')
 

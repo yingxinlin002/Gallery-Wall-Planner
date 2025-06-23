@@ -671,55 +671,104 @@ def artwork_manual():
     
     if request.method == 'POST':
         try:
-            # Helper function to safely convert form values to float
             def get_float(form, field, default=0.0):
                 value = form.get(field)
                 return float(value) if value else default
 
-            # Create new artwork - IMPORTANT: Set wall_id=None
-            artwork = Artwork(
-                name=request.form.get('name', '').strip(),
-                width=get_float(request.form, 'width'),
-                height=get_float(request.form, 'height'),
-                hanging_point=get_float(request.form, 'hanging'),
-                medium=request.form.get('medium', '').strip(),
-                depth=get_float(request.form, 'depth'),
-                price=get_float(request.form, 'price'),
-                nfs=bool(request.form.get('nfs')),
-                wall_id=None,  # leave at None for now
-                user_id=session.get('user_id')
-            )
-            
-            # Handle file upload
-            if 'imageUpload' in request.files:
-                file = request.files['imageUpload']
-                if file and file.filename != '':
-                    filename = secure_filename(file.filename)
-                    upload_dir = os.path.join(app.static_folder, 'uploads')
-                    os.makedirs(upload_dir, exist_ok=True)
-                    upload_path = os.path.join(upload_dir, filename)
-                    file.save(upload_path)
-                    artwork.image_path = os.path.join('static', 'uploads', filename)
-            
-            db.session.add(artwork)
-            db.session.commit()
-            logger.info(f"[DB] Created artwork: {artwork.id} ({artwork.name}), wall_id: {artwork.wall_id}")
-            
+            # --- Branch: Guest vs Logged-in User ---
+            if 'user_id' in session:
+                # Logged-in user: create in DB
+                artwork = Artwork(
+                    name=request.form.get('name', '').strip(),
+                    width=get_float(request.form, 'width'),
+                    height=get_float(request.form, 'height'),
+                    hanging_point=get_float(request.form, 'hanging'),
+                    medium=request.form.get('medium', '').strip(),
+                    depth=get_float(request.form, 'depth'),
+                    price=get_float(request.form, 'price'),
+                    nfs=bool(request.form.get('nfs')),
+                    wall_id=None,  # leave at None for now
+                    user_id=session.get('user_id')
+                )
+                # Handle file upload
+                if 'imageUpload' in request.files:
+                    file = request.files['imageUpload']
+                    if file and file.filename != '':
+                        filename = secure_filename(file.filename)
+                        upload_dir = os.path.join(app.static_folder, 'uploads')
+                        os.makedirs(upload_dir, exist_ok=True)
+                        upload_path = os.path.join(upload_dir, filename)
+                        file.save(upload_path)
+                        artwork.image_path = os.path.join('static', 'uploads', filename)
+                db.session.add(artwork)
+                db.session.commit()
+                logger.info(f"[DB] Created artwork: {artwork.id} ({artwork.name}), wall_id: {artwork.wall_id}")
+
+            elif 'guest_session_id' in session and isinstance(wall, dict):
+                # Guest: store in Redis
+                guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+                exhibit_id = session.get('current_exhibit_id')
+                exhibits = guest_data.get('data', {}).get('exhibits', [])
+                exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+                if not exhibit:
+                    flash("No exhibit found.", "error")
+                    return redirect(url_for('new_exhibit'))
+                # Find the wall in the exhibit
+                wall_id = wall.get('id')
+                wall_in_redis = next((w for w in exhibit.get('walls', []) if str(w.get('id')) == str(wall_id)), None)
+                if not wall_in_redis:
+                    flash("No wall found.", "error")
+                    return redirect(url_for('select_wall_space'))
+                # Create artwork dict
+                import uuid
+                artwork_id = str(uuid.uuid4())
+                artwork = {
+                    'id': artwork_id,
+                    'name': request.form.get('name', '').strip(),
+                    'width': get_float(request.form, 'width'),
+                    'height': get_float(request.form, 'height'),
+                    'hanging_point': get_float(request.form, 'hanging'),
+                    'medium': request.form.get('medium', '').strip(),
+                    'depth': get_float(request.form, 'depth'),
+                    'price': get_float(request.form, 'price'),
+                    'nfs': bool(request.form.get('nfs')),
+                    'image_path': '',
+                    'x_position': 0,
+                    'y_position': 0,
+                    'wall_id': wall_id,
+                }
+                # Handle file upload (optional: implement if needed)
+                if 'imageUpload' in request.files:
+                    file = request.files['imageUpload']
+                    if file and file.filename != '':
+                        filename = secure_filename(file.filename)
+                        upload_dir = os.path.join(app.static_folder, 'uploads')
+                        os.makedirs(upload_dir, exist_ok=True)
+                        upload_path = os.path.join(upload_dir, filename)
+                        file.save(upload_path)
+                        artwork['image_path'] = os.path.join('static', 'uploads', filename)
+                wall_in_redis.setdefault('artworks', []).append(artwork)
+                redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+                logger.info(f"[REDIS] Created guest artwork: {artwork['name']} (id={artwork_id}) on wall {wall_id}")
+
+            else:
+                flash("Session expired. Please start again.", "error")
+                return redirect(url_for('landing_page'))
+
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    'success': True,
-                    'artwork': artwork.to_dict()
-                })
+                return jsonify({'success': True, 'artwork': artwork if isinstance(artwork, dict) else artwork.to_dict()})
             return redirect(url_for('artwork_manual'))
             
         except Exception as e:
-            db.session.rollback()
+            if 'user_id' in session:
+                db.session.rollback()
             app.logger.error(f"Error creating artwork: {str(e)}")
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'error': str(e)}), 400
             flash(f"Error creating artwork: {str(e)}")
             return redirect(url_for('artwork_manual'))
     
+    # --- GET: Show artworks ---
     artworks = Artwork.query.filter_by(wall_id=None).all()
     if wall:
         if isinstance(wall, dict):
