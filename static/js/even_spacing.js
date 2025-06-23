@@ -84,10 +84,10 @@ export class EvenSpacing {
             if (e.target.tagName === 'OPTION') {
                 e.preventDefault();
                 const option = e.target;
-                const artworkId = parseInt(option.value);
+                const artworkId = option.value;
                 
                 // Find if this artwork is already selected
-                const existingIndex = this.selectedArtworks.findIndex(a => a.id === artworkId);
+                const existingIndex = this.selectedArtworks.findIndex(a => a.id == artworkId);
                 
                 if (existingIndex >= 0) {
                     // Remove from selection
@@ -136,7 +136,7 @@ export class EvenSpacing {
         
         // Update all options to show selection order
         options.forEach(option => {
-            const artworkId = parseInt(option.value);
+            const artworkId = option.value;
             const index = this.selectedArtworks.findIndex(a => a.id === artworkId);
             
             // Remove any existing order number
