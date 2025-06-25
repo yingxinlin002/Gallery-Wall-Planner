@@ -250,45 +250,26 @@ export class InstallationInstruction {
         instructions.push("");
 
         // B) Forward pass (first+1 to end)
-        let stepNum = 2;  // Starts at 2 because STARTING POINT is always 1
-        let prevX = first.x, prevY = first.y;
+        let stepNum = 2;
         for (let i = firstIndex + 1; i < names.length; i++) {
             const curr = { name: names[i], ...locations[names[i]] };
-            const dx = Math.abs(curr.x - prevX);
-            const dy = Math.abs(curr.y - prevY);
-            const yStepDir = curr.y > prevY ? "UP" : "DOWN";
-
             instructions.push(`${stepNum}. ${curr.name}:`);
-            instructions.push(`   • From ${names[i-1]}'s nail position:`);
-            instructions.push(`     → Measure ${xInitial} ${dx.toFixed(2)}"`);
-            instructions.push(`     → Measure ${yStepDir} ${dy.toFixed(2)}"`);
+            instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${curr.x.toFixed(3)}"`);
+            instructions.push(`   • From FLOOR, measure UP ${curr.y.toFixed(3)}"`);
             instructions.push(`   • Mark this point for ${curr.name}'s nail`);
             instructions.push("");
-            
             stepNum++;
-            prevX = curr.x;
-            prevY = curr.y;
         }
 
         // D) Backward pass (first-1 to start)
-        prevX = first.x;
-        prevY = first.y;
         for (let i = firstIndex - 1; i >= 0; i--) {
             const curr = { name: names[i], ...locations[names[i]] };
-            const dx = Math.abs(curr.x - prevX);
-            const dy = Math.abs(curr.y - prevY);
-            const yStepDir = curr.y > prevY ? "UP" : "DOWN";
-
             instructions.push(`${stepNum}. ${curr.name}:`);
-            instructions.push(`   • From ${names[i+1]}'s nail position:`);
-            instructions.push(`     → Measure ${xDir} ${dx.toFixed(2)}"`);
-            instructions.push(`     → Measure ${yStepDir} ${dy.toFixed(2)}"`);
+            instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${curr.x.toFixed(3)}"`);
+            instructions.push(`   • From FLOOR, measure UP ${curr.y.toFixed(3)}"`);
             instructions.push(`   • Mark this point for ${curr.name}'s nail`);
             instructions.push("");
-            
             stepNum++;
-            prevX = curr.x;
-            prevY = curr.y;
         }
 
         // Final instructions
