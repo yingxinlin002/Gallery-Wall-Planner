@@ -6,6 +6,8 @@ export class InstallationInstruction {
     }
 
     show() {
+        console.log("Wall Data:", this.wallData);
+        console.log("Artwork Data:", this.artworkData);
         // Create modal container
         this.modal = document.createElement('div');
         this.modal.className = 'modal fade';
@@ -39,13 +41,16 @@ export class InstallationInstruction {
         modalFooter.className = 'modal-footer';
         modalFooter.innerHTML = `
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" id="saveInstructionsBtn">Save</button>
+            <button type="submit" class="btn btn-primary" id="saveInstructionsBtn">Submit</button>
         `;
         
-        // Assemble modal
+        // --- Wrap body and footer in a form ---
+        const form = document.createElement('form');
+        form.appendChild(modalBody);
+        form.appendChild(modalFooter);
+
         modalContent.appendChild(modalHeader);
-        modalContent.appendChild(modalBody);
-        modalContent.appendChild(modalFooter);
+        modalContent.appendChild(form);
         modalDialog.appendChild(modalContent);
         this.modal.appendChild(modalDialog);
         
@@ -61,7 +66,8 @@ export class InstallationInstruction {
             this.modal.remove();
         });
         
-        document.getElementById('saveInstructionsBtn').addEventListener('click', () => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
             this.saveInstructions();
         });
     }
@@ -128,37 +134,6 @@ export class InstallationInstruction {
                 </div>
             </div>
         `;
-        
-        // File Type section
-        container.innerHTML += `
-            <div class="mb-3">
-                <label class="form-label fw-bold">File Type</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="fileType" id="fileTypeWord" value="word" checked>
-                    <label class="form-check-label" for="fileTypeWord">
-                        Word
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="fileType" id="fileTypeExcel" value="excel">
-                    <label class="form-check-label" for="fileTypeExcel">
-                        Excel
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="fileType" id="fileTypePDF" value="pdf">
-                    <label class="form-check-label" for="fileTypePDF">
-                        PDF
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="fileType" id="fileTypeText" value="text">
-                    <label class="form-check-label" for="fileTypeText">
-                        Text (No Image)
-                    </label>
-                </div>
-            </div>
-        `;
     }
 
     getSelectedValue(name) {
@@ -171,24 +146,38 @@ export class InstallationInstruction {
         const heightRef = this.getSelectedValue('heightMeasure');
         const wallWidth = this.wallData.width;
         const wallHeight = this.wallData.height;
-        
+
         const locations = {};
-        
+
+        console.log("Calculating hang locations for:", this.artworkData);
+
         this.artworkData.forEach(art => {
+            // Accept both DB and guest objects
+            const position = art.position || { x: art.x_position ?? 0, y: art.y_position ?? 0 };
+            const hangingPoint = art.hanging_point ?? 0;
+            const width = art.width ?? 0;
+            const height = art.height ?? 0;
+
+            // Skip if we don't have valid dimensions
+            if (width <= 0 || height <= 0) {
+                console.warn("Skipping artwork with invalid dimensions:", art);
+                return;
+            }
+
             // Get bottom-left position
-            const bottomLeftX = art.position.x;
-            const bottomLeftY = art.position.y;
-            
+            const bottomLeftX = position.x;
+            const bottomLeftY = position.y;
+
             // Calculate center position
-            const centerX = bottomLeftX + (art.width / 2);
-            
+            const centerX = bottomLeftX + (width / 2);
+
             // Calculate top edge (in wall coordinates where 0 is bottom)
-            const topEdge = bottomLeftY + art.height;
-            
+            const topEdge = bottomLeftY + height;
+
             // Hanging point is top edge minus hanging point offset
             let hangX = centerX;
-            let hangY = topEdge - art.hanging_point;
-            
+            let hangY = topEdge - hangingPoint;
+
             // Adjust based on measurement preferences
             if (wallRef === "right") {
                 hangX = wallWidth - hangX;
@@ -196,10 +185,10 @@ export class InstallationInstruction {
             if (heightRef === "ceiling") {
                 hangY = wallHeight - hangY;
             }
-            
+
             locations[art.name] = { x: hangX, y: hangY };
         });
-        
+
         // Sort by hang_x ascending, then hang_y descending
         const sortedEntries = Object.entries(locations).sort((a, b) => {
             if (a[1].x !== b[1].x) {
@@ -207,7 +196,7 @@ export class InstallationInstruction {
             }
             return b[1].y - a[1].y;
         });
-        
+
         return Object.fromEntries(sortedEntries);
     }
 
@@ -252,7 +241,7 @@ export class InstallationInstruction {
         const yInitial = heightRef === "floor" ? "UP" : "DOWN";
         const xDir = wallRef === "left" ? "LEFT" : "RIGHT";
         const yDir = heightRef === "floor" ? "DOWN" : "UP";
-        const adjustedY = this.wallData.height - first.y;
+        const adjustedY = first.y;
         
         instructions.push(`1. STARTING POINT - ${first.name}:`);
         instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${first.x.toFixed(3)}"`);
@@ -316,44 +305,31 @@ export class InstallationInstruction {
 
     saveInstructions() {
         const textLines = this.generateInstructionLines();
+        console.log("Generated instructions:", textLines);
+
         if (!textLines || textLines.length === 0) {
-            this.showAlert("Error", "No instructions to save.");
+            const errorMsg = this.artworkData.length === 0 
+                ? "No artwork added to this wall yet."
+                : "Could not calculate positions for the artworks. Please check that all artworks have valid dimensions and positions.";
+            this.showAlert("Error", errorMsg);
             return;
         }
 
-        const fileType = this.getSelectedValue('fileType');
-        const extension = {
-            "excel": ".xlsx",
-            "word": ".docx", 
-            "pdf": ".pdf",
-            "text": ".txt"
-        }[fileType] || ".txt";
-
-        // Create default filename
+        // Always use .txt extension
         const wallName = this.wallData.name.replace(/[^a-zA-Z0-9 _]/g, "").trim();
-        const defaultFilename = `Installation_Instructions_${wallName}${extension}`;
+        const defaultFilename = `Installation_Instructions_${wallName || 'Wall'}.txt`;
 
-        // Create blob based on file type
-        let blob;
-        if (fileType === "text") {
-            blob = new Blob([textLines.join('\n')], { type: 'text/plain' });
-        } else {
-            // For other file types, we'd need additional libraries or server-side processing
-            // For now, we'll just save as text
-            blob = new Blob([textLines.join('\n')], { type: 'text/plain' });
-            this.showAlert("Info", "Currently only text export is implemented. Other formats coming soon.");
-            return;
-        }
+        // Save as plain text
+        const blob = new Blob([textLines.join('\n')], { type: 'text/plain' });
 
-        // Create download link
+        // Create download link and trigger file explorer
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = defaultFilename;
         document.body.appendChild(a);
         a.click();
-        
-        // Cleanup
+
         setTimeout(() => {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);

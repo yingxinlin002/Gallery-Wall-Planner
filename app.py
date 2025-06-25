@@ -18,6 +18,7 @@ from authlib.integrations.base_client.errors import MismatchingStateError
 from apscheduler.schedulers.background import BackgroundScheduler
 from uuid import uuid4
 import logging
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -642,23 +643,51 @@ def editor():
         user=user_info
     )
 
-@app.route('/update_artwork_position/<int:artwork_id>', methods=['POST'])
+@app.route('/update_artwork_position/<artwork_id>', methods=['POST'])
 def update_artwork_position(artwork_id):
-    artwork = Artwork.query.get_or_404(artwork_id)
     data = request.get_json()
-    
-    # Update all relevant fields
-    artwork.x_position = data.get('x_position')
-    artwork.y_position = data.get('y_position')
-    artwork.wall_id = data.get('wall_id')  # This can be None when removing
-    
-    db.session.commit()
-    logger.info(f"[DB] Updated artwork position: {artwork.id} (x={artwork.x_position}, y={artwork.y_position}, wall_id={artwork.wall_id})")
-    return jsonify({
-        'success': True,
-        'artwork': artwork.to_dict()
-    })
+    user_id = session.get('user_id')
 
+    if user_id:
+        # Logged-in user: artwork_id is int
+        artwork = Artwork.query.get_or_404(artwork_id)
+        artwork.x_position = data.get('x_position')
+        artwork.y_position = data.get('y_position')
+        artwork.wall_id = data.get('wall_id')  # This can be None when removing
+        db.session.commit()
+        logger.info(f"[DB] Updated artwork position: {artwork.id} (x={artwork.x_position}, y={artwork.y_position}, wall_id={artwork.wall_id})")
+        return jsonify({
+            'success': True,
+            'artwork': artwork.to_dict()
+        })
+    elif 'guest_session_id' in session:
+        # Guest: artwork_id is a string (UUID)
+        guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+        exhibit_id = session.get('current_exhibit_id')
+        exhibits = guest_data.get('data', {}).get('exhibits', [])
+        exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+        if not exhibit:
+            return jsonify({'success': False, 'error': 'Exhibit not found'}), 404
+        # Find the wall
+        wall_id = data.get('wall_id') or session.get('current_wall_id')
+        wall = next((w for w in exhibit.get('walls', []) if str(w.get('id')) == str(wall_id)), None)
+        if not wall:
+            return jsonify({'success': False, 'error': 'Wall not found'}), 404
+        # Find the artwork
+        artwork = next((a for a in wall.get('artworks', []) if str(a.get('id')) == str(artwork_id)), None)
+        if not artwork:
+            return jsonify({'success': False, 'error': 'Artwork not found'}), 404
+        artwork['x_position'] = data.get('x_position')
+        artwork['y_position'] = data.get('y_position')
+        artwork['wall_id'] = wall_id
+        redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+        logger.info(f"[REDIS] Updated guest artwork position: {artwork['id']} (x={artwork['x_position']}, y={artwork['y_position']}, wall_id={artwork['wall_id']})")
+        return jsonify({
+            'success': True,
+            'artwork': artwork
+        })
+    else:
+        return jsonify({'success': False, 'error': 'Session expired'}), 403
 @app.route('/check-auth-status')
 def check_auth_status():
     return jsonify({
