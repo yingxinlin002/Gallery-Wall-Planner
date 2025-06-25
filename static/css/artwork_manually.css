@@ -99,6 +99,17 @@ body {
     padding: 15px;
     margin-bottom: 10px;
     border-left: 4px solid var(--primary-color);
+    position: relative;
+    padding-right: 80px;
+}
+
+.delete-artwork {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 8px;
+    font-size: 12px;
 }
 
 .artwork-name {

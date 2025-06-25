@@ -127,13 +127,17 @@
                     <div class="artwork-list-container" id="artworkList">
                         {% if artworks %}
                             {% for artwork in artworks %}
-                            <div class="artwork-item">
+                            <div class="artwork-item" data-artwork-id="{{ artwork.id }}">
                                 <div class="artwork-name">{{ artwork.name }} ({{ artwork.width }}" × {{ artwork.height }}")</div>
                                 <div class="artwork-details">
                                     {% if artwork.medium %}{{ artwork.medium }} | {% endif %}
                                     {% if artwork.price > 0 %}${{ "%.2f"|format(artwork.price) }} | {% endif %}
                                     {% if artwork.nfs %}NFS{% endif %}
                                 </div>
+                                <button class="btn btn-danger btn-sm delete-artwork" 
+                                        onclick="deleteArtwork('{{ artwork.id }}')">
+                                    Delete
+                                </button>
                             </div>
                             {% endfor %}
                         {% else %}
@@ -148,12 +152,40 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         window.goBackToEditorUrl = "{{ url_for('editor') }}";
-        
-        function validateForm() {
-            // Basic validation - the required fields are already handled by HTML5 validation
-            // Show confirmation dialog
-            const confirmation = confirm("Are you sure you want to create this artwork?");
-            return confirmation;
+
+        function deleteArtwork(artworkId) {
+            if (!confirm('Are you sure you want to delete this artwork?')) {
+                return;
+            }
+
+            fetch(`/delete-artwork/${artworkId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the artwork item from the list
+                    const item = document.querySelector(`.artwork-item[data-artwork-id="${artworkId}"]`);
+                    if (item) {
+                        item.remove();
+                    }
+                    // If no artworks left, show "no artworks" message
+                    if (document.querySelectorAll('.artwork-item').length === 0) {
+                        const artworkList = document.getElementById('artworkList');
+                        artworkList.innerHTML = '<p class="text-muted">No artworks added yet</p>';
+                    }
+                } else {
+                    alert(data.error || 'Failed to delete artwork');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the artwork');
+            });
         }
         
         function toggleOptionalFields() {

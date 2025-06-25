@@ -809,6 +809,58 @@ def artwork_manual():
 
     return render_template('artwork_manually.html', artworks=artworks)
 
+@app.route('/delete-artwork/<artwork_id>', methods=['DELETE'])
+def delete_artwork(artwork_id):
+    user_id = session.get('user_id')
+    guest_id = session.get('guest_session_id')
+    
+    try:
+        if user_id:
+            # Logged-in user: delete from SQL database
+            artwork = Artwork.query.get_or_404(artwork_id)
+            if artwork.user_id != user_id:
+                return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+                
+            db.session.delete(artwork)
+            db.session.commit()
+            logger.info(f"[DB] Deleted artwork: {artwork_id} (user_id={user_id})")
+            
+        elif guest_id:
+            # Guest: delete from Redis
+            guest_data = redis_manager.get_session(guest_id)
+            if not guest_data:
+                return jsonify({'success': False, 'error': 'Session expired'}), 400
+                
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            
+            # Find the exhibit and wall containing the artwork
+            for exhibit in exhibits:
+                if str(exhibit.get('id')) == str(exhibit_id):
+                    # Check walls first
+                    for wall in exhibit.get('walls', []):
+                        wall['artworks'] = [a for a in wall.get('artworks', []) 
+                                           if str(a.get('id')) != str(artwork_id)]
+                    
+                    # Also check unplaced artworks
+                    exhibit['artworks'] = [a for a in exhibit.get('artworks', [])
+                                          if str(a.get('id')) != str(artwork_id)]
+                    
+                    redis_manager.update_session(guest_id, guest_data['data'])
+                    logger.info(f"[REDIS] Deleted guest artwork: {artwork_id} (session={guest_id})")
+                    break
+            
+        else:
+            return jsonify({'success': False, 'error': 'Session expired'}), 403
+            
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        if user_id:
+            db.session.rollback()
+        logger.error(f"Error deleting artwork: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/select-wall/<wall_id>')
 def select_wall(wall_id):
     session["current_wall_id"] = wall_id
