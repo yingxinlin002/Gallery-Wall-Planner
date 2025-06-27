@@ -881,13 +881,53 @@ def select_wall(wall_id):
 
 @app.route('/update_object_position/<int:obj_id>', methods=['POST'])
 def update_object_position(obj_id):
-    from gallery.models.permanent_object import PermanentObject
-    obj = PermanentObject.query.get_or_404(obj_id)
-    data = request.get_json()
-    obj.x = data['x']
-    obj.y = data['y']
-    db.session.commit()
-    return jsonify({'success': True})
+    try:
+        data = request.get_json()
+        x = float(data.get('x', 0))
+        y = float(data.get('y', 0))
+        
+        # Handle both database and Redis cases
+        if 'user_id' in session:
+            # Logged-in user: update in DB
+            from gallery.models.permanent_object import PermanentObject
+            obj = PermanentObject.query.get_or_404(obj_id)
+            obj.x = x
+            obj.y = y
+            db.session.commit()
+            return jsonify({'success': True})
+        elif 'guest_session_id' in session:
+            # Guest: update in Redis
+            guest_data = redis_manager.get_session(session['guest_session_id'])
+            if not guest_data:
+                return jsonify({'success': False, 'error': 'Session expired'}), 400
+                
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if not exhibit:
+                return jsonify({'success': False, 'error': 'Exhibit not found'}), 404
+                
+            # Find the wall and object
+            wall_id = session.get('current_wall_id')
+            wall = next((w for w in exhibit.get('walls', []) if str(w.get('id')) == str(wall_id)), None)
+            if not wall:
+                return jsonify({'success': False, 'error': 'Wall not found'}), 404
+                
+            obj = next((o for o in wall.get('permanent_objects', []) if str(o.get('id')) == str(obj_id)), None)
+            if not obj:
+                return jsonify({'success': False, 'error': 'Object not found'}), 404
+                
+            obj['x'] = x
+            obj['y'] = y
+            redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Session expired'}), 403
+            
+    except Exception as e:
+        if 'user_id' in session:
+            db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/save_and_continue_permanent_objects', methods=['POST'])
 def save_and_continue_permanent_objects():

@@ -7,97 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lock_objects.css') }}">
-    <style>
-        :root {
-            --sidebar-width: 300px;
-            --sidebar-collapsed-width: 60px;
-            --header-height: 80px;
-            --footer-height: 70px;
-            --primary-color: #3498db;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-        }
-        
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .header {
-            background-color: #343a40;
-            color: white;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-        }
-        
-        .left-panel {
-            background-color: white;
-            border-radius: 5px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            height: calc(100vh - var(--header-height) - var(--footer-height) - 30px);
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            width: var(--sidebar-width);
-        }
-        
-        .left-panel.collapsed {
-            width: var(--sidebar-collapsed-width) !important;
-            overflow: hidden;
-        }
-        
-        .canvas-container {
-            background-color: white;
-            border-radius: 5px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            height: calc(100vh - var(--header-height) - var(--footer-height) - 30px);
-            position: relative;
-        }
-        
-        .canvas-object {
-            position: absolute;
-            background: rgba(100, 149, 237, 0.7);
-            border: 2px solid #003;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: move;
-            user-select: none;
-            transition: all 0.2s ease;
-            z-index: 2;
-        }
-        
-        .canvas-object.collision-highlight {
-            background: rgba(255, 0, 0, 0.5) !important;
-            border: 2px solid red !important;
-        }
-        
-        .toggle-sidebar-btn {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 1000;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .footer-buttons {
-            margin-top: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-    </style>
 </head>
 <body>
     <div class="container-fluid py-3">
@@ -136,11 +45,11 @@
                                 <div id="permanentObjectsCollapse" class="accordion-collapse collapse show" data-bs-parent="#fixturesAccordion">
                                     <div class="accordion-body p-0">
                                         <div id="permanentObjectsList" class="list-group list-group-flush">
-                                            {% for obj in wall.permanent_objects %}
+                                            {% for obj in permanent_objects %}
                                             <div class="list-group-item wall-item d-flex justify-content-between align-items-center" 
                                                  draggable="true" 
                                                  data-id="{{ obj.id }}"
-                                                 data-obj='{{ obj.to_dict()|tojson|safe }}'>
+                                                 data-obj='{{ obj|tojson|safe }}'>
                                                 <span>{{ obj.name }}</span>
                                                 <div class="btn-group btn-group-sm">
                                                     <button class="btn btn-outline-primary edit-btn" data-id="{{ obj.id }}">
@@ -166,7 +75,7 @@
                 <div class="wall-space">
                     <div class="canvas-container" id="canvas-container">
                         <canvas id="wall-canvas"></canvas>
-                        <div id="canvas-overlay" class="canvas-overlay">
+                        <div id="canvas-overlay">
                             <div id="canvas-objects-layer"></div>
                         </div>
                     </div>
@@ -229,7 +138,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="itemY" class="form-label">Y Position (inches from floor)</label>
-                                        <input type="number" class="form-control" id="itemY" name="y" min="0" max="{{ wallHeight }}" step="0.1" value="0">
+                                        <input type="number" class="form-control" id="itemY" name="y" min="0" step="0.1" value="0">
                                         <div class="form-text">Distance from the floor (bottom of the wall)</div>
                                     </div>
                                 </div>
@@ -268,25 +177,6 @@
         </div>
     </div>
 
-    <!-- Collision Warning Modal -->
-    <div class="modal fade" id="collisionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Collision Detected</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>The fixture overlaps with another object. Would you like to continue anyway?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Editing</button>
-                    <button type="button" class="btn btn-primary" id="continueAnywayBtn">Continue Anyway</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Pass server-side variables to JS -->
     <script>
         window.wallData = {
@@ -299,8 +189,8 @@
         window.urls = {
             addObject: "{{ url_for('add_permanent_object') }}",
             updateObject: "{{ url_for('update_permanent_object') }}",
-            updatePosition: (objId) => `/update_object_position/${objId}`,
-            editor: "{{ url_for('editor') }}"
+            updatePosition: "{{ url_for('update_object_position', obj_id=0) }}".replace('/0', '/'), // Base URL without ID
+            deleteObject: "{{ url_for('delete_permanent_object', obj_id=0) }}".replace('/0', '/')  // Base URL without ID
         };
         window.csrfToken = "{{ csrf_token() }}";
     </script>
@@ -309,10 +199,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <!-- Application Scripts -->
-    <script type="module" src="{{ url_for('static', filename='js/modules/WallCanvas.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/modules/ObjectManager.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/modules/MeasurementManager.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/modules/CollisionDetector.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/lock_objects_init.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lock_objects.js') }}"></script>
 </body>
 </html>
