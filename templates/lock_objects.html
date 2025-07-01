@@ -166,7 +166,39 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="obj_id" id="editObjId">
                     <div class="modal-body">
-                        <!-- Content will be populated by JavaScript -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editItemName" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="editItemName" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editItemWidth" class="form-label">Width (inches)</label>
+                                    <input type="number" class="form-control" id="editItemWidth" name="width" min="0" step="0.1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editItemHeight" class="form-label">Height (inches)</label>
+                                    <input type="number" class="form-control" id="editItemHeight" name="height" min="0" step="0.1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editItemImage" class="form-label">Image</label>
+                                    <input type="file" class="form-control" id="editItemImage" name="image" accept="image/*">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="position-controls">
+                                    <h6>Position</h6>
+                                    <div class="mb-3">
+                                        <label for="editItemX" class="form-label">X Position (inches from left wall edge)</label>
+                                        <input type="number" class="form-control" id="editItemX" name="x" min="0" step="0.1">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editItemY" class="form-label">Y Position (inches from floor)</label>
+                                        <input type="number" class="form-control" id="editItemY" name="y" min="0" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

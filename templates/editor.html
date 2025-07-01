@@ -163,7 +163,7 @@
         window.unplacedArtworkData = {{ unplaced_artwork|tojson|safe }};
         window.allArtworkData = {{ all_artwork|tojson|safe }};
         window.csrfToken = "{{ csrf_token() }}";
-        window.currentWallData.permanentObjects = {{ current_wall.permanent_objects|map(attribute='to_dict')|list|tojson|safe }};
+        window.currentWallData.permanentObjects = {{ (current_wall.permanent_objects or [])|map(attribute='to_dict', default='')|list|tojson|safe }};
 
         // Then import your modules
         import { setupCollapsibleMenus } from "{{ url_for('static', filename='js/collapsible.js') }}";

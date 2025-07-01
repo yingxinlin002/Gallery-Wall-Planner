@@ -227,10 +227,15 @@ function makeObjectsDraggable() {
                 
                 // Calculate new position in inches
                 const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
-                const newY = Math.max(0, Math.min(
-                    window.wallData.height - height,
-                    parseFloat(target.getAttribute('data-y')) + event.dy / scale
-                ));
+
+                // Calculate new top-left Y in canvas coordinates
+                const prevY = parseFloat(target.getAttribute('data-y'));
+                const prevCanvasTop = (window.wallData.height - prevY - height) * scale;
+                const newCanvasTop = prevCanvasTop + event.dy;
+
+                // Convert back to "inches from floor"
+                let newY = window.wallData.height - (newCanvasTop / scale) - height;
+                newY = Math.max(0, Math.min(window.wallData.height - height, newY));
                 
                 // Update position attributes
                 target.setAttribute('data-x', newX);

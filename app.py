@@ -86,6 +86,7 @@ def load_temp_projects_for_guest(guest_id):
 def get_current_wall():
     wall_id = session.get("current_wall_id")
     if wall_id is None:
+        logger.info("No current_wall_id in session")
         return None
         
     user_id = session.get('user_id')
@@ -97,6 +98,7 @@ def get_current_wall():
         if wall:
             exhibit = Exhibit.query.get(wall.exhibit_id)
             if exhibit and exhibit.user_id == user_id:
+                logger.info(f"[DB] Retrieved wall {wall_id} for user {user_id}")
                 return wall
     elif guest_id:
         # Guest user - get from Redis
@@ -107,7 +109,17 @@ def get_current_wall():
             exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
             if exhibit:
                 walls = exhibit.get('walls', [])
-                return next((w for w in walls if str(w.get('id')) == str(wall_id)), None)
+                wall = next((w for w in walls if str(w.get('id')) == str(wall_id)), None)
+                if wall:
+                    logger.info(f"[REDIS] Retrieved wall {wall_id} for guest {guest_id}")
+                    return wall
+                else:
+                    logger.info(f"[REDIS] Wall {wall_id} not found in exhibit {exhibit_id}")
+            else:
+                logger.info(f"[REDIS] Exhibit {exhibit_id} not found in guest data")
+    else:
+        logger.info("No user_id or guest_session_id in session")
+    
     return None
 
 @app.route("/", methods=["GET"])
@@ -497,29 +509,88 @@ def add_permanent_object():
                 file.save(filepath)
                 image_path = os.path.join('uploads', filename)
         
-        obj = PermanentObject(
-            name=name,
-            width=width,
-            height=height,
-            x=x,
-            y=y,
-            image_path=image_path,
-            wall_id=wall_id
-        )
-        db.session.add(obj)
-        db.session.commit()
-        logger.info(f"[DB] Created permanent object: {obj.id} ({obj.name}) on wall {wall_id}")
+        # Logged-in user case
+        if 'user_id' in session:
+            logger.info(f"[DB] Creating permanent object for user {session['user_id']}")
+            obj = PermanentObject(
+                name=name,
+                width=width,
+                height=height,
+                x=x,
+                y=y,
+                image_path=image_path,
+                wall_id=wall_id
+            )
+            db.session.add(obj)
+            db.session.commit()
+            logger.info(f"[DB] Created permanent object: {obj.id} ({obj.name}) on wall {wall_id}")
+            
+        # Guest user case
+        elif 'guest_session_id' in session:
+            guest_session_id = session['guest_session_id']
+            guest_data = redis_manager.get_session(guest_session_id) or {'data': {}}
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            
+            logger.info(f"[REDIS] Attempting to add permanent object to guest session {guest_session_id}")
+            logger.info(f"[REDIS] Current exhibits in session: {len(exhibits)}")
+            
+            exhibit_id = session.get('current_exhibit_id')
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            
+            if not exhibit:
+                logger.error(f"[REDIS] No exhibit found with id {exhibit_id}")
+                flash("No exhibit found.", "error")
+                return redirect(url_for('new_exhibit'))
+            
+            walls = exhibit.get('walls', [])
+            wall = next((w for w in walls if str(w.get('id')) == str(wall_id)), None)
+            
+            if not wall:
+                logger.error(f"[REDIS] No wall found with id {wall_id}")
+                flash("No wall found.", "error")
+                return redirect(url_for('select_wall_space'))
+            
+            # Create new object
+            import uuid
+            obj_id = str(uuid.uuid4())
+            new_obj = {
+                'id': obj_id,
+                'name': name,
+                'width': width,
+                'height': height,
+                'x': x,
+                'y': y,
+                'image_path': image_path,
+                'wall_id': wall_id
+            }
+            
+            # Initialize permanent_objects array if it doesn't exist
+            if 'permanent_objects' not in wall:
+                wall['permanent_objects'] = []
+            
+            wall['permanent_objects'].append(new_obj)
+            
+            # Save back to Redis
+            redis_manager.update_session(guest_session_id, guest_data['data'])
+            logger.info(f"[REDIS] Created guest permanent object: {new_obj} in wall {wall_id}")
+            
+            obj = new_obj  # For the response
+            
+        else:
+            flash("Session expired. Please start again.", "error")
+            return redirect(url_for('landing_page'))
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': True,
-                'object': obj.to_dict()
+                'object': obj.to_dict() if hasattr(obj, 'to_dict') else obj
             })
         else:
             flash("Fixture added successfully", "success")
             return redirect(url_for('edit_permanent_objects'))
         
     except Exception as e:
+        logger.error(f"Error adding fixture: {str(e)}", exc_info=True)
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': False,
@@ -539,10 +610,14 @@ def edit_permanent_objects():
     # Branch for SQLAlchemy object vs dict
     if isinstance(wall, dict):
         # Guest: wall is a dict from Redis
+        logger.info(f"[REDIS] Loading permanent objects for guest wall {wall.get('id')}")
         permanent_objects = wall.get('permanent_objects', [])
+        logger.info(f"[REDIS] Found {len(permanent_objects)} permanent objects")
     else:
         # Logged-in user: wall is a SQLAlchemy object
+        logger.info(f"[DB] Loading permanent objects for wall {wall.id}")
         permanent_objects = [obj.to_dict() for obj in wall.permanent_objects]
+        logger.info(f"[DB] Found {len(permanent_objects)} permanent objects")
 
     return render_template(
         'lock_objects.html',
@@ -596,7 +671,7 @@ def delete_permanent_object(obj_id):
     db.session.delete(obj)
     db.session.commit()
     flash("Permanent object deleted.", "success")
-    return redirect(url_for('lock_objects', wall_id=wall_id))
+    return redirect(url_for('edit_permanent_objects'))
 
 @app.route('/save_and_continue', methods=['POST'])
 def save_and_continue():
@@ -879,7 +954,7 @@ def select_wall(wall_id):
                     return redirect(url_for('select_wall_space'))
     return redirect(url_for('select_wall_space'))
 
-@app.route('/update_object_position/<int:obj_id>', methods=['POST'])
+@app.route('/update_object_position/<obj_id>', methods=['POST'])
 def update_object_position(obj_id):
     try:
         data = request.get_json()
@@ -888,15 +963,15 @@ def update_object_position(obj_id):
         
         # Handle both database and Redis cases
         if 'user_id' in session:
-            # Logged-in user: update in DB
+            # Logged-in user: update in DB (expects integer ID)
             from gallery.models.permanent_object import PermanentObject
-            obj = PermanentObject.query.get_or_404(obj_id)
+            obj = PermanentObject.query.get_or_404(int(obj_id))  # Convert to int for DB lookup
             obj.x = x
             obj.y = y
             db.session.commit()
             return jsonify({'success': True})
         elif 'guest_session_id' in session:
-            # Guest: update in Redis
+            # Guest: update in Redis (uses string UUID)
             guest_data = redis_manager.get_session(session['guest_session_id'])
             if not guest_data:
                 return jsonify({'success': False, 'error': 'Session expired'}), 400
