@@ -1,4 +1,5 @@
-export class MeasurementManager {
+// MeasurementManager.js - Modified to work without ES6 modules
+class MeasurementManager {
     constructor(container) {
         this.container = container;
         this.linesContainer = null;

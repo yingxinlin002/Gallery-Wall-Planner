@@ -1,97 +1,10 @@
-// lock_objects.js - Updated version
 const canvas = document.getElementById('wall-canvas');
 const ctx = canvas.getContext('2d');
-const container = document.querySelector('.canvas-container');
+const container = document.getElementById('canvas-container');
 const objectsLayer = document.getElementById('canvas-objects-layer');
 
-// Measurement Lines Manager
-class MeasurementLinesManager {
-    constructor(container) {
-        this.container = container;
-        this.linesContainer = document.createElement('div');
-        this.linesContainer.className = 'measurement-lines-container';
-        container.appendChild(this.linesContainer);
-    }
-
-    drawMeasurementLines(x, y, width, height, wallWidth, wallHeight, scale) {
-        this.clearMeasurementLines();
-        
-        // Convert to canvas coordinates
-        const canvasX = x * scale;
-        const canvasY = (wallHeight - y - height) * scale;
-        const canvasWidth = width * scale;
-        const canvasHeight = height * scale;
-        
-        // Left measurement
-        this.createMeasurementLine(
-            0, canvasY + canvasHeight/2, 
-            canvasX, canvasY + canvasHeight/2,
-            `${x.toFixed(1)} in`
-        );
-        
-        // Right measurement
-        this.createMeasurementLine(
-            canvasX + canvasWidth, canvasY + canvasHeight/2,
-            wallWidth * scale, canvasY + canvasHeight/2,
-            `${(wallWidth - x - width).toFixed(1)} in`
-        );
-        
-        // Top measurement (from top of object to top of wall)
-        this.createMeasurementLine(
-            canvasX + canvasWidth/2, 0,
-            canvasX + canvasWidth/2, canvasY,
-            `${(wallHeight - y - height).toFixed(1)} in`
-        );
-        
-        // Bottom measurement (from bottom of object to floor)
-        this.createMeasurementLine(
-            canvasX + canvasWidth/2, canvasY + canvasHeight,
-            canvasX + canvasWidth/2, wallHeight * scale,
-            `${y.toFixed(1)} in`
-        );
-    }
-
-    createMeasurementLine(x1, y1, x2, y2, labelText) {
-        // Create line element
-        const line = document.createElement('div');
-        line.className = 'measurement-line';
-        
-        // Position and size the line
-        const left = Math.min(x1, x2);
-        const top = Math.min(y1, y2);
-        const width = Math.abs(x2 - x1);
-        const height = Math.abs(y2 - y1);
-        
-        line.style.left = `${left}px`;
-        line.style.top = `${top}px`;
-        line.style.width = `${width}px`;
-        line.style.height = `${height}px`;
-        
-        // Create label
-        if (labelText) {
-            const label = document.createElement('div');
-            label.className = 'measurement-label';
-            label.textContent = labelText;
-            
-            // Position label based on line orientation
-            if (height === 0) { // horizontal line
-                label.style.left = `${left + width/2 - 20}px`;
-                label.style.top = `${top - 25}px`;
-            } else { // vertical line
-                label.style.left = `${left - 40}px`;
-                label.style.top = `${top + height/2 - 10}px`;
-            }
-            
-            this.linesContainer.appendChild(label);
-        }
-        
-        this.linesContainer.appendChild(line);
-    }
-
-    clearMeasurementLines() {
-        this.linesContainer.innerHTML = '';
-    }
-}
+// Initialize MeasurementManager
+const measurementManager = new MeasurementManager(container);
 
 // Set canvas dimensions
 function resizeCanvas() {
@@ -205,7 +118,6 @@ function updateDimensionLabels(scale) {
 // Make objects draggable with measurement lines
 function makeObjectsDraggable() {
     const scale = getScale();
-    const measurementManager = new MeasurementLinesManager(container);
     
     interact('.canvas-object').draggable({
         inertia: true,
@@ -218,7 +130,7 @@ function makeObjectsDraggable() {
         listeners: {
             start(event) {
                 event.target.classList.add('dragging');
-                measurementManager.clearMeasurementLines();
+                measurementManager.clear();
             },
             move(event) {
                 const target = event.target;
@@ -246,7 +158,7 @@ function makeObjectsDraggable() {
                 target.style.top = `${(window.wallData.height - newY - height) * scale}px`;
                 
                 // Draw measurement lines
-                measurementManager.drawMeasurementLines(
+                measurementManager.drawMeasurements(
                     newX, 
                     newY, 
                     width, 
@@ -283,7 +195,7 @@ function makeObjectsDraggable() {
                 updateObjectPosition(id, x, y);
                 
                 target.classList.remove('dragging');
-                measurementManager.clearMeasurementLines();
+                measurementManager.clear();
             }
         }
     });
