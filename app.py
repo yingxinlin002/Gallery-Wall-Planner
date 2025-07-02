@@ -371,7 +371,7 @@ def create_wall():
             flash("Session expired. Please start again.", "error")
             return redirect(url_for('landing_page'))
 
-        return redirect(url_for('edit_permanent_objects'))
+        return redirect(url_for('select_wall_space'))
 
     return render_template('create_wall.html')
 
