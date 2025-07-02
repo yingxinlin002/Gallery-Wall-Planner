@@ -1,3 +1,6 @@
+import { CollisionDetector } from './modules/CollisionDetector.js';
+import { MeasurementManager } from './modules/MeasurementManager.js';
+
 const canvas = document.getElementById('wall-canvas');
 const ctx = canvas.getContext('2d');
 const container = document.getElementById('canvas-container');
@@ -5,6 +8,7 @@ const objectsLayer = document.getElementById('canvas-objects-layer');
 
 // Initialize MeasurementManager
 const measurementManager = new MeasurementManager(container);
+const collisionDetector = new CollisionDetector();
 
 // Set canvas dimensions
 function resizeCanvas() {
@@ -88,7 +92,7 @@ function renderObjects() {
             </div>
         `;
         
-        if (checkCollisions(obj)) {
+        if (collisionDetector.checkCollisions(obj, window.wallData.permanentObjects)) {
             div.classList.add('collision-highlight');
         }
         
@@ -136,48 +140,51 @@ function makeObjectsDraggable() {
                 const target = event.target;
                 const width = parseFloat(target.getAttribute('data-width'));
                 const height = parseFloat(target.getAttribute('data-height'));
-                
-                // Calculate new position in inches
-                const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
+                const scale = getScale();
 
-                // Calculate new top-left Y in canvas coordinates
-                const prevY = parseFloat(target.getAttribute('data-y'));
-                const prevCanvasTop = (window.wallData.height - prevY - height) * scale;
-                const newCanvasTop = prevCanvasTop + event.dy;
+                // Get previous wall coordinates (inches from left, inches from floor)
+                let prevX = parseFloat(target.getAttribute('data-x'));
+                let prevY = parseFloat(target.getAttribute('data-y'));
 
-                // Convert back to "inches from floor"
-                let newY = window.wallData.height - (newCanvasTop / scale) - height;
-                newY = Math.max(0, Math.min(window.wallData.height - height, newY));
+                // Apply drag delta (convert pixels to inches)
+                let newX = prevX + event.dx / scale;
+                // CORRECT: Subtract dy because screen Y increases downward but wall Y increases upward
+                let newY = prevY - event.dy / scale;
+
+                // Constrain within wall bounds
+                const constrainedX = Math.max(0, Math.min(window.wallData.width - width, newX));
+                const constrainedY = Math.max(0, Math.min(window.wallData.height - height, newY));
+
+                // Update DOM position (convert back to screen coordinates)
+                target.style.left = `${constrainedX * scale}px`;
+                // CORRECT: Convert wall Y (0=floor) to screen Y (0=top)
+                target.style.top = `${(window.wallData.height - constrainedY - height) * scale}px`;
                 
-                // Update position attributes
-                target.setAttribute('data-x', newX);
-                target.setAttribute('data-y', newY);
-                
-                // Update visual position (convert to top-left origin for display)
-                target.style.left = `${newX * scale}px`;
-                target.style.top = `${(window.wallData.height - newY - height) * scale}px`;
-                
+                // Update data attributes (in wall coordinates)
+                target.setAttribute('data-x', constrainedX);
+                target.setAttribute('data-y', constrainedY);
+
                 // Draw measurement lines
                 measurementManager.drawMeasurements(
-                    newX, 
-                    newY, 
-                    width, 
-                    height, 
-                    window.wallData.width, 
-                    window.wallData.height, 
+                    constrainedX,
+                    constrainedY,
+                    width,
+                    height,
+                    window.wallData.width,
+                    window.wallData.height,
                     scale
                 );
-                
+
                 // Check for collisions
                 const obj = {
                     id: target.getAttribute('data-id'),
-                    x: newX,
-                    y: newY,
+                    x: constrainedX,
+                    y: constrainedY,
                     width: width,
                     height: height
                 };
-                
-                if (checkCollisions(obj)) {
+
+                if (collisionDetector.checkCollisions(obj, window.wallData.permanentObjects)) {
                     target.classList.add('collision-highlight');
                     document.getElementById('collision-indicator').classList.remove('d-none');
                 } else {
@@ -190,34 +197,22 @@ function makeObjectsDraggable() {
                 const id = target.getAttribute('data-id');
                 const x = parseFloat(target.getAttribute('data-x'));
                 const y = parseFloat(target.getAttribute('data-y'));
-                
+
+                // Update the object in our local data immediately
+                const objIndex = window.wallData.permanentObjects.findIndex(o => o.id == id);
+                if (objIndex !== -1) {
+                    window.wallData.permanentObjects[objIndex].x = x;
+                    window.wallData.permanentObjects[objIndex].y = y;
+                }
+
                 // Save position to database
                 updateObjectPosition(id, x, y);
-                
+
                 target.classList.remove('dragging');
                 measurementManager.clear();
             }
         }
     });
-}
-
-function checkCollisions(obj) {
-    // Check against other objects
-    const objects = window.wallData.permanentObjects;
-    for (const other of objects) {
-        if (other.id != obj.id && checkRectOverlap(obj, other)) {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-function checkRectOverlap(a, b) {
-    return a.x < b.x + b.width &&
-           a.x + a.width > b.x &&
-           a.y < b.y + b.height &&
-           a.y + a.height > b.y;
 }
 
 function updateObjectPosition(objId, x, y) {
@@ -238,12 +233,12 @@ function updateObjectPosition(objId, x, y) {
     })
     .then(data => {
         if (data.success) {
-            // Update the object in our local data
-            const objIndex = window.wallData.permanentObjects.findIndex(o => o.id == objId);
-            if (objIndex !== -1) {
-                window.wallData.permanentObjects[objIndex].x = x;
-                window.wallData.permanentObjects[objIndex].y = y;
-            }
+            // The local data is already updated in the drag end handler.
+            // const objIndex = window.wallData.permanentObjects.findIndex(o => o.id == objId);
+            // if (objIndex !== -1) {
+            //     window.wallData.permanentObjects[objIndex].x = x;
+            //     window.wallData.permanentObjects[objIndex].y = y;
+            // }
         }
     })
     .catch(error => console.error('Error updating position:', error));

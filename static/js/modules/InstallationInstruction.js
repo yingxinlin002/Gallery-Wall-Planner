@@ -242,33 +242,47 @@ export class InstallationInstruction {
         const xDir = wallRef === "left" ? "LEFT" : "RIGHT";
         const yDir = heightRef === "floor" ? "DOWN" : "UP";
         const adjustedY = first.y;
-        
+
         instructions.push(`1. STARTING POINT - ${first.name}:`);
         instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${first.x.toFixed(3)}"`);
         instructions.push(`   • From ${heightRef.toUpperCase()}, measure ${yInitial} ${adjustedY.toFixed(3)}"`);
         instructions.push(`   • Mark this point with a pencil - this is your starting nail position`);
         instructions.push("");
 
-        // B) Forward pass (first+1 to end)
+        // Forward pass (first+1 to end)
         let stepNum = 2;
+        let prev = first;
         for (let i = firstIndex + 1; i < names.length; i++) {
             const curr = { name: names[i], ...locations[names[i]] };
+            // Calculate relative X
+            const deltaX = curr.x - prev.x;
+            const relDir = deltaX >= 0 ? "RIGHT" : "LEFT";
+            const relDist = Math.abs(deltaX).toFixed(3);
+
             instructions.push(`${stepNum}. ${curr.name}:`);
-            instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${curr.x.toFixed(3)}"`);
+            instructions.push(`   • From ${prev.name} nail position, measure ${relDir} ${relDist}""`);
             instructions.push(`   • From FLOOR, measure UP ${curr.y.toFixed(3)}"`);
             instructions.push(`   • Mark this point for ${curr.name}'s nail`);
             instructions.push("");
+            prev = curr;
             stepNum++;
         }
 
-        // D) Backward pass (first-1 to start)
+        // Backward pass (first-1 to start)
+        prev = first;
         for (let i = firstIndex - 1; i >= 0; i--) {
             const curr = { name: names[i], ...locations[names[i]] };
+            // Calculate relative X
+            const deltaX = curr.x - prev.x;
+            const relDir = deltaX >= 0 ? "RIGHT" : "LEFT";
+            const relDist = Math.abs(deltaX).toFixed(3);
+
             instructions.push(`${stepNum}. ${curr.name}:`);
-            instructions.push(`   • From ${wallRef.toUpperCase()} wall edge, measure ${xInitial} ${curr.x.toFixed(3)}"`);
+            instructions.push(`   • From ${prev.name} nail position, measure ${relDir} ${relDist}""`);
             instructions.push(`   • From FLOOR, measure UP ${curr.y.toFixed(3)}"`);
             instructions.push(`   • Mark this point for ${curr.name}'s nail`);
             instructions.push("");
+            prev = curr;
             stepNum++;
         }
 

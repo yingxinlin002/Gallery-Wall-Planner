@@ -157,50 +157,6 @@ def home():
                                 user={'name': 'Guest', 'is_guest': True})
     
     return redirect(url_for('landing_page'))
-
-# Add save endpoint for guests
-@app.route('/save-guest-work', methods=['POST'])
-def save_guest_work():
-    if 'guest_session_id' not in session:
-        return jsonify({'error': 'No guest session'}), 400
-    
-    guest_data = redis_manager.get_session(session['guest_session_id'])
-    if not guest_data:
-        return jsonify({'error': 'Session expired'}), 400
-    
-    try:
-        # Convert to registered user
-        if 'convert_to_user' in request.form:
-            # Handle user registration
-            user = User(...)  # Create new user
-            db.session.add(user)
-            db.session.commit()
-            
-            # Migrate data from Redis to database
-            exhibits = migrate_guest_data(session['guest_session_id'], user.id)
-            
-            # Update session
-            session.pop('guest_session_id')
-            session['user_id'] = user.id
-            session['user'] = {'name': user.name, 'is_guest': False}
-            
-            return jsonify({
-                'success': True,
-                'message': 'Account created and work saved',
-                'user_id': user.id
-            })
-        
-        # Or just save temporary work
-        else:
-            exhibit_data = request.get_json()
-            redis_manager.update_session(
-                session['guest_session_id'],
-                exhibit_data
-            )
-            return jsonify({'success': True})
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
     
 def migrate_guest_data(guest_session_id, user_id):
     """Move guest data from Redis to database"""
@@ -663,7 +619,7 @@ def update_permanent_object():
         flash(f"Error updating fixture: {str(e)}", "error")
         return redirect(url_for('edit_permanent_objects'))
 
-@app.route('/delete_permanent_object/<int:obj_id>', methods=['POST'])
+@app.route('/delete_permanent_object/<obj_id>', methods=['POST'])
 def delete_permanent_object(obj_id):
     from gallery.models.permanent_object import PermanentObject
     obj = PermanentObject.query.get_or_404(obj_id)
@@ -969,6 +925,7 @@ def update_object_position(obj_id):
             obj.x = x
             obj.y = y
             db.session.commit()
+            logger.info(f"[DB] Updated permanent object {obj.id} location: x={x}, y={y}")
             return jsonify({'success': True})
         elif 'guest_session_id' in session:
             # Guest: update in Redis (uses string UUID)
@@ -992,9 +949,12 @@ def update_object_position(obj_id):
             if not obj:
                 return jsonify({'success': False, 'error': 'Object not found'}), 404
                 
+            logger.info(f"Before update: {obj}")
             obj['x'] = x
             obj['y'] = y
+            logger.info(f"After update: {obj}")
             redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+            logger.info(f"[REDIS] Updated guest permanent object {obj.get('id')} location: x={x}, y={y}")
             return jsonify({'success': True})
         else:
             return jsonify({'success': False, 'error': 'Session expired'}), 403
@@ -1002,6 +962,7 @@ def update_object_position(obj_id):
     except Exception as e:
         if 'user_id' in session:
             db.session.rollback()
+        logger.error(f"Error updating permanent object position: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/save_and_continue_permanent_objects', methods=['POST'])

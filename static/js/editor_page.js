@@ -477,32 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         // --- End Installation Instruction Integration ---
 
-        // Save Temporary Work button handler
-        const saveGuestBtn = document.getElementById('saveGuestBtn');
-        if (saveGuestBtn) {
-            saveGuestBtn.addEventListener('click', async function() {
-                try {
-                    const currentState = getCurrentWallState(); // You must implement this function!
-                    const response = await fetch('/save-guest-work', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': window.csrfToken
-                        },
-                        body: JSON.stringify(currentState)
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        alert('Work saved temporarily!');
-                    } else {
-                        alert('Error saving work: ' + (result.error || 'Unknown error'));
-                    }
-                } catch (error) {
-                    alert('Error saving work: ' + error.message);
-                }
-            });
-        }
-
         // Create Account & Save button handler
         const convertBtn = document.getElementById('convertAndSaveBtn');
         if (convertBtn) {

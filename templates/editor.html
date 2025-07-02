@@ -18,20 +18,9 @@
         <h2 class="header-title">Organize Art</h2>
         <!-- Save Button(s) -->
         <div class="save-buttons">
-            {% if user.is_guest %}
-            <div class="guest-save-options">
-                <button class="btn btn-warning" id="saveGuestBtn">
-                    <i class="fas fa-save"></i> Save Temporary Work
-                </button>
-                <button class="btn btn-success" id="convertAndSaveBtn">
-                    <i class="fas fa-user-plus"></i> Create Account &amp; Save
-                </button>
-            </div>
-            {% else %}
             <button class="btn btn-primary" id="saveChangesBtn">
                 <i class="fas fa-save"></i> Save Changes
             </button>
-            {% endif %}
         </div>
     </div>
 
