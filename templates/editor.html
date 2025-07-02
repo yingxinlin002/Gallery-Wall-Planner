@@ -142,6 +142,34 @@
         </div>
     </div>
 
+    <!-- Snap Line Creation Modal -->
+    <div class="modal fade" id="snapLineModal" tabindex="-1" aria-labelledby="snapLineModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="snapLineForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="snapLineModalLabel">Add Snap Line</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="orientation" class="form-label">Orientation</label>
+              <select class="form-select" id="orientation" name="orientation" required>
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+              </select>
+            </div>
+            <div class="mb-3" id="distance-group">
+              <label for="distance" class="form-label" id="distance-label">Distance from bottom (inches)</label>
+              <input type="number" class="form-control" id="distance" name="distance" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Add Snap Line</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.11/dist/interact.min.js"></script>
 
     <script type="module">

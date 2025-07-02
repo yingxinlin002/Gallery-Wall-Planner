@@ -719,6 +719,7 @@ def update_artwork_position(artwork_id):
         })
     else:
         return jsonify({'success': False, 'error': 'Session expired'}), 403
+
 @app.route('/check-auth-status')
 def check_auth_status():
     return jsonify({
@@ -890,6 +891,114 @@ def delete_artwork(artwork_id):
         if user_id:
             db.session.rollback()
         logger.error(f"Error deleting artwork: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/save-snap-line', methods=['POST'])
+def save_snap_line():
+    try:
+        data = request.get_json()
+        wall_id = session.get('current_wall_id')
+        
+        if 'user_id' in session:
+            # Logged-in user: save to DB
+            from gallery.models.wall_line import SingleLine
+            line = SingleLine.from_dict(data)
+            db.session.add(line)
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'line': line.to_dict()
+            })
+        elif 'guest_session_id' in session:
+            # Guest: save to Redis
+            guest_data = redis_manager.get_session(session['guest_session_id']) or {'data': {}}
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if not exhibit:
+                return jsonify({'success': False, 'error': 'Exhibit not found'}), 404
+                
+            wall = next((w for w in exhibit.get('walls', []) if str(w.get('id')) == str(wall_id)), None)
+            if not wall:
+                return jsonify({'success': False, 'error': 'Wall not found'}), 404
+                
+            if 'wall_lines' not in wall:
+                wall['wall_lines'] = []
+                
+            line_id = str(uuid.uuid4())
+            new_line = {
+                'id': line_id,
+                'x_cord': data.get('x_cord', 0),
+                'y_cord': data.get('y_cord', 0),
+                'length': data.get('length', 0),
+                'angle': data.get('angle', 0),
+                'orientation': data.get('orientation', 'horizontal'),
+                'alignment': data.get('alignment', 'center'),
+                'distance': data.get('distance', 0),
+                'snap_to': data.get('snap_to', True),
+                'moveable': data.get('moveable', True),
+                'wall_id': wall_id
+            }
+            
+            wall['wall_lines'].append(new_line)
+            redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+            
+            return jsonify({
+                'success': True,
+                'line': new_line
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Session expired'}), 403
+            
+    except Exception as e:
+        logger.error(f"Error saving snap line: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/delete-snap-line/<line_id>', methods=['DELETE'])
+def delete_snap_line(line_id):
+    try:
+        wall_id = session.get('current_wall_id')
+        
+        if 'user_id' in session:
+            # Logged-in user: delete from DB
+            from gallery.models.wall_line import SingleLine
+            line = SingleLine.query.filter_by(id=line_id, wall_id=wall_id).first()
+            if not line:
+                return jsonify({'success': False, 'error': 'Line not found'}), 404
+                
+            db.session.delete(line)
+            db.session.commit()
+            return jsonify({'success': True})
+            
+        elif 'guest_session_id' in session:
+            # Guest: delete from Redis
+            guest_data = redis_manager.get_session(session['guest_session_id'])
+            if not guest_data:
+                return jsonify({'success': False, 'error': 'Session expired'}), 400
+                
+            exhibit_id = session.get('current_exhibit_id')
+            exhibits = guest_data.get('data', {}).get('exhibits', [])
+            
+            exhibit = next((ex for ex in exhibits if str(ex.get('id')) == str(exhibit_id)), None)
+            if not exhibit:
+                return jsonify({'success': False, 'error': 'Exhibit not found'}), 404
+                
+            wall = next((w for w in exhibit.get('walls', []) if str(w.get('id')) == str(wall_id)), None)
+            if not wall:
+                return jsonify({'success': False, 'error': 'Wall not found'}), 404
+                
+            if 'wall_lines' in wall:
+                wall['wall_lines'] = [line for line in wall['wall_lines'] if str(line.get('id')) != str(line_id)]
+                redis_manager.update_session(session['guest_session_id'], guest_data['data'])
+                
+            return jsonify({'success': True})
+            
+        else:
+            return jsonify({'success': False, 'error': 'Session expired'}), 403
+            
+    except Exception as e:
+        logger.error(f"Error deleting snap line: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/select-wall/<wall_id>')

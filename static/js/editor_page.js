@@ -1,6 +1,7 @@
 import { EvenSpacing } from './even_spacing.js';
 import { MeasurementManager } from './modules/MeasurementManager.js';
-import { InstallationInstruction } from './modules/InstallationInstruction.js'; // <-- Add this import
+import { InstallationInstruction } from './modules/InstallationInstruction.js';
+import { SnapLineManager } from './modules/SnapLineManager.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Loaded: Starting wall editor setup');
@@ -9,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('wall-canvas');
     const layer = document.getElementById('canvas-artwork-layer');
     const container = document.getElementById('canvas-container');
+
     console.log('Container dimensions:', {
         width: container.clientWidth,
         height: container.clientHeight,
@@ -127,26 +129,18 @@ document.addEventListener('DOMContentLoaded', function() {
             );
         }    
 
+        // Add this function above where you define editor
         function getScale() {
             if (!container || !wall || !wall.width || !wall.height) {
                 console.error('Missing required data for scaling');
                 return 1;
             }
-            
-            // Get the wall-space container dimensions
             const wallSpace = document.querySelector('.wall-space');
-            const availableWidth = wallSpace.clientWidth - 40; // Subtract padding
-            const availableHeight = wallSpace.clientHeight - 40; // Subtract padding
-            
-            // Calculate scale factors
+            const availableWidth = wallSpace.clientWidth - 40;
+            const availableHeight = wallSpace.clientHeight - 40;
             const scaleX = availableWidth / wall.width;
             const scaleY = availableHeight / wall.height;
-            
-            // Use the smaller scale to ensure everything fits
-            const scale = Math.min(scaleX, scaleY);
-            
-            // Add some minimum scale if needed
-            return Math.max(scale, 0.1); // Ensure it doesn't get too small
+            return Math.max(Math.min(scaleX, scaleY), 0.1);
         }
 
         // Modify renderArtworks to only show placed artworks
@@ -240,19 +234,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 listeners: {
                     start(event) {
                         event.target.style.zIndex = '3';
-                        measurementManager.clear(); // Clear any existing lines
+                        measurementManager.clear();
                     },
                     move(event) {
                         const target = event.target;
                         const width = parseFloat(target.getAttribute('data-width'));
                         const height = parseFloat(target.getAttribute('data-height'));
                         
-                        // Calculate new position (in inches)
-                        const newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
-                        // Subtract dy instead of adding to account for bottom-left origin
-                        const newY = Math.max(0, Math.min(wall.height - height, 
-                            parseFloat(target.getAttribute('data-y')) - event.dy / scale));
+                        let newX = parseFloat(target.getAttribute('data-x')) + event.dx / scale;
+                        let newY = parseFloat(target.getAttribute('data-y')) - event.dy / scale;
                         
+                        // Check for snap lines
+                        const movingArtwork = {
+                            id: target.getAttribute('data-id'),
+                            x_position: newX,
+                            y_position: newY,
+                            width: width,
+                            height: height
+                        };
+                        
+                        const snapResult = snapLineManager.checkSnap(movingArtwork);
+                        if (snapResult) {
+                            if (snapResult.x !== undefined) {
+                                newX = snapResult.x;
+                                target.style.borderLeft = '2px solid ' + snapLineManager.snapColor;
+                            } else {
+                                target.style.borderLeft = '';
+                            }
+                            
+                            if (snapResult.y !== undefined) {
+                                newY = snapResult.y;
+                                target.style.borderTop = '2px solid ' + snapLineManager.snapColor;
+                            } else {
+                                target.style.borderTop = '';
+                            }
+                        } else {
+                            target.style.borderLeft = '';
+                            target.style.borderTop = '';
+                        }
+
                         // Update position attributes
                         target.setAttribute('data-x', newX);
                         target.setAttribute('data-y', newY);
@@ -274,15 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         );
                         
                         // Check for collisions
-                        const artwork = {
-                            id: target.getAttribute('data-id'),
-                            x_position: newX,
-                            y_position: newY,
-                            width: width,
-                            height: height
-                        };
-                        
-                        if (checkCollisions(artwork)) {
+                        if (checkCollisions(movingArtwork)) {
                             target.style.border = '2px solid red';
                         } else {
                             target.style.border = 'none';
@@ -368,10 +380,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     artwork.y_position = null;
                     artwork.wall_id = null;
                     
-                    // Remove from placed artworks array
-                    placedArtworks = placedArtworks.filter(a => a.id !== artworkId);
+                    // Remove from placed artworks array in place
+                    const idx = placedArtworks.findIndex(a => a.id === artworkId);
+                    if (idx !== -1) {
+                        placedArtworks.splice(idx, 1);
+                    }
                     renderArtworks();
-                    
+                        
                     // Toggle button visibility
                     this.style.display = 'none';
                     this.previousElementSibling.style.display = 'block';
@@ -449,10 +464,13 @@ document.addEventListener('DOMContentLoaded', function() {
             wall: window.currentWallData,
             placedArtworks: placedArtworks,
             updateArtworkPosition: updateArtworkPosition,
-            renderArtworks: renderArtworks
+            renderArtworks: renderArtworks,
+            getScale: getScale, 
+            drawWall: drawWall,
         };
 
         const evenSpacing = new EvenSpacing(editor);
+        const snapLineManager = new SnapLineManager(editor);
         evenSpacing.init();
 
         // Connect the even spacing button
@@ -463,6 +481,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         // --- End EvenSpacing Integration ---
+
+        // Connect the snap line manager
+        const addSnapLineBtn = document.getElementById('addSnapLineBtn');
+        if (addSnapLineBtn) {
+            addSnapLineBtn.addEventListener('click', () => {
+                snapLineManager.startLineCreation();
+            });
+        }
+        // --- End Snap Line Manager Integration ---
 
         // --- Installation Instruction Integration ---
         const calcInstructionBtn = document.getElementById('calcInstructionBtn');
